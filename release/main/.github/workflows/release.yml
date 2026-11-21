@@ -1,0 +1,249 @@
+name: Publish desktop release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic version without the v prefix (for example 0.2.0)
+        required: true
+        type: string
+      prerelease:
+        description: Mark the release as a prerelease
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      commit: ${{ steps.version.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate release version and source
+        id: version
+        shell: pwsh
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_PRERELEASE: ${{ inputs.prerelease }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $dispatch = $env:GITHUB_EVENT_NAME -eq 'workflow_dispatch'
+          if ($dispatch) {
+            if ($env:GITHUB_REF -cne 'refs/heads/main') {
+              throw 'Run this workflow from the public main branch.'
+            }
+            $version = $env:REQUESTED_VERSION
+          } else {
+            $version = $env:GITHUB_REF_NAME.Substring(1)
+          }
+          $number = '(?:0|[1-9][0-9]*)'
+          $identifier = '(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+          $semver = [regex]::Match($version, "\A$number\.$number\.$number(?:-(?<pre>$identifier(?:\.$identifier)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\z")
+          if (!$semver.Success) {
+            throw "Invalid semantic version '$version'. Enter a version such as 0.2.0 or 0.2.0-rc.1."
+          }
+          $isPrerelease = $semver.Groups['pre'].Success -or $env:REQUESTED_PRERELEASE -eq 'true'
+          $tag = "v$version"
+          git merge-base --is-ancestor HEAD origin/main
+          if ($LASTEXITCODE -ne 0) { throw 'The release commit must be on public main.' }
+
+          $tagRef = git ls-remote --refs origin "refs/tags/$tag"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not check whether the tag exists.' }
+          if ($dispatch -and $tagRef) { throw "Tag $tag already exists. Enter a new version." }
+          if (!$dispatch -and !$tagRef) { throw "Tag $tag no longer exists on GitHub." }
+
+          $escapedTag = [Uri]::EscapeDataString($tag)
+          $lookup = gh api --silent "repos/$env:GITHUB_REPOSITORY/releases/tags/$escapedTag" 2>&1
+          if ($LASTEXITCODE -eq 0) { throw "A release for $tag already exists." }
+          if ("$lookup" -notmatch 'HTTP 404') { throw "Could not check for an existing release. $lookup" }
+
+          $commit = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Could not identify the release commit.' }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
+          "commit=$commit" >> $env:GITHUB_OUTPUT
+
+  windows:
+    needs: validate
+    runs-on: windows-latest
+    env:
+      RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.commit }}
+          persist-credentials: false
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-SDL2
+
+      - name: Build and install Windows x64
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          cmake --preset gcc-release -DWEBOLUTION_BUILD_TESTS=OFF "-DWEBOLUTION_VERSION=$RELEASE_VERSION"
+          cmake --build --preset gcc-release --target webolution --parallel 4
+          cmake --install build/cmake/gcc-release --prefix "$PWD/build/windows-release"
+
+      - name: Check package and write checksum
+        shell: pwsh
+        run: |
+          $stage = (Resolve-Path 'build/windows-release').Path
+          if (!(Test-Path (Join-Path $stage 'SDL2.dll') -PathType Leaf)) {
+            throw 'The Windows package is missing its SDL2 runtime.'
+          }
+          $previousPath = $env:PATH
+          try {
+            $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
+            $printed = & (Join-Path $stage 'webolution.exe') --version
+            if ($LASTEXITCODE -ne 0 -or $printed -cne "Lemmings Webolution $env:RELEASE_VERSION") {
+              throw 'The installed game could not run with the bundled DLLs and expected version.'
+            }
+          } finally {
+            $env:PATH = $previousPath
+          }
+          Set-Location 'build'
+          $zip = "lemmings-webolution-${env:RELEASE_TAG}-windows-x64.zip"
+          Compress-Archive -Path "$stage/*" -DestinationPath $zip
+          $hash = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath "$zip.sha256" -Encoding ascii -NoNewline -Value "$hash  $zip$([char]10)"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-x64
+          path: |
+            build/lemmings-webolution-${{ env.RELEASE_TAG }}-windows-x64.zip
+            build/lemmings-webolution-${{ env.RELEASE_TAG }}-windows-x64.zip.sha256
+          if-no-files-found: error
+          compression-level: 0
+          overwrite: true
+
+  linux:
+    needs: validate
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.commit }}
+          persist-credentials: false
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake ninja-build pkg-config libsdl2-dev
+
+      - name: Build and install Linux x64
+        run: |
+          cmake --preset gcc-release -DWEBOLUTION_BUILD_TESTS=OFF "-DWEBOLUTION_VERSION=$RELEASE_VERSION"
+          cmake --build --preset gcc-release --target webolution --parallel 4
+          cmake --install build/cmake/gcc-release --prefix "$PWD/build/linux-release"
+
+      - name: Check package and write checksum
+        working-directory: build
+        run: |
+          ldd linux-release/webolution | grep 'libSDL2.* => /'
+          test "$(linux-release/webolution --version)" = "Lemmings Webolution $RELEASE_VERSION"
+          archive="lemmings-webolution-$RELEASE_TAG-linux-x64.tar.gz"
+          tar -C linux-release -czf "$archive" webolution README.txt LICENSE
+          sha256sum "$archive" > "$archive.sha256"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux-x64
+          path: |
+            build/lemmings-webolution-${{ env.RELEASE_TAG }}-linux-x64.tar.gz
+            build/lemmings-webolution-${{ env.RELEASE_TAG }}-linux-x64.tar.gz.sha256
+          if-no-files-found: error
+          compression-level: 0
+          overwrite: true
+
+  publish:
+    needs: [validate, windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+      RELEASE_PRERELEASE: ${{ needs.validate.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.commit }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-x64
+          path: dist
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: linux-x64
+          path: dist
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          $zip = "lemmings-webolution-$tag-windows-x64.zip"
+          $tar = "lemmings-webolution-$tag-linux-x64.tar.gz"
+          Push-Location dist
+          try {
+            sha256sum --check -- "$zip.sha256" "$tar.sha256"
+            if ($LASTEXITCODE -ne 0) { throw 'The release artifacts failed checksum verification.' }
+          } finally {
+            Pop-Location
+          }
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            git push origin "HEAD:refs/tags/$tag"
+            if ($LASTEXITCODE -ne 0) { throw "Could not create tag $tag on the built commit." }
+          }
+          $commit = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Could not identify the built commit.' }
+          $refs = @(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if ($LASTEXITCODE -ne 0) { throw "Could not verify tag $tag on GitHub." }
+          $objects = @{}
+          foreach ($entry in $refs) {
+            $object, $ref = $entry -split '\s+', 2
+            $objects[$ref] = $object
+          }
+          $tagCommit = $objects["refs/tags/$tag^{}"]
+          if (!$tagCommit) { $tagCommit = $objects["refs/tags/$tag"] }
+          if ($tagCommit -ne $commit) {
+            throw "Tag $tag must point to the commit that was built ($commit)."
+          }
+          $flags = @('--verify-tag', '--generate-notes')
+          if ($env:RELEASE_PRERELEASE -eq 'true') { $flags += '--prerelease' }
+          gh release create $tag "dist/$zip" "dist/$zip.sha256" "dist/$tar" "dist/$tar.sha256" @flags
+          if ($LASTEXITCODE -ne 0) { throw "Could not publish $tag. Check for an existing release." }

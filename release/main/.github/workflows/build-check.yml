@@ -1,0 +1,51 @@
+name: Check desktop builds
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake ninja-build pkg-config libsdl2-dev
+      - name: Build Linux x64
+        run: |
+          cmake --preset gcc-release -DWEBOLUTION_BUILD_TESTS=OFF
+          cmake --build --preset gcc-release --target webolution --parallel 4
+          ldd build/cmake/gcc-release/webolution | grep 'libSDL2.* => /'
+          build/cmake/gcc-release/webolution --version
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-SDL2
+      - name: Build Windows x64
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          cmake --preset gcc-release -DWEBOLUTION_BUILD_TESTS=OFF
+          cmake --build --preset gcc-release --target webolution --parallel 4
+          objdump -p build/cmake/gcc-release/webolution.exe | grep 'DLL Name: SDL2.dll'
+          build/cmake/gcc-release/webolution.exe --version

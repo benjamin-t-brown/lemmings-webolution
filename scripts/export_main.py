@@ -16,6 +16,12 @@ ROOT_FILES = {
     "CMakeLists.txt": "Configure and link the game.",
     "cmake/webolution_app.cmake": "Compile the application object library.",
     "cmake/webolution_sources.cmake": "Select the production translation units.",
+    "src/app/icon/generate_ico.py": "Regenerate the clone's Windows icon.",
+}
+
+CLONE_ICON_HASHES = {
+    "src/app/icon/webolution.png": "1e0aa7fe2ce790c480e959ec94604bd129fb0009a61c4169a6d0d73a6453f308",
+    "src/app/icon/webolution.ico": "f830b17e6eb42e96b1b4b8973efb354633ea9d42c414705280e0479a72288d75",
 }
 
 # List production files individually so additions to the checkout need review.
@@ -27,7 +33,8 @@ SOURCE_GROUPS = {
         Camera.h CameraInput.cpp CameraInput.h CameraIntro.cpp CameraIntro.h CrtRand.cpp
         CrtRand.h CursorPolicy.cpp CursorPolicy.h DeathParticles.h EntryStartCue.cpp
         EntryStartCue.h ExitBalloon.h FrontendSession.cpp FrontendSession.h
-        FrameConsumption.h FrameProfile.h FrontendWindow.cpp FrontendWindow.h HatchAnimation.cpp
+        FrameConsumption.h FrameProfile.h FrontendWindow.cpp FrontendWindow.h GameDataLocation.cpp
+        GameDataLocation.h HatchAnimation.cpp
         HatchAnimation.h HoverFeedback.h
         LemmingAnim.cpp LemmingAnim.h LemmingCountdown.cpp LemmingMotion.cpp LemmingMotion.h
         LevelEndTransition.cpp LevelEndTransition.h LevelMenu.cpp LevelMenu.h LevelOutcome.h
@@ -39,11 +46,13 @@ SOURCE_GROUPS = {
         SceneDispatch.cpp SceneDispatch.h SceneFrame.h SceneMaterialFlags.h SceneMeshSource.cpp
         SceneMeshSource.h SceneRaster.cpp SceneRaster.h SceneVertexPack.cpp SceneVertexPack.h
         SdlShutdown.hpp SdlWindow.hpp SimClock.cpp SimClock.h SkillPanel.cpp SkillPanel.h
-        SoundMenu.cpp SoundMenu.h TubeScene.cpp TubeScene.h WindowScale.h main.cpp
+        SoundMenu.cpp SoundMenu.h TubeScene.cpp TubeScene.h Version.rc.in WindowScale.h main.cpp
+        AppIconResource.h WindowsWindowIcon.cpp WindowsWindowIcon.h webolution.rc
     """),
     "assets": ("Original data decoding or asset lookup.", """
         Bitmap.cpp Bitmap.h Box.cpp Box.h CellMesh.cpp CellMesh.h CollisionGrid.cpp
-        CollisionGrid.h Cylinder.cpp Cylinder.h GameData.cpp GameData.h LevelIndex.cpp
+        CollisionGrid.h Cylinder.cpp Cylinder.h DiscGameData.cpp DiscGameData.h
+        GameData.cpp GameData.h LevelIndex.cpp
         LevelIndex.h LevelObjects.cpp LevelObjects.h LevelStats.cpp LevelStats.h LightMap.cpp
         LightMap.h Lrz.cpp Lrz.h Png.cpp Png.h PolyList.cpp PolyList.h Rar20.cpp Rar20.h
         SceneNode.cpp SceneNode.h Sprite.cpp Sprite.h SurfaceMesh.cpp SurfaceMesh.h
@@ -79,11 +88,17 @@ RETAIL_UNITS = """
 RETAIL_HEADERS = [*RETAIL_UNITS, "animation_playback"]
 
 OVERLAY_REASONS = {
+    ".github/workflows/build-check.yml": "Check Linux and Windows builds on main changes.",
     ".github/workflows/pages.yml": "Build and publish the browser game to GitHub Pages.",
+    ".github/workflows/release.yml": "Build and publish desktop releases from a version tag.",
     ".gitignore": "Ignore game data and local build products.",
+    "BUILDING.md": "Build the Linux, Windows and browser versions from source.",
     "CMakePresets.json": "Provide native debug, native release and Emscripten release builds.",
     "LICENSE": "MIT license for the exported source.",
-    "README.md": "Player setup and build instructions.",
+    "README.md": "Player setup instructions.",
+    "RELEASING.md": "Publish desktop releases on GitHub Actions.",
+    "packaging/linux/README.txt": "Player setup instructions included in the Linux archive.",
+    "packaging/windows/README.txt": "Player setup instructions included in the Windows zip.",
 }
 
 EXCLUDED_ROOTS = set("""
@@ -164,6 +179,8 @@ def manifest():
 
     for name, reason in ROOT_FILES.items():
         add(ROOT / name, name, reason)
+    for name in CLONE_ICON_HASHES:
+        add(ROOT / name, name, "User-supplied clone application icon.")
     for domain, (reason, names) in SOURCE_GROUPS.items():
         for name in names.split():
             path = f"src/{domain}/{name}"
@@ -201,12 +218,17 @@ def scan_file(path):
             or (name != PRODUCTION_REPLAY_HEADER and DEVELOPMENT_FILE.search(path.stem))
             or (parts[0] == "cmake" and name not in ROOT_FILES)):
         yield f"{name}: excluded path"
+    data = path.read_bytes()
+    digest = sha256(data).hexdigest()
+    if digest == REFERENCE_EXE:
+        yield f"{name}: reference executable SHA-256"
+    if name in CLONE_ICON_HASHES:
+        if digest == CLONE_ICON_HASHES[name]:
+            return
+        yield f"{name}: unexpected clone icon SHA-256"
     suffixes = {suffix.lower() for suffix in path.suffixes}
     if NON_SOURCE_SUFFIXES.intersection(suffixes | {parts[-1]}):
         yield f"{name}: binary or game-data extension"
-    data = path.read_bytes()
-    if sha256(data).hexdigest() == REFERENCE_EXE:
-        yield f"{name}: reference executable SHA-256"
     if data.startswith(BINARY_MAGIC) or data[257:262] == b"ustar":
         yield f"{name}: binary signature"
     if CONTROL.search(data):

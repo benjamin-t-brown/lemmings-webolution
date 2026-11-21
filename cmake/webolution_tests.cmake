@@ -116,6 +116,13 @@ add_test(NAME rar20 COMMAND "${CMAKE_COMMAND}"
   "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/rar20-test/patch.box"
   -P "${CMAKE_SOURCE_DIR}/cmake/rar20_test.cmake")
 
+add_executable(test_disc_game_data src/__test__/test_disc_game_data.cpp)
+target_link_libraries(test_disc_game_data PRIVATE webolution_objects)
+add_test(NAME disc_game_data COMMAND "${CMAKE_COMMAND}"
+  "-DTEST_EXE=$<TARGET_FILE:test_disc_game_data>"
+  "-DDISC_IMAGE=${CMAKE_SOURCE_DIR}/build/disc-inputs/lemmings-revolution.iso"
+  -P "${CMAKE_SOURCE_DIR}/cmake/disc_game_data_test.cmake")
+
 add_executable(test_spriteview src/__test__/test_spriteview.cpp)
 target_link_libraries(test_spriteview PRIVATE webolution_objects)
 add_test(NAME spriteview COMMAND test_spriteview)

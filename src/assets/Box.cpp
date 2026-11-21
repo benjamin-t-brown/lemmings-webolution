@@ -6,6 +6,7 @@
 #include <set>
 
 namespace webo {
+namespace fs = std::filesystem;
 namespace {
 
 constexpr char kMagic[6] = {'L', 'E', 'M', 'B', 'O', 'X'};
@@ -16,6 +17,11 @@ std::uint32_t readU32(const std::byte* p) {
   std::uint32_t v;
   std::memcpy(&v, p, 4);
   return v;  // Archive offsets and their host representation are little-endian.
+}
+
+std::string pathText(const std::filesystem::path& path) {
+  const auto utf8 = path.u8string();
+  return std::string(utf8.begin(), utf8.end());
 }
 
 }  // namespace
@@ -33,43 +39,62 @@ std::string normaliseAssetName(std::string_view name) {
   return out;
 }
 
+fs::path resolveGameDataFile(const fs::path& path) {
+  const auto name = path.filename();
+  if (name.empty()) return path;
+  const auto directory = path.has_parent_path() ? path.parent_path() : fs::path(".");
+  const auto folded = normaliseAssetName(pathText(name));
+  fs::path match;
+  std::error_code error;
+  for (fs::directory_iterator it(directory, error), end; !error && it != end; it.increment(error)) {
+    const auto candidate = it->path().filename();
+    const bool exact = candidate == name;
+    if (!exact && normaliseAssetName(pathText(candidate)) != folded) continue;
+    std::error_code statusError;
+    if (!it->is_regular_file(statusError)) continue;
+    if (exact) return path;
+    if (match.empty() || candidate < match) match = candidate;
+  }
+  return match.empty() ? path : path.parent_path() / match;
+}
+
 std::expected<Box, std::string> Box::open(const std::filesystem::path& path) {
   std::error_code ec;
   const auto fileSize = std::filesystem::file_size(path, ec);
   if (ec)
-    return std::unexpected(std::format("{}: {}", path.string(), ec.message()));
+    return std::unexpected(std::format("{}: {}", pathText(path), ec.message()));
 
   std::ifstream in(path, std::ios::binary);
   if (!in)
-    return std::unexpected(std::format("{}: cannot open", path.string()));
+    return std::unexpected(std::format("{}: cannot open", pathText(path)));
 
   std::byte header[14];
   if (!in.read(reinterpret_cast<char*>(header), sizeof header))
-    return std::unexpected(std::format("{}: truncated header", path.string()));
+    return std::unexpected(std::format("{}: truncated header", pathText(path)));
   if (std::memcmp(header, kMagic, sizeof kMagic) != 0)
-    return std::unexpected(std::format("{}: not a LEMBOX archive", path.string()));
+    return std::unexpected(std::format("{}: not a LEMBOX archive", pathText(path)));
 
   const std::uint32_t count = readU32(header + 6);
   const std::uint32_t nameBlock = readU32(header + 10);
   if (count == 0 || count > kMaxEntries)
-    return std::unexpected(std::format("{}: implausible entry count {}", path.string(), count));
+    return std::unexpected(std::format("{}: implausible entry count {}", pathText(path), count));
   if (nameBlock > kMaxNameBlock)
-    return std::unexpected(std::format("{}: implausible name block {}", path.string(), nameBlock));
+    return std::unexpected(std::format("{}: implausible name block {}", pathText(path), nameBlock));
 
   std::vector<std::byte> names(nameBlock);
   if (!in.read(reinterpret_cast<char*>(names.data()), static_cast<std::streamsize>(nameBlock)))
-    return std::unexpected(std::format("{}: truncated name block", path.string()));
+    return std::unexpected(std::format("{}: truncated name block", pathText(path)));
 
   Box box;
   box.entries_.reserve(count);
   std::size_t o = 0;
   for (std::uint32_t i = 0; i < count; ++i) {
     if (o + 4 > names.size())
-      return std::unexpected(std::format("{}: name block overran at entry {}", path.string(), i));
+      return std::unexpected(std::format("{}: name block overran at entry {}", pathText(path), i));
     const std::uint32_t len = readU32(names.data() + o);
     o += 4;
     if (o + len > names.size())
-      return std::unexpected(std::format("{}: name {} overruns block", path.string(), i));
+      return std::unexpected(std::format("{}: name {} overruns block", pathText(path), i));
     Entry e;
     e.name.assign(reinterpret_cast<const char*>(names.data() + o), len);
     e.offset = 0;
@@ -83,14 +108,14 @@ std::expected<Box, std::string> Box::open(const std::filesystem::path& path) {
                              std::vector<std::uint32_t>& out) -> std::expected<void, std::string> {
     std::byte c[4];
     if (!in.read(reinterpret_cast<char*>(c), 4))
-      return std::unexpected(std::format("{}: truncated {} count", path.string(), what));
+      return std::unexpected(std::format("{}: truncated {} count", pathText(path), what));
     const std::uint32_t n = readU32(c);
     if (n != count)
       return std::unexpected(
-          std::format("{}: {} count {} != entry count {}", path.string(), what, n, count));
+          std::format("{}: {} count {} != entry count {}", pathText(path), what, n, count));
     out.resize(n);
     if (!in.read(reinterpret_cast<char*>(out.data()), static_cast<std::streamsize>(n) * 4))
-      return std::unexpected(std::format("{}: truncated {} table", path.string(), what));
+      return std::unexpected(std::format("{}: truncated {} table", pathText(path), what));
     return {};
   };
 
@@ -116,7 +141,7 @@ std::expected<Box, std::string> Box::open(const std::filesystem::path& path) {
   in.close();
   box.stream_.open(path, std::ios::binary);
   if (!box.stream_)
-    return std::unexpected(std::format("{}: cannot reopen for reading", path.string()));
+    return std::unexpected(std::format("{}: cannot reopen for reading", pathText(path)));
 
   return box;
 }
@@ -178,18 +203,47 @@ Box::Validation Box::validate() const {
 std::expected<AssetLibrary, std::string> AssetLibrary::open(const std::filesystem::path& base,
                                                             const std::filesystem::path& patch) {
   AssetLibrary lib;
-  auto b = Box::open(base);
+  auto b = Box::open(resolveGameDataFile(base));
   if (!b)
     return std::unexpected(b.error());
   lib.base_ = std::move(*b);
 
-  if (!patch.empty() && std::filesystem::exists(patch)) {
-    auto p = Box::open(patch);
+  const auto resolvedPatch = resolveGameDataFile(patch);
+  if (!resolvedPatch.empty() && fs::exists(resolvedPatch)) {
+    auto p = Box::open(resolvedPatch);
     if (!p)
       return std::unexpected(p.error());
     lib.patch_ = std::move(*p);
     lib.hasPatch_ = true;
   }
+  return lib;
+}
+
+std::expected<AssetLibrary, std::string> AssetLibrary::openRequired(
+    const std::filesystem::path& base, const std::filesystem::path& patch) {
+  AssetLibrary lib;
+  const auto load = [](const std::filesystem::path& path) -> std::expected<Box, std::string> {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(path, ec) || !std::ifstream(path, std::ios::binary)) {
+      const auto folder = std::filesystem::absolute(path.parent_path(), ec);
+      return std::unexpected(std::format("Could not open {} in {}.",
+          pathText(path.filename()), pathText(ec ? path.parent_path() : folder)));
+    }
+    auto box = Box::open(path);
+    if (!box) return std::unexpected("Invalid game data file: " + box.error());
+    const auto layout = box->validate();
+    if (!layout.ok)
+      return std::unexpected(std::format("Invalid game data file {}: {}",
+          pathText(path), layout.problems.front()));
+    return box;
+  };
+  auto b = load(resolveGameDataFile(base));
+  if (!b) return std::unexpected(b.error());
+  auto p = load(resolveGameDataFile(patch));
+  if (!p) return std::unexpected(p.error());
+  lib.base_ = std::move(*b);
+  lib.patch_ = std::move(*p);
+  lib.hasPatch_ = true;
   return lib;
 }
 

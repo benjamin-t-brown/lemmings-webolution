@@ -518,7 +518,7 @@ bool containsCI(std::string_view haystack, std::string_view needle) {
 }
 
 std::expected<webo::AssetLibrary, std::string> openGame(const fs::path& dir) {
-  const fs::path base = dir / "lemmings.box";
+  const fs::path base = webo::resolveGameDataFile(dir / "lemmings.box");
   const fs::path patch = dir / "patch.box";
   if (!fs::exists(base))
     return std::unexpected(std::format("{}: no lemmings.box here", dir.string()));

@@ -14,12 +14,14 @@ FILES = {
     **{f"/webolution.{ext}": BUILD / f"webolution.{ext}" for ext in ("html", "js", "wasm")},
     "/web-game-data.mjs": BUILD / "web-game-data.mjs",
     "/isolate.js": BUILD / "isolate.js",
+    "/favicon.png": BUILD / "favicon.png",
     **{f"/game/{name}": GAME / name for name in ("lemmings.box", "patch.box")},
 }
 
 
 class GameHandler(SimpleHTTPRequestHandler):
-    extensions_map = {".wasm": "application/wasm", ".js": "text/javascript", ".mjs": "text/javascript"}
+    extensions_map = {".wasm": "application/wasm", ".js": "text/javascript", ".mjs": "text/javascript",
+                      ".png": "image/png"}
 
     def send_head(self):
         if urlsplit(self.path).path not in FILES:

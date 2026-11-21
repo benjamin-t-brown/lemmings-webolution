@@ -18,8 +18,9 @@
 namespace webo::app {
 class SdlWindow {
  public:
-  explicit SdlWindow(int choice = 1, int runOverride = 0)
-      : choice_(choice), runOverride_(runOverride) {
+  explicit SdlWindow(int choice = 1, int runOverride = 0,
+                     void (*setIcon)(SDL_Window*) = nullptr)
+      : choice_(choice), runOverride_(runOverride), setIcon_(setIcon) {
 #ifndef __EMSCRIPTEN__
     scale_ = desktopWindowScale(windowScaleChoice(choice, runOverride), 0);
 #endif
@@ -31,7 +32,8 @@ class SdlWindow {
     if (window_) SDL_DestroyWindow(window_);
     if (initialized_) quitWindowSubsystems();
   }
-  std::expected<void, std::string> ensure(const char* title = "Lemmings Webolution") {
+  std::expected<void, std::string> ensure(
+      const char* title = "Lemmings Webolution " WEBOLUTION_VERSION_STRING) {
     if (renderer_) return {};
     if (choice_ < 0 || choice_ > kMaxFixedWindowScale || runOverride_ < 0 ||
         runOverride_ > kMaxFixedWindowScale)
@@ -47,6 +49,7 @@ class SdlWindow {
     }
     if (!window_) {
 #ifdef __EMSCRIPTEN__
+      constexpr bool desktop = false;
       const int initialScale = 1;
       const auto flags = SDL_WINDOW_SHOWN;
 #else
@@ -57,10 +60,9 @@ class SdlWindow {
       window_ = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
           kGameWidth * initialScale, kGameHeight * initialScale, flags);
       if (!window_) return error("SDL_CreateWindow");
+      if (desktop && setIcon_) setIcon_(window_);
       applyWindowScale();
-#ifndef __EMSCRIPTEN__
       if (desktop) SDL_ShowWindow(window_);
-#endif
     }
     // Scale the final 640x480 texture on the GPU when available. Headless
     // drivers use the software fallback. The renderer choice is scale-independent.
@@ -161,6 +163,7 @@ class SdlWindow {
   }
   bool initialized_ = false;
   int choice_, runOverride_;
+  void (*setIcon_)(SDL_Window*);
   int scale_ = 1;
   SDL_Window* window_ = nullptr;
   SDL_Renderer* renderer_ = nullptr;

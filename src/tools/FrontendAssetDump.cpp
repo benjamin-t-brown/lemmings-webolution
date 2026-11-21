@@ -48,11 +48,12 @@ int main(int argc, char** argv) {
     return 2;
   }
   const fs::path game = argv[1], out = argv[2];
-  if (!fs::is_directory(game) || !fs::is_regular_file(game / "lemmings.box")) {
+  const auto base = webo::resolveGameDataFile(game / "lemmings.box");
+  if (!fs::is_regular_file(base)) {
     std::cerr << "invalid game directory (expected lemmings.box): " << game.string() << '\n';
     return 2;
   }
-  auto lib = webo::AssetLibrary::open(game / "lemmings.box", game / "patch.box");
+  auto lib = webo::AssetLibrary::open(base, game / "patch.box");
   if (!lib) { std::cerr << "cannot open asset archives: " << lib.error() << '\n'; return 2; }
   std::error_code ec;
   fs::create_directories(out, ec);

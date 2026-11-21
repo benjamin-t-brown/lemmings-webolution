@@ -38,6 +38,20 @@ void RuntimeReleaseRateControl::change(std::size_t hatch, int delta, sim::World&
                            rates_.intervalTicks(rate, world.rules().ticksPerSecond));
 }
 
+std::optional<std::size_t> RuntimeReleaseRateControl::pressTarget(
+    std::span<const HatchHoverTarget> targets, int x, int y, int button, bool actorCanReceiveSkill) {
+  // Provisional clone precedence: a valid left-click assignment takes priority.
+  // The right button can adjust a hatch even when an actor is eligible.
+  if (button != 3 && (button != 1 || actorCanReceiveSkill)) return std::nullopt;
+  return hoveredHatch(targets, x, y);
+}
+
+std::optional<std::size_t> RuntimeReleaseRateControl::heldTarget(
+    std::span<const HatchHoverTarget> targets, int x, int y) const {
+  if (!heldHatch_) return std::nullopt;
+  return hoveredHatch(targets, x, y, heldHatch_);
+}
+
 bool RuntimeReleaseRateControl::press(std::optional<std::size_t> hatch, int button, sim::World& world) {
   if (!hatch || *hatch >= hatchCount() || (button != 1 && button != 3)) return false;
   heldButton_ = button;
@@ -49,9 +63,10 @@ bool RuntimeReleaseRateControl::press(std::optional<std::size_t> hatch, int butt
   return true;
 }
 
-void RuntimeReleaseRateControl::advance(double seconds, std::optional<std::size_t> hatch, sim::World& world) {
+void RuntimeReleaseRateControl::advance(double seconds, std::span<const HatchHoverTarget> targets,
+                                        int x, int y, sim::World& world) {
   if (!heldButton_) return;
-  if (hatch != heldHatch_) { reset(); return; }
+  if (!heldTarget(targets, x, y)) { reset(); return; }
   if (!std::isfinite(seconds) || seconds <= 0) return;
   // Provisional clone repeat steps immediately, waits 0.4 s, then repeats
   // every 0.1 s in real time. Native repeats on input updates.

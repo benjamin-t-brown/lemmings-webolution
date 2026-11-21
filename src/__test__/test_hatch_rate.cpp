@@ -34,15 +34,40 @@ void units(const AssetLibrary& lib, const std::filesystem::path& directory) {
   check(idle.spawned() == 1, "first countdown completes");
   control->press(0, 1, world); control->release(1);
   check(control->current() == 20, "left click lowers one index");
-  control->press(0, 3, world); control->advance(0.399, 0, world);
+  const app::HatchHoverTarget hatch[]{{0, 10, 10, 30, 30}};
+  const bool actorCanReceiveSkill = world.canAssign(0, sim::Skill::Climber);
+  check(actorCanReceiveSkill, "the released lemming can take the selected skill");
+  check(!control->pressTarget(hatch, 20, 20, 1, actorCanReceiveSkill) &&
+        control->pressTarget(hatch, 20, 20, 1, false) == 0,
+        "left press gives way only to an assignable lemming");
+  const auto rightTarget = control->pressTarget(hatch, 20, 20, 3, actorCanReceiveSkill);
+  check(rightTarget && control->press(hatch[*rightTarget].index, 3, world),
+        "right press can adjust the hatch while the lemming overlaps");
+  control->advance(0.399, hatch, 20, 20, world);
   check(control->current() == 21, "hold starts with one click");
-  control->advance(0.001, 0, world);
-  check(control->current() == 22, "repeat starts at 400ms");
-  control->advance(10, std::nullopt, world); control->advance(10, 0, world);
-  check(control->current() == 22 && !control->holding(), "leaving hatch cancels hold permanently");
-  control->press(0, 3, world); control->advance(10, 0, world); control->reset();
+  control->advance(0.001, hatch, 20, 20, world);
+  check(control->current() == 22 && control->heldTarget(hatch, 20, 20) == 0,
+        "rate and held hover continue through the actor overlap");
+  control->release(3);
+  control->advance(10, hatch, 20, 20, world);
+  check(control->current() == 22 && !control->holding() && !control->heldTarget(hatch, 20, 20),
+        "button release ends the hold and its readout");
+  const auto leftTarget = control->pressTarget(hatch, 20, 20, 1, false);
+  check(leftTarget && control->press(hatch[*leftTarget].index, 1, world),
+        "left hold starts before a lemming passes under the pointer");
+  check(!control->pressTarget(hatch, 20, 20, 1, actorCanReceiveSkill),
+        "the passing lemming would take a new left press");
+  control->advance(0.4, hatch, 20, 20, world);
+  check(control->current() == 20 && control->holding(),
+        "the existing left hold repeats during that overlap");
+  control->advance(0.1, hatch, 20, 20, world);
+  check(control->current() == 19 && control->holding(), "repeat continues as the lemming passes");
+  control->advance(0, hatch, 30, 20, world);
+  control->advance(10, hatch, 20, 20, world);
+  check(control->current() == 19 && !control->holding(), "leaving hatch cancels hold permanently");
+  control->press(0, 3, world); control->advance(10, hatch, 20, 20, world); control->reset();
   check(control->current() == 50, "upper authored limit");
-  control->press(0, 1, world); control->advance(10, 0, world); control->reset();
+  control->press(0, 1, world); control->advance(10, hatch, 20, 20, world); control->reset();
   check(control->current() == 1, "lower authored limit");
 
   for (const auto* level : {"M06_KF_1", "E10_KF_1"}) {
@@ -61,7 +86,12 @@ void units(const AssetLibrary& lib, const std::filesystem::path& directory) {
       check(multi->press(h, 3, shared), "every hatch accepts right input");
       check(multi->current() == expected && shared.setup().releaseIntervalSeconds == rates->secondsPerLemming(expected),
             "clicked hatch clamps the shared rate");
-      multi->advance(10, (h+1)%records.size(), shared);
+      const app::HatchHoverTarget overlapping[]{{(h+1)%records.size(), 10, 10, 30, 30},
+                                                {h, 20, 10, 40, 30}};
+      multi->advance(0, overlapping, 20, 20, shared);
+      check(multi->heldTarget(overlapping, 20, 20) == 1,
+            "overlapping hatch geometry preserves the exact held hatch");
+      multi->advance(10, overlapping, 19, 20, shared);
       check(!multi->holding(), "moving between hatches cancels the first hold");
       multi->press(h, 1, shared); multi->release(1);
       check(multi->current() == std::clamp(expected-1, records[h].rateMin, records[h].rateMax),

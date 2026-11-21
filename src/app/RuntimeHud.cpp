@@ -17,14 +17,6 @@ int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index)
   return static_cast<int>(std::max(0LL, quota(std::max(0, total)) - quota(std::clamp(spawned, 0, std::max(0, total)))));
 }
 
-std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> targets, int x, int y) {
-  for (std::size_t i = 0; i < targets.size(); ++i) {
-    const auto& h = targets[i];
-    if (pointerOverSceneBounds(x, y, h.left, h.top, h.right, h.bottom)) return i;
-  }
-  return std::nullopt;
-}
-
 void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
                     std::optional<int> adjustingRate) {
   const auto cells = shell::fontCells();

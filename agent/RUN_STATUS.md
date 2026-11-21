@@ -10,6 +10,8 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
+- builder-wall-pass-001: **ready** — Lemmings walk through a wall at the top of builder stairs that end too low (playtest 26 R1)
+- gate-top-glitch-001: **ready** — Glitchy graphics above the topmost lever-opened wall on How do we get up there! (playtest 26 R2)
 
 ## Recently completed queue entries
 

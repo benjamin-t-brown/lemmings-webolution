@@ -32135,20 +32135,20 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "User request (2026-11-20): the repository gets a clean 'main' branch holding only the game's source code, from which a web build is published to GitHub Pages (repository benjamin-t-brown/lemmings-webolution, so the site is served under the /lemmings-webolution/ subpath). Decompilation notes, test runs, test code and development-only tooling stay on the decompile branch. Your job is the export, not version control: the lead creates the branch from your export after review. Part 1, export tool: add scripts/export_main.py that writes a fresh tree to build/main-export/ (deleting only that directory first) from an explicit allowlist of paths in this checkout plus a main-only overlay directory release/main/ (new; its files are copied to the export root). Default deny: anything not allowlisted is left out. Expected in: the game sources under src/ (app, assets, audio, gfx, save, shell, sim, web) and only the CMake, preset and build files the game executable and the Emscripten build need, .clang-format and .gitattributes, plus the overlay. Expected out: AGENTS.md, CLAUDE.md, agent/, docs/, decomp-lemmings/, old/, web/ (check what it is first), tools/, 'Lemmings Revolution/', build/, .claude/, .opencode/, src/__test__/, src/tools/, test-only CMake modules and any test, replay, fixture, harness, REA or agent-control file. Decide each remaining path from what it is, and list every included path with a one-line reason in the report. The tool is deterministic (same input, same output; LF only; no timestamps written into files) and ends by scanning the export: it fails if any file is an original game file or binary (reject executables, DLLs, .box, .dat, archives and the reference EXE hash 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f), if a path matches the excluded list, or if text contains development-history terms (playtest, task ids of the form word-word-NNN, worker, supervisor, agent/, docs/scratch, build/agent-runs) and prints each hit; original-binary references in source comments (addresses, original names) are allowed and stay. A hit in a src/ comment is fixed by rewording that comment only. User decision (2026-11-20): the game's development, diagnostic and test-support code stays in main exactly as on this branch, including --record, --replay, --cursor-fixture, --map, --map-flags, --direct-level, --sim-ticks, the C3 dumps, frame timing, the frontend and level frame observers, the SDL event injection hooks and the fixed-frame clock in ApplicationRunOptions. The export copies each allowlisted file byte for byte and never rewrites or strips code, and the scanner does not flag flag names or test hooks. Every source file the game build compiles or includes is therefore allowlisted. Part 2, CMake split: the export must configure and build the game without test sources present. Move test, fixture and test-driver targets out of the root CMakeLists.txt into an included module (for example cmake/tests.cmake, included when WEBOLUTION_BUILD_TESTS is ON, default ON, and the test sources exist), and move test-only helpers out of cmake/webolution_app.cmake the same way. On this branch every existing target, test name, label and command must stay identical; compare ctest -N output and the target list before and after and archive both under build/. The export's CMakePresets.json keeps only the native release/debug and emscripten-release presets (overlay or generated copy). Part 3, main overlay under release/main/: a README.md for players and builders (what the project is, that it ships no game data, how to play in the browser and where the game files come from, native and Emscripten build steps, no development history), a .gitignore, and .github/workflows/pages.yml that builds the emscripten-release preset with emsdk pinned to 5.0.3 (the registered version) and deploys webolution.html (as index.html), .js, .wasm and the web scripts with the official Pages actions. The build uses pthreads, so the page needs cross-origin isolation and Pages cannot set COOP/COEP headers: add a small service worker of our own (no third-party download) that adds Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy (require-corp, or credentialless if needed for the archive.org CORS fetch from web-game-data-001) and reloads once on first visit; the page explains the reload and says what is wrong if isolation is still missing. Make every page URL relative so the site works under a subpath, and keep the local scripts/serve-web.py playtest server working on this branch. Add release/main/LICENSE with the standard MIT License text, 'Copyright (c) 2026 Benjamin Brown' (user decision 2026-11-20); the README names the license, says the project is unofficial and not affiliated with the owners of Lemmings Revolution, and that the license covers this source only, not the original game or its data. Evidence: run the export, configure and build the game natively and with the emscripten-release preset from a copy of build/main-export/ placed under build/ (registered toolchains; the SDL2 port is cached), archive the scan output and file list, and run the exported web build under the registered emsdk Node far enough to show it loads without test code. Difficulty: difficult. Recommended model: Opus. Reason: restructuring a 1,650-line CMakeLists without changing any test target, plus cross-origin isolation for a static host. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "scope": "User request (2026-11-20): the repository gets a clean 'main' branch holding only the game's source code, from which a web build is published to GitHub Pages (repository benjamin-t-brown/lemmings-webolution, so the site is served under the /lemmings-webolution/ subpath). Decompilation notes, test runs, test code and development-only tooling stay on the decompile branch. Your job is the export, not version control: the lead creates the branch from your export after review. Part 1, export tool: add scripts/export_main.py that writes a fresh tree to build/main-export/ (deleting only that directory first) from an explicit allowlist of paths in this checkout plus a main-only overlay directory release/main/ (new; its files are copied to the export root). Default deny: anything not allowlisted is left out. Expected in: the game sources under src/ (app, assets, audio, gfx, save, shell, sim, web) and only the CMake, preset and build files the game executable and the Emscripten build need, .clang-format and .gitattributes, plus the overlay. Expected out: AGENTS.md, CLAUDE.md, agent/, docs/, decomp-lemmings/, old/, web/ (check what it is first), tools/, 'Lemmings Revolution/', build/, .claude/, .opencode/, src/__test__/, src/tools/, test-only CMake modules and any test, replay, fixture, harness, REA or agent-control file. Decide each remaining path from what it is, and list every included path with a one-line reason in the report. The tool is deterministic (same input, same output; LF only; no timestamps written into files) and ends by scanning the export: it fails if any file is an original game file or binary (reject executables, DLLs, .box, .dat, archives and the reference EXE hash 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f), if a path matches the excluded list, or if text contains development-history terms (playtest, task ids of the form word-word-NNN, worker, supervisor, agent/, docs/scratch, build/agent-runs) and prints each hit; original-binary references in source comments (addresses, original names) are allowed and stay. A hit in a src/ comment is fixed by rewording that comment only. Lead authorization (2026-11-20): a hit in a non-test string literal (the play-site evidence strings in src/audio/CuePlayback.cpp kRoutes) is fixed by rewording that literal to drop docs/ and old/docs/ paths, task ids and playtest references while keeping every original address, DAT_/FUN_ name, offset and the provisional labels exactly; no test assertion is edited and every test that reads those strings still passes. The scanner has no per-line exemptions. User decision (2026-11-20): the game's development, diagnostic and test-support code stays in main exactly as on this branch, including --record, --replay, --cursor-fixture, --map, --map-flags, --direct-level, --sim-ticks, the C3 dumps, frame timing, the frontend and level frame observers, the SDL event injection hooks and the fixed-frame clock in ApplicationRunOptions. The export copies each allowlisted file byte for byte and never rewrites or strips code, and the scanner does not flag flag names or test hooks. Every source file the game build compiles or includes is therefore allowlisted. Part 2, CMake split: the export must configure and build the game without test sources present. Move test, fixture and test-driver targets out of the root CMakeLists.txt into an included module (for example cmake/tests.cmake, included when WEBOLUTION_BUILD_TESTS is ON, default ON, and the test sources exist), and move test-only helpers out of cmake/webolution_app.cmake the same way. On this branch every existing target, test name, label and command must stay identical; compare ctest -N output and the target list before and after and archive both under build/. The export's CMakePresets.json keeps only the native release/debug and emscripten-release presets (overlay or generated copy). Part 3, main overlay under release/main/: a README.md for players and builders (what the project is, that it ships no game data, how to play in the browser and where the game files come from, native and Emscripten build steps, no development history), a .gitignore, and .github/workflows/pages.yml that builds the emscripten-release preset with emsdk pinned to 5.0.3 (the registered version) and deploys webolution.html (as index.html), .js, .wasm and the web scripts with the official Pages actions. The build uses pthreads, so the page needs cross-origin isolation and Pages cannot set COOP/COEP headers: add a small service worker of our own (no third-party download) that adds Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy (require-corp, or credentialless if needed for the archive.org CORS fetch from web-game-data-001) and reloads once on first visit; the page explains the reload and says what is wrong if isolation is still missing. Make every page URL relative so the site works under a subpath, and keep the local scripts/serve-web.py playtest server working on this branch. Add release/main/LICENSE with the standard MIT License text, 'Copyright (c) 2026 Benjamin Brown' (user decision 2026-11-20); the README names the license, says the project is unofficial and not affiliated with the owners of Lemmings Revolution, and that the license covers this source only, not the original game or its data. Evidence: run the export, configure and build the game natively and with the emscripten-release preset from a copy of build/main-export/ placed under build/ (registered toolchains; the SDL2 port is cached), archive the scan output and file list, and run the exported web build under the registered emsdk Node far enough to show it loads without test code. Difficulty: difficult. Recommended model: Opus. Reason: restructuring a 1,650-line CMakeLists without changing any test target, plus cross-origin isolation for a static host. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, copies every exported src/ file byte-identical to this checkout, and every src/ file outside src/web differs from HEAD at most in comment text, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
+        "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, copies every exported src/ file byte-identical to this checkout, and every src/ file outside src/web differs from HEAD at most in comment text and in the reworded CuePlayback.cpp evidence strings, the scanner has no per-line exemptions, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
         "A copy of the export under build/ configures and builds the game natively and with the emscripten-release preset, with no test sources present; on this branch the ctest -N listing and target list archived before and after the CMake split are identical.",
         "The export contains a README.md, a .gitignore and a Pages workflow pinned to emsdk 5.0.3, the page works under a subpath with relative URLs and a service worker that provides cross-origin isolation, the export carries the MIT LICENSE, and the smoke profile passes."
       ],
-      "loop_attempts": 3,
-      "run_id": "20261121T030515-49632-db65b1ff",
-      "started": "2026-11-21T03:05:15.708496+00:00",
-      "finished": "2026-11-21T03:19:18.136346+00:00",
-      "last_run": "build/agent-runs/20261121T030515-49632-db65b1ff",
+      "loop_attempts": 4,
+      "run_id": "20261121T032836-36712-f7fa87e9",
+      "started": "2026-11-21T03:28:37.372492+00:00",
+      "finished": "2026-11-21T03:39:12.804606+00:00",
+      "last_run": "build/agent-runs/20261121T032836-36712-f7fa87e9",
       "review_feedback": {
         "decision": "revise",
-        "reason": "Lead, 2026-11-20: attempts 1-3 went the wrong way on one point. Reviews asked for test hooks to be kept out of main, and the user has decided they stay (see the scope). Undo that work: remove the export-only preprocessor guards (WEBOLUTION_PUBLIC_SOURCE, WEBOLUTION_REPLAYS, WEBOLUTION_FRAME_INSPECTION and any similar __has_include switches) and the guard stripping in scripts/export_main.py; restore every src/ file outside src/web that this task changed (main.cpp, AppEntry.h, BackdropScene, MapScene, SkillPanel, TubeScene, Raster, SceneRaster, Bitmap, TextureCache, CuePlayback and any other) to its HEAD content, keeping only comment rewording needed for the history-term scan, and drop the FrameProfile.h to FrameTiming.h rename if it was made for the export. Remove the scanner checks for development flags and test hooks. Keep what passed review: the CMake split with identical ctest -N and target lists, the history-term scan including ids like debris-3d-001, the binary and excluded-path checks, release/main/ (README, .gitignore, MIT LICENSE, pages.yml with emsdk 5.0.3), src/web/isolate.js, relative URLs, and the subpath startup evidence. Then rerun the export twice, rebuild the standalone copy natively and with emscripten-release, refresh the evidence and the report (list each src/ file restored), and run smoke. src/__test__/test_web_game_data.mjs stays as it is now."
+        "reason": "Lead, 2026-11-20: attempt 4 was right to stop. You are now authorized (see the scope) to reword the 12 evidence string literals in src/audio/CuePlayback.cpp kRoutes listed in build/main-export-001/retained-diagnostics/retained-cue-citations.log: drop the docs/scratch and old/docs/scratch paths, task ids and the playtest citation, keep every address and original name exactly (src/__test__/test_cueplayback.cpp requires each string to stay non-empty and contain 0x). Remove CUE_EVIDENCE_LINES and any other line exemption from scripts/export_main.py, rerun the export twice, refresh the standalone builds and evidence, list each reworded string before and after in the report, and run smoke. Everything else from attempt 4 stays as it is."
       },
       "last_failure": "The standalone builds, CMake comparisons, browser startup under the Pages subpath, and supervisor smoke profile pass. The public export still contains test-harness code. Keep the frontend and level frame observers and the `--sim-ticks` pre-seeding path on the decompile branch, add scanner coverage for them, and refresh the export evidence.",
       "blocker": null,
@@ -32157,8 +32157,204 @@
           "run": "build/agent-runs/20261121T030515-49632-db65b1ff",
           "review": null,
           "blocker": "Attempt limit: The standalone builds, CMake comparisons, browser startup under the Pages subpath, and supervisor smoke profile pass. The public export still contains test-harness code. Keep the frontend and level frame observers and the `--sim-ticks` pre-seeding path on the decompile branch, add scanner coverage for them, and refresh the export evidence."
+        },
+        {
+          "run": "build/agent-runs/20261121T032836-36712-f7fa87e9",
+          "review": {
+            "decision": "blocked",
+            "reason": "The standalone build, Pages startup, and smoke criteria pass. The history scan skips 21 prohibited matches in 12 compiled cue-evidence lines. Removing the skip would make the export fail, and removing the citations requires authorization for a narrowly scoped change to C++ string literals under the comment-only HEAD constraint.",
+            "checks": [
+              {
+                "criterion": "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, copies every exported src/ file byte-identical to this checkout, and every src/ file outside src/web differs from HEAD at most in comment text, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "scripts/export_main.py",
+                    "detail": "The explicit allowlist and release overlay are copied byte for byte. The scanner checks paths, binary signatures, and the reference hash, but scan_file skips every line in CUE_EVIDENCE_LINES."
+                  },
+                  {
+                    "path": "build/main-export/src/audio/CuePlayback.cpp",
+                    "detail": "Lines 20\u201352 contain compiled strings with docs/scratch paths, task IDs, and a playtest citation. The exported file matches the checkout and HEAD. The cited original addresses can be retained if changes to the provenance strings are authorized."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/retained-cue-citations.log",
+                    "detail": "Lists all 21 prohibited matches across the 12 lines exempted from the scan."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/export-comparison.txt",
+                    "detail": "Records identical output across both runs and unchanged tracked sources outside src/web. Read-only hashes confirmed that all 213 current export files match their checkout inputs and the standalone copy."
+                  },
+                  {
+                    "path": "docs/scratch/main-export-001.md",
+                    "detail": "Lists the 213 exported paths with inclusion reasons and documents the scanner exception."
+                  }
+                ]
+              },
+              {
+                "criterion": "A copy of the export under build/ configures and builds the game natively and with the emscripten-release preset, with no test sources present; on this branch the ctest -N listing and target list archived before and after the CMake split are identical.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/standalone-native-configure.log",
+                    "detail": "Records a successful configuration of the standalone copy under build/ using the registered MinGW-w64 GCC."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/standalone-native-build.log",
+                    "detail": "Records the standalone native build through the final webolution.exe link."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/standalone-web-configure.log",
+                    "detail": "Records successful generation in the standalone copy's emscripten-release preset directory."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/standalone-web-build.log",
+                    "detail": "Records the standalone WebAssembly build through the final webolution.js link. Inspection of the standalone source tree found no test source directories."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/standalone-web-startup.log",
+                    "detail": "Shows the exported WebAssembly build reached its help output through the registered emsdk Node and retained the approved diagnostic options."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/cmake-comparison.txt",
+                    "detail": "Records 218 native targets and 256 native tests, plus 34 web targets and one web test. Read-only SHA-256 comparisons confirmed that all four before-and-after target and ctest -N listing pairs match byte for byte."
+                  }
+                ]
+              },
+              {
+                "criterion": "The export contains a README.md, a .gitignore and a Pages workflow pinned to emsdk 5.0.3, the page works under a subpath with relative URLs and a service worker that provides cross-origin isolation, the export carries the MIT LICENSE, and the smoke profile passes.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/main-export/README.md",
+                    "detail": "Explains browser setup, original data requirements, native and Emscripten builds, unofficial status, and the scope of the MIT license."
+                  },
+                  {
+                    "path": "build/main-export/.gitignore",
+                    "detail": "Excludes local build outputs and original game data patterns."
+                  },
+                  {
+                    "path": "build/main-export/.github/workflows/pages.yml",
+                    "detail": "Pins emsdk 5.0.3, builds emscripten-release, stages the generated HTML as index.html with the Wasm and browser scripts, and uses the official Pages upload and deploy actions."
+                  },
+                  {
+                    "path": "build/main-export/LICENSE",
+                    "detail": "Contains the standard MIT License and the requested 2026 Benjamin Brown copyright."
+                  },
+                  {
+                    "path": "build/main-export/src/web/isolate.js",
+                    "detail": "Adds COOP same-origin and COEP require-corp to responses within the service worker scope."
+                  },
+                  {
+                    "path": "build/main-export-001/retained-diagnostics/pages-startup-http.json",
+                    "detail": "The fresh browser probe against the rebuilt package records one reload and loads the service worker, JavaScript, Wasm, and game-data module under /lemmings-webolution/ before reaching the relative archive lookup. The probe used a loopback server without isolation headers."
+                  },
+                  {
+                    "path": "build/agent-runs/20261121T032836-36712-f7fa87e9/verification.log",
+                    "detail": "The current supervisor run built smoke_tests and passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "The standalone build, Pages startup, and smoke criteria pass. The history scan skips 21 prohibited matches in 12 compiled cue-evidence lines. Removing the skip would make the export fail, and removing the citations requires authorization for a narrowly scoped change to C++ string literals under the comment-only HEAD constraint."
         }
-      ]
+      ],
+      "review": {
+        "decision": "blocked",
+        "reason": "The standalone build, Pages startup, and smoke criteria pass. The history scan skips 21 prohibited matches in 12 compiled cue-evidence lines. Removing the skip would make the export fail, and removing the citations requires authorization for a narrowly scoped change to C++ string literals under the comment-only HEAD constraint.",
+        "checks": [
+          {
+            "criterion": "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, copies every exported src/ file byte-identical to this checkout, and every src/ file outside src/web differs from HEAD at most in comment text, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "scripts/export_main.py",
+                "detail": "The explicit allowlist and release overlay are copied byte for byte. The scanner checks paths, binary signatures, and the reference hash, but scan_file skips every line in CUE_EVIDENCE_LINES."
+              },
+              {
+                "path": "build/main-export/src/audio/CuePlayback.cpp",
+                "detail": "Lines 20\u201352 contain compiled strings with docs/scratch paths, task IDs, and a playtest citation. The exported file matches the checkout and HEAD. The cited original addresses can be retained if changes to the provenance strings are authorized."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/retained-cue-citations.log",
+                "detail": "Lists all 21 prohibited matches across the 12 lines exempted from the scan."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/export-comparison.txt",
+                "detail": "Records identical output across both runs and unchanged tracked sources outside src/web. Read-only hashes confirmed that all 213 current export files match their checkout inputs and the standalone copy."
+              },
+              {
+                "path": "docs/scratch/main-export-001.md",
+                "detail": "Lists the 213 exported paths with inclusion reasons and documents the scanner exception."
+              }
+            ]
+          },
+          {
+            "criterion": "A copy of the export under build/ configures and builds the game natively and with the emscripten-release preset, with no test sources present; on this branch the ctest -N listing and target list archived before and after the CMake split are identical.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/main-export-001/retained-diagnostics/standalone-native-configure.log",
+                "detail": "Records a successful configuration of the standalone copy under build/ using the registered MinGW-w64 GCC."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/standalone-native-build.log",
+                "detail": "Records the standalone native build through the final webolution.exe link."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/standalone-web-configure.log",
+                "detail": "Records successful generation in the standalone copy's emscripten-release preset directory."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/standalone-web-build.log",
+                "detail": "Records the standalone WebAssembly build through the final webolution.js link. Inspection of the standalone source tree found no test source directories."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/standalone-web-startup.log",
+                "detail": "Shows the exported WebAssembly build reached its help output through the registered emsdk Node and retained the approved diagnostic options."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/cmake-comparison.txt",
+                "detail": "Records 218 native targets and 256 native tests, plus 34 web targets and one web test. Read-only SHA-256 comparisons confirmed that all four before-and-after target and ctest -N listing pairs match byte for byte."
+              }
+            ]
+          },
+          {
+            "criterion": "The export contains a README.md, a .gitignore and a Pages workflow pinned to emsdk 5.0.3, the page works under a subpath with relative URLs and a service worker that provides cross-origin isolation, the export carries the MIT LICENSE, and the smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/main-export/README.md",
+                "detail": "Explains browser setup, original data requirements, native and Emscripten builds, unofficial status, and the scope of the MIT license."
+              },
+              {
+                "path": "build/main-export/.gitignore",
+                "detail": "Excludes local build outputs and original game data patterns."
+              },
+              {
+                "path": "build/main-export/.github/workflows/pages.yml",
+                "detail": "Pins emsdk 5.0.3, builds emscripten-release, stages the generated HTML as index.html with the Wasm and browser scripts, and uses the official Pages upload and deploy actions."
+              },
+              {
+                "path": "build/main-export/LICENSE",
+                "detail": "Contains the standard MIT License and the requested 2026 Benjamin Brown copyright."
+              },
+              {
+                "path": "build/main-export/src/web/isolate.js",
+                "detail": "Adds COOP same-origin and COEP require-corp to responses within the service worker scope."
+              },
+              {
+                "path": "build/main-export-001/retained-diagnostics/pages-startup-http.json",
+                "detail": "The fresh browser probe against the rebuilt package records one reload and loads the service worker, JavaScript, Wasm, and game-data module under /lemmings-webolution/ before reaching the relative archive lookup. The probe used a loopback server without isolation headers."
+              },
+              {
+                "path": "build/agent-runs/20261121T032836-36712-f7fa87e9/verification.log",
+                "detail": "The current supervisor run built smoke_tests and passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

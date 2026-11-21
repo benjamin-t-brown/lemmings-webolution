@@ -10,18 +10,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- disc-unrar-001: **ready** — RAR 2.0 extractor for the disc patch, and 1.0 patch.box support (web release, clone addition)
-- web-game-data-001: **ready** — Web release: game data setup (installed files, CD image, archive.org download) (clone addition)
 - main-export-001: **ready** — Clean source export for the public main branch, with a GitHub Pages build (release)
 
 ## Recently completed queue entries
 
-- actorcompose-fixtures-001: Restore the five actorcompose camera fixtures as tracked files
-  Verification evidence: `build/agent-runs/20261120T065159-45368-23c3a665/verification.log`
-- antigrav-flip-motion-001: A lemming entering an anti-grav lift moves smoothly to the floor above and turns over
-  Accepted: 2026-11-20T18:55:23.323580+00:00
-  Verification evidence: `build/agent-runs/20261120T182550-37944-de0bcea2/verification.log`
-  Verification evidence: `build\agent-runs\20261120T182550-37944-de0bcea2\verification.log`
 - inverted-builder-fluid-001: An upside-down builder treats water ahead as a roof instead of empty space
   Accepted: 2026-11-20T19:12:32.572984+00:00
   Verification evidence: `build/agent-runs/20261120T185523-37944-57dd5e50/verification.log`
@@ -34,14 +26,22 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-20T21:21:44.866718+00:00
   Verification evidence: `build/agent-runs/20261120T211150-55872-44197c94/verification.log`
   Verification evidence: `build\agent-runs\20261120T211150-55872-44197c94\verification.log`
+- disc-unrar-001: RAR 2.0 extractor for the disc patch, and 1.0 patch.box support (web release, clone addition)
+  Accepted: 2026-11-21T02:04:19.522193+00:00
+  Verification evidence: `build/agent-runs/20261121T014241-49632-de00de90/verification.log`
+  Verification evidence: `build\agent-runs\20261121T014241-49632-de00de90\verification.log`
+- web-game-data-001: Web release: game data setup (installed files, CD image, archive.org download) (clone addition)
+  Accepted: 2026-11-21T02:21:18.769648+00:00
+  Verification evidence: `build/agent-runs/20261121T020419-49632-e97b4560/verification.log`
+  Verification evidence: `build\agent-runs\20261121T020419-49632-e97b4560\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-ae911e2bb85248f2b474ebcadca663b0/result.json`
+- Result: `build/agent-runs/loop-87751a2bb6ce4d48a7cf210b2737ef69/result.json`
 - Status: **blocked**
-- Duration: 0h 11m 52s
-- Completed in this invocation: switch-hover-highlight-002
-- Reason: The playable-v1 queue has no remaining unparked production fix supported by the playtest ledger. On Designed with love (M11_KF_1, node 33), Playtest 24 confirmed the lift crossing, the inverted Builder stopping at water, and the improved lift effects. Its new P1 switch-hover defect has since passed independent review. The next milestone dependency is a human win on node 33 through the ordinary frontend. If the level still blocks progress, the failed route and the action that stopped it would ide
+- Duration: 1h 39m 07s
+- Completed in this invocation: disc-unrar-001, web-game-data-001
+- Reason: Attempt limit reached for main-export-001
 
 ## Documentation handoff
 

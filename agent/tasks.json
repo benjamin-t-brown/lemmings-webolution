@@ -31945,12 +31945,90 @@
         "Truncated, corrupted and wrong-entry inputs return an error naming the reason without crashing; the web build exports the extract function beside _main and the Emscripten release target links.",
         "With a build/ game directory holding the installed lemmings.box and the 1.0 patch.box, the clone starts and the level sweep driver reaches every map node's play state, or the report names each failure and the loading fix; the report lists the 1.0 versus 1.1 entry differences, and the smoke profile passes."
       ],
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
       "kind": "implementation",
-      "user_authorized": true
+      "user_authorized": true,
+      "loop_attempts": 1,
+      "run_id": "20261121T014241-49632-de00de90",
+      "started": "2026-11-21T01:42:41.747691+00:00",
+      "finished": "2026-11-21T02:01:55.345466+00:00",
+      "last_run": "build/agent-runs/20261121T014241-49632-de00de90",
+      "review": {
+        "decision": "accept",
+        "reason": "The retained evidence covers all three criteria. The disc extraction matches the required checksums, the Emscripten Release export works before main, and the existing loader reached play on all 102 nodes with the 1.0 data. The installed-data smoke profile passed. This read-only review used retained results and establishes clone compatibility within the tested routes. Human play on 1.0 and original-game fidelity remain unverified.",
+        "checks": [
+          {
+            "criterion": "The extractor decodes build/disc-inputs/LEMPATCH.EXE: the 'Lemmings Revolution.exe' entry has CRC32 364b1d9a and the 'patch.box' entry has CRC32 ef0b386c and SHA-256 a393a45e71d797fc5b646a9a235d1f64298129f378c6f4b79f47ec773d00de53, shown by the legacy test and by the lrtool subcommand, with output written under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/disc-unrar-001/rar20-ctest.log",
+                "detail": "The passing legacy test names build/disc-inputs/LEMPATCH.EXE as input and writes patch.box under build/disc-unrar-001/native/rar20-test/. It records CRC32 364b1d9a for the in-memory EXE and CRC32 ef0b386c plus the expected SHA-256 for patch.box."
+              },
+              {
+                "path": "build/disc-unrar-001/lrtool-unrar.log",
+                "detail": "The CLI reports CRC32 364b1d9a for the discarded solid predecessor and CRC32 ef0b386c for build/disc-unrar-001/patch.box. The digest recorded for that output matches the expected SHA-256."
+              }
+            ]
+          },
+          {
+            "criterion": "Truncated, corrupted and wrong-entry inputs return an error naming the reason without crashing; the web build exports the extract function beside _main and the Emscripten release target links.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_rar20.cpp",
+                "detail": "The in-memory tests require reason-specific errors for a truncated payload, an altered payload CRC, an altered header CRC and a missing entry. The retained legacy CTest log records a passing run of these cases."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "The Emscripten link options export _webolution_extract_rar20 beside _main and retain ccall and the filesystem runtime methods."
+              },
+              {
+                "path": "build/disc-unrar-001/wasm-build-sdl-cache.log",
+                "detail": "The Emscripten Release build completes the link of webolution.js using the SDK's prepared SDL2 port."
+              },
+              {
+                "path": "build/disc-unrar-001/wasm-ccall.log",
+                "detail": "The pre-main Node probe records successful extraction with the expected digest. A missing entry and a truncated archive produce named errors and preserve the verified output."
+              }
+            ]
+          },
+          {
+            "criterion": "With a build/ game directory holding the installed lemmings.box and the 1.0 patch.box, the clone starts and the level sweep driver reaches every map node's play state, or the report names each failure and the loading fix; the report lists the 1.0 versus 1.1 entry differences, and the smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/disc-unrar-001/box-diff.tsv",
+                "detail": "The comparison identifies the staged installed base and disc 1.0 patch by path, size and SHA-256. It lists the raw patch and effective overlay differences against 1.1."
+              },
+              {
+                "path": "build/disc-unrar-001/frontend-v1.log",
+                "detail": "The production frontend path enters Just Climb (MM_CLIMB_002) from the map and the 1.0 frontend test exits successfully."
+              },
+              {
+                "path": "build/disc-unrar-001/sweep-v1/matrix.csv",
+                "detail": "All 102 node records show completed runs, successful loads and valid settled play frames. Node 45, VH04_JC1, also records all 50 expected releases."
+              },
+              {
+                "path": "docs/scratch/disc-unrar-001.md",
+                "detail": "The report traces the existing patch-first asset loader and explains why no loading fix was needed. It identifies VH04_JC1 as the changed level and lists the 11 assets exclusive to 1.1."
+              },
+              {
+                "path": "build/agent-runs/20261121T014241-49632-de00de90/verification.log",
+                "detail": "The supervisor built smoke_tests against the installed game directory. All 95 main smoke tests, including the sweep chunks and report, and all 84 recovery tests passed."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T02:04:19.522193+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T014241-49632-de00de90\\verification.log",
+        "verified_content": "5bf24646cd67b3087eb1c7f680fc2f5fe1292fdbf94b871984be6c62f2b157ef"
+      }
     },
     {
       "id": "web-game-data-001",
@@ -31964,12 +32042,86 @@
         "Synthetic 2048, Mode 1 and Mode 2 images are read correctly; a folder or file pair is accepted with either the 1.0 or the 1.1 patch.box, an unknown hash with a valid box header is accepted with a note, and a non-box file is rejected with a message naming it.",
         "The report names the setup routes, the storage location kept separate from /store, the playtest-server fallback and the 'Change game data' control; the Emscripten release target builds, the smoke profile passes, and the report ends with a what-to-check note."
       ],
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
       "kind": "implementation",
-      "user_authorized": true
+      "user_authorized": true,
+      "loop_attempts": 1,
+      "run_id": "20261121T020419-49632-e97b4560",
+      "started": "2026-11-21T02:04:20.047878+00:00",
+      "finished": "2026-11-21T02:20:02.207836+00:00",
+      "last_run": "build/agent-runs/20261121T020419-49632-e97b4560",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported by the source and retained logs. The read-only review did not rerun builds or tests. Live archive.org transfer, browser persistence, and phone layout remain for playtesting.",
+        "checks": [
+          {
+            "criterion": "A Node run of the new web script over build/disc-inputs/lemmings-revolution.iso, through both the range-read path and the stream-once path with a stub fetch, yields lemmings.box with SHA-256 74b544beee769b0354e64b25eaec06fe725d50d2df11a94270600ae03a7e6a51 and patch.box with SHA-256 a393a45e71d797fc5b646a9a235d1f64298129f378c6f4b79f47ec773d00de53 via the exported extractor; the stream path stops after the last needed sector and the log under build/ shows the byte count.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/web-game-data-001/web-game-data-ctest-final.log",
+                "detail": "The registered emsdk Node ran against the specified ISO and built webolution.js. Both paths passed with the exact hashes. The 206 path received 377,136,304 bytes in 176 requests. The 200 path canceled its sole request after the last needed sector at byte 494,682,048, with 494,884,727 bytes delivered in complete stub chunks out of 773,944,416."
+              },
+              {
+                "path": "src/__test__/test_web_game_data.mjs",
+                "detail": "The test boots the built Wasm with main disabled, injects fetch responses backed by the ISO, and calls the production patch extraction wrapper. It hashes both returned blobs and asserts that the streaming response was canceled within one chunk of the last required sector."
+              },
+              {
+                "path": "src/web/web-game-data.mjs",
+                "detail": "The extraction wrapper writes the installer to temporary MEMFS, calls webolution_extract_rar20 for patch.box, and removes the temporary files. The streaming reader cancels the response once the selected extents have been read."
+              }
+            ]
+          },
+          {
+            "criterion": "Synthetic 2048, Mode 1 and Mode 2 images are read correctly; a folder or file pair is accepted with either the 1.0 or the 1.1 patch.box, an unknown hash with a valid box header is accepted with a note, and a non-box file is rejected with a message naming it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/web-game-data-001/web-game-data-ctest-final.log",
+                "detail": "The retained run passed the 2048-byte image with root patch fallback, the raw Mode 1 image, the raw Mode 2 Joliet image, installed-file validation, and acceptance of both known patch versions."
+              },
+              {
+                "path": "src/__test__/test_web_game_data.mjs",
+                "detail": "The synthetic tests compare extracted bytes and assert bounded slice reads. The installed-file tests assert case-insensitive selection, no notes for either known patch version, an unrecognized SHA-256 note for each valid synthetic LEMB box, and a rejection that names patch.box when its header is invalid."
+              },
+              {
+                "path": "src/web/webolution.html",
+                "detail": "The folder picker, file-pair picker, and installed-data drop handler all use the shared selector. The Start screen displays validation notes and setup displays named rejection messages."
+              }
+            ]
+          },
+          {
+            "criterion": "The report names the setup routes, the storage location kept separate from /store, the playtest-server fallback and the 'Change game data' control; the Emscripten release target builds, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/web-game-data-001.md",
+                "detail": "The report names the installed data, local CD image, and archive.org routes, the dedicated webolution-game-data IndexedDB database, the separate /store save tree, the playtest-server fallback, and the confirmed Change game data control. It ends with a VH04_JC1 playtest and a saved-progress check after reimporting."
+              },
+              {
+                "path": "build/web-game-data-001/web-build-final.log",
+                "detail": "The emscripten-release webolution target linked successfully."
+              },
+              {
+                "path": "build/web-game-data-001/web-package-check.log",
+                "detail": "The copied HTML and module matched their sources, the inline JavaScript parsed, and the playtest server mapped the module to text/javascript."
+              },
+              {
+                "path": "build/agent-runs/20261121T020419-49632-e97b4560/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests. This resolves the smoke gate shown as pending in the worker report."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T02:21:18.769648+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T020419-49632-e97b4560\\verification.log",
+        "verified_content": "e04e7ca6b5f69e733e2ab99f3ca756f9a74e416659e4460e6daa7743084c9528"
+      }
     },
     {
       "id": "main-export-001",
@@ -31983,11 +32135,29 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "User request (2026-11-20): the repository gets a clean 'main' branch holding only the game's source code, from which a web build is published to GitHub Pages (repository benjamin-t-brown/lemmings-webolution, so the site is served under the /lemmings-webolution/ subpath). Decompilation notes, test runs, test code and development-only tooling stay on the decompile branch. Your job is the export, not version control: the lead creates the branch from your export after review. Part 1, export tool: add scripts/export_main.py that writes a fresh tree to build/main-export/ (deleting only that directory first) from an explicit allowlist of paths in this checkout plus a main-only overlay directory release/main/ (new; its files are copied to the export root). Default deny: anything not allowlisted is left out. Expected in: the game sources under src/ (app, assets, audio, gfx, save, shell, sim, web) and only the CMake, preset and build files the game executable and the Emscripten build need, .clang-format and .gitattributes, plus the overlay. Expected out: AGENTS.md, CLAUDE.md, agent/, docs/, decomp-lemmings/, old/, web/ (check what it is first), tools/, 'Lemmings Revolution/', build/, .claude/, .opencode/, src/__test__/, src/tools/, test-only CMake modules and any test, replay, fixture, harness, REA or agent-control file. Decide each remaining path from what it is, and list every included path with a one-line reason in the report. The tool is deterministic (same input, same output; LF only; no timestamps written into files) and ends by scanning the export: it fails if any file is an original game file or binary (reject executables, DLLs, .box, .dat, archives and the reference EXE hash 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f), if a path matches the excluded list, or if text contains development-history terms (playtest, task ids of the form word-word-NNN, worker, supervisor, agent/, docs/scratch, build/agent-runs) and prints each hit; original-binary references in source comments (addresses, original names) are allowed and stay. Fix a hit at its source in src/ only when it is a comment or an unused development leftover; never change behavior for it. Part 2, CMake split: the export must configure and build the game without test sources present. Move test, fixture and test-driver targets out of the root CMakeLists.txt into an included module (for example cmake/tests.cmake, included when WEBOLUTION_BUILD_TESTS is ON, default ON, and the test sources exist), and move test-only helpers out of cmake/webolution_app.cmake the same way. On this branch every existing target, test name, label and command must stay identical; compare ctest -N output and the target list before and after and archive both under build/. The export's CMakePresets.json keeps only the native release/debug and emscripten-release presets (overlay or generated copy). Part 3, main overlay under release/main/: a README.md for players and builders (what the project is, that it ships no game data, how to play in the browser and where the game files come from, native and Emscripten build steps, no development history), a .gitignore, and .github/workflows/pages.yml that builds the emscripten-release preset with emsdk pinned to 5.0.3 (the registered version) and deploys webolution.html (as index.html), .js, .wasm and the web scripts with the official Pages actions. The build uses pthreads, so the page needs cross-origin isolation and Pages cannot set COOP/COEP headers: add a small service worker of our own (no third-party download) that adds Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy (require-corp, or credentialless if needed for the archive.org CORS fetch from web-game-data-001) and reloads once on first visit; the page explains the reload and says what is wrong if isolation is still missing. Make every page URL relative so the site works under a subpath, and keep the local scripts/serve-web.py playtest server working on this branch. Add release/main/LICENSE with the standard MIT License text, 'Copyright (c) 2026 Benjamin Brown' (user decision 2026-11-20); the README names the license, says the project is unofficial and not affiliated with the owners of Lemmings Revolution, and that the license covers this source only, not the original game or its data. Evidence: run the export, configure and build the game natively and with the emscripten-release preset from a copy of build/main-export/ placed under build/ (registered toolchains; the SDL2 port is cached), archive the scan output and file list, and run the exported web build under the registered emsdk Node far enough to show it loads without test code. Difficulty: difficult. Recommended model: Opus. Reason: restructuring a 1,650-line CMakeLists without changing any test target, plus cross-origin isolation for a static host. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "scope": "User request (2026-11-20): the repository gets a clean 'main' branch holding only the game's source code, from which a web build is published to GitHub Pages (repository benjamin-t-brown/lemmings-webolution, so the site is served under the /lemmings-webolution/ subpath). Decompilation notes, test runs, test code and development-only tooling stay on the decompile branch. Your job is the export, not version control: the lead creates the branch from your export after review. Part 1, export tool: add scripts/export_main.py that writes a fresh tree to build/main-export/ (deleting only that directory first) from an explicit allowlist of paths in this checkout plus a main-only overlay directory release/main/ (new; its files are copied to the export root). Default deny: anything not allowlisted is left out. Expected in: the game sources under src/ (app, assets, audio, gfx, save, shell, sim, web) and only the CMake, preset and build files the game executable and the Emscripten build need, .clang-format and .gitattributes, plus the overlay. Expected out: AGENTS.md, CLAUDE.md, agent/, docs/, decomp-lemmings/, old/, web/ (check what it is first), tools/, 'Lemmings Revolution/', build/, .claude/, .opencode/, src/__test__/, src/tools/, test-only CMake modules and any test, replay, fixture, harness, REA or agent-control file. Decide each remaining path from what it is, and list every included path with a one-line reason in the report. The tool is deterministic (same input, same output; LF only; no timestamps written into files) and ends by scanning the export: it fails if any file is an original game file or binary (reject executables, DLLs, .box, .dat, archives and the reference EXE hash 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f), if a path matches the excluded list, or if text contains development-history terms (playtest, task ids of the form word-word-NNN, worker, supervisor, agent/, docs/scratch, build/agent-runs) and prints each hit; original-binary references in source comments (addresses, original names) are allowed and stay. A hit in a src/ comment is fixed by rewording that comment only. User decision (2026-11-20): the game's development, diagnostic and test-support code stays in main exactly as on this branch, including --record, --replay, --cursor-fixture, --map, --map-flags, --direct-level, --sim-ticks, the C3 dumps, frame timing, the frontend and level frame observers, the SDL event injection hooks and the fixed-frame clock in ApplicationRunOptions. The export copies each allowlisted file byte for byte and never rewrites or strips code, and the scanner does not flag flag names or test hooks. Every source file the game build compiles or includes is therefore allowlisted. Part 2, CMake split: the export must configure and build the game without test sources present. Move test, fixture and test-driver targets out of the root CMakeLists.txt into an included module (for example cmake/tests.cmake, included when WEBOLUTION_BUILD_TESTS is ON, default ON, and the test sources exist), and move test-only helpers out of cmake/webolution_app.cmake the same way. On this branch every existing target, test name, label and command must stay identical; compare ctest -N output and the target list before and after and archive both under build/. The export's CMakePresets.json keeps only the native release/debug and emscripten-release presets (overlay or generated copy). Part 3, main overlay under release/main/: a README.md for players and builders (what the project is, that it ships no game data, how to play in the browser and where the game files come from, native and Emscripten build steps, no development history), a .gitignore, and .github/workflows/pages.yml that builds the emscripten-release preset with emsdk pinned to 5.0.3 (the registered version) and deploys webolution.html (as index.html), .js, .wasm and the web scripts with the official Pages actions. The build uses pthreads, so the page needs cross-origin isolation and Pages cannot set COOP/COEP headers: add a small service worker of our own (no third-party download) that adds Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy (require-corp, or credentialless if needed for the archive.org CORS fetch from web-game-data-001) and reloads once on first visit; the page explains the reload and says what is wrong if isolation is still missing. Make every page URL relative so the site works under a subpath, and keep the local scripts/serve-web.py playtest server working on this branch. Add release/main/LICENSE with the standard MIT License text, 'Copyright (c) 2026 Benjamin Brown' (user decision 2026-11-20); the README names the license, says the project is unofficial and not affiliated with the owners of Lemmings Revolution, and that the license covers this source only, not the original game or its data. Evidence: run the export, configure and build the game natively and with the emscripten-release preset from a copy of build/main-export/ placed under build/ (registered toolchains; the SDL2 port is cached), archive the scan output and file list, and run the exported web build under the registered emsdk Node far enough to show it loads without test code. Difficulty: difficult. Recommended model: Opus. Reason: restructuring a 1,650-line CMakeLists without changing any test target, plus cross-origin isolation for a static host. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
+        "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, copies every exported src/ file byte-identical to this checkout, and every src/ file outside src/web differs from HEAD at most in comment text, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
         "A copy of the export under build/ configures and builds the game natively and with the emscripten-release preset, with no test sources present; on this branch the ctest -N listing and target list archived before and after the CMake split are identical.",
         "The export contains a README.md, a .gitignore and a Pages workflow pinned to emsdk 5.0.3, the page works under a subpath with relative URLs and a service worker that provides cross-origin isolation, the export carries the MIT LICENSE, and the smoke profile passes."
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261121T030515-49632-db65b1ff",
+      "started": "2026-11-21T03:05:15.708496+00:00",
+      "finished": "2026-11-21T03:19:18.136346+00:00",
+      "last_run": "build/agent-runs/20261121T030515-49632-db65b1ff",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-20: attempts 1-3 went the wrong way on one point. Reviews asked for test hooks to be kept out of main, and the user has decided they stay (see the scope). Undo that work: remove the export-only preprocessor guards (WEBOLUTION_PUBLIC_SOURCE, WEBOLUTION_REPLAYS, WEBOLUTION_FRAME_INSPECTION and any similar __has_include switches) and the guard stripping in scripts/export_main.py; restore every src/ file outside src/web that this task changed (main.cpp, AppEntry.h, BackdropScene, MapScene, SkillPanel, TubeScene, Raster, SceneRaster, Bitmap, TextureCache, CuePlayback and any other) to its HEAD content, keeping only comment rewording needed for the history-term scan, and drop the FrameProfile.h to FrameTiming.h rename if it was made for the export. Remove the scanner checks for development flags and test hooks. Keep what passed review: the CMake split with identical ctest -N and target lists, the history-term scan including ids like debris-3d-001, the binary and excluded-path checks, release/main/ (README, .gitignore, MIT LICENSE, pages.yml with emsdk 5.0.3), src/web/isolate.js, relative URLs, and the subpath startup evidence. Then rerun the export twice, rebuild the standalone copy natively and with emscripten-release, refresh the evidence and the report (list each src/ file restored), and run smoke. src/__test__/test_web_game_data.mjs stays as it is now."
+      },
+      "last_failure": "The standalone builds, CMake comparisons, browser startup under the Pages subpath, and supervisor smoke profile pass. The public export still contains test-harness code. Keep the frontend and level frame observers and the `--sim-ticks` pre-seeding path on the decompile branch, add scanner coverage for them, and refresh the export evidence.",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261121T030515-49632-db65b1ff",
+          "review": null,
+          "blocker": "Attempt limit: The standalone builds, CMake comparisons, browser startup under the Pages subpath, and supervisor smoke profile pass. The public export still contains test-harness code. Keep the frontend and level frame observers and the `--sim-ticks` pre-seeding path on the decompile branch, add scanner coverage for them, and refresh the export evidence."
+        }
       ]
     }
   ]

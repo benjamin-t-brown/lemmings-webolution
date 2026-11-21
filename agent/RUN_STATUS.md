@@ -10,40 +10,37 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- lantern-occlusion-001: **ready** — Lemmings stay visible in front of the lantern glow by the exit on Penelope Lem Stop (playtest 25 Q14)
-- builder-brick-rotate-001: **ready** — Carried builder plank rotates into place as it grows (playtest 25 Q11)
-- examine-pause-001: **ready** — Examine pause: Enter or Pause/Break freezes the level so the player can drag to look around, with switch highlights (playtest 25 Q12, clone addition)
-- exit-hover-count-001: **ready** — Hovering an exit balloon shows the number of lemmings needed to win (playtest 25 Q13, clone addition)
 
 ## Recently completed queue entries
 
-- web-mobile-warning-001: Web: warn mobile players before they start (clone addition)
-  Accepted: 2026-11-21T18:57:33.301881+00:00
-  Verification evidence: `build/agent-runs/loop-7483343a5c7546eca39021a0fd17045e/0001-verify-c00509/verification.log`
-- water-motion-001: Animated water on Just Climb: the pool and the pipe stream (playtest 25 Q5)
-  Accepted: 2026-11-21T19:17:22.114331+00:00
-  Verification evidence: `build/agent-runs/20261121T185733-5064-87ed9aff/verification.log`
-  Verification evidence: `build\agent-runs\20261121T185733-5064-87ed9aff\verification.log`
-- windmill-motion-001: Turning windmill blades on Escape to victory (playtest 25 Q6)
-  Accepted: 2026-11-21T19:58:14.662690+00:00
-  Verification evidence: `build/agent-runs/20261121T194430-5064-28acbe4e/verification.log`
-  Verification evidence: `build\agent-runs\20261121T194430-5064-28acbe4e\verification.log`
-- linux-build-001: Linux build and release archive, built and checked on GitHub Actions (clone addition)
-  Accepted: 2026-11-21T10:37:11.390757+00:00
-  Verification evidence: `build/agent-runs/20261121T102857-14440-b4257d13/verification.log`
-  Verification evidence: `build\agent-runs\20261121T102857-14440-b4257d13\verification.log`
 - disc-volume-warning-001: CD image: a file shorter than its declared volume is a warning when both boxes are intact
   Accepted: 2026-11-21T20:05:22.017521+00:00
   Verification evidence: `build/agent-runs/20261121T195814-5064-1dabea55/verification.log`
   Verification evidence: `build\agent-runs\20261121T195814-5064-1dabea55\verification.log`
+- lantern-occlusion-001: Lemmings stay visible in front of the lantern glow by the exit on Penelope Lem Stop (playtest 25 Q14)
+  Accepted: 2026-11-21T21:02:33.376026+00:00
+  Verification evidence: `build/agent-runs/20261121T203907-50060-3e890e33/verification.log`
+  Verification evidence: `build\agent-runs\20261121T203907-50060-3e890e33\verification.log`
+- builder-brick-rotate-001: Carried builder plank rotates into place as it grows (playtest 25 Q11)
+  Accepted: 2026-11-21T21:26:28.999237+00:00
+  Verification evidence: `build/agent-runs/20261121T210233-50060-daadf4c0/verification.log`
+  Verification evidence: `build\agent-runs\20261121T210233-50060-daadf4c0\verification.log`
+- examine-pause-001: Examine pause: Enter or Pause/Break freezes the level so the player can drag to look around, with switch highlights (playtest 25 Q12, clone addition)
+  Accepted: 2026-11-21T21:51:48.880225+00:00
+  Verification evidence: `build/agent-runs/20261121T212629-50060-843e8c9f/verification.log`
+  Verification evidence: `build\agent-runs\20261121T212629-50060-843e8c9f\verification.log`
+- exit-hover-count-001: Hovering an exit balloon shows the number of lemmings needed to win (playtest 25 Q13, clone addition)
+  Accepted: 2026-11-21T22:07:02.043752+00:00
+  Verification evidence: `build/agent-runs/20261121T215148-50060-d4e9961b/verification.log`
+  Verification evidence: `build\agent-runs\20261121T215148-50060-d4e9961b\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-7483343a5c7546eca39021a0fd17045e/result.json`
+- Result: `build/agent-runs/loop-57b118598a2b44c29a06077d3fdcf8fd/result.json`
 - Status: **blocked**
-- Duration: 1h 12m 21s
-- Completed in this invocation: web-mobile-warning-001, water-motion-001, windmill-motion-001, disc-volume-warning-001
-- Reason: No new production task is supported by the current playtest ledger. Playtest 25's gameplay defects Q1, Q5 and Q6 have accepted fixes awaiting human confirmation. The next unverified level is Penelope Lem Stop (M04_KF_1, node 34). Its deathroller is implemented, and the ledger records no human attempt or failing action to fix. The next human playtest can advance playable v1 by recording a win or identifying a reproducible defect. The residual Now You're Stalking seam remains parked until the play
+- Duration: 1h 29m 55s
+- Completed in this invocation: lantern-occlusion-001, builder-brick-rotate-001, examine-pause-001, exit-hover-count-001
+- Reason: The queue has no ready task or planning-required placeholder. The documented Playtest 25 fixes are accepted in the queue and await human confirmation. Penelope Lem Stop is the next level without a recorded human win. Its reported exit-lantern occlusion already has an accepted fix, and the retained 26/32 attempt establishes no additional defect. The next useful evidence is a human playtest on the accepted build. This pass read source, reports, and retained logs. It made no edits, ran no builds or
 
 ## Documentation handoff
 

@@ -33617,7 +33617,7 @@
     {
       "id": "lantern-occlusion-001",
       "title": "Lemmings stay visible in front of the lantern glow by the exit on Penelope Lem Stop (playtest 25 Q14)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -33629,12 +33629,110 @@
         "The report names the node that hid the lemmings (record offset, blend and depth state), the cause in the clone, the static evidence or provisional rule with its reason, the production call path changed, and the other levels and node kinds affected.",
         "Clone framebuffers under build/ of M04_KF_1 from the left-side view before and after show a lemming between the lantern and the exit hidden before and visible up to the exit jump after, the lantern glow still drawn, and solid scenery still hiding actors.",
         "The level sweep frames of levels without these billboards are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T203907-50060-3e890e33",
+      "started": "2026-11-21T20:39:07.851395+00:00",
+      "finished": "2026-11-21T20:59:55.811962+00:00",
+      "last_run": "build/agent-runs/20261121T203907-50060-3e890e33",
+      "review": {
+        "decision": "accept",
+        "reason": "The production fix keeps the lemming visible through the lantern halo and into the exit jump while preserving solid-scenery occlusion. The unaffected sweep frames, all four affected promoted replays, and the supervisor smoke profile passed. Original depth state remains unresolved, and human confirmation remains for the next playtest.",
+        "checks": [
+          {
+            "criterion": "The report names the node that hid the lemmings (record offset, blend and depth state), the cause in the clone, the static evidence or provisional rule with its reason, the production call path changed, and the other levels and node kinds affected.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/lantern-occlusion-001.md",
+                "detail": "Identifies Playtest 25 Q14 and M04_KF_1 Secondary type-2 branch-0 billboard sprite_Light02_additive8 at LVL offset 0xB473B. Documents selector 2 ONE/ONE, disabled alpha test, strict Less depth testing, and the former depth writes. Explains the provisional rule and lists the other 17 affected levels."
+              },
+              {
+                "path": "build/lantern-occlusion-001/M04-before/pixels.tsv",
+                "detail": "At yaw 187 and step 9444, record 0xB473B hid all 117 drawable actor pixels. At pixel (460, 398), RGB stayed the same as scene depth fell from 357.124 to 334.567, causing the actor at depth 349.664 to fail clipping. Forty-nine hidden actor pixels had unchanged RGB."
+              },
+              {
+                "path": "build/lantern-occlusion-001/rea.json",
+                "detail": "Retains Ghidra instructions and pseudocode for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. At 0x00414944 and 0x0041494F the quad calls the texture binder and blend setter. The selector-2 calls at 0x00414DB8, 0x00414DD4, and 0x00414DEA request blend enable and ONE/ONE. The flags-0 request at 0x004728DC disables alpha testing. These paths leave effective depth state unresolved."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The production drawBillboard path retains depth testing and disables depth writes before rasterization for destination factor ONE, which covers selectors 2 and 3. The installed census records 216 matching LIGHT02 billboards, all selector 2."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The normal level frame renders Secondary scenery before drawInjectedWalkers. The latter uses the completed scene depth and pipe depth for actor clipping."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "clipActorToScene still requires each drawable sprite pixel's upright-plane depth to be strictly in front of the scene and pipe depth values."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffers under build/ of M04_KF_1 from the left-side view before and after show a lemming between the lantern and the exit hidden before and visible up to the exit jump after, the lantern glow still drawn, and solid scenery still hiding actors.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lantern-occlusion-001/M04-before/9444-actor.png",
+                "detail": "At yaw 187, the balloon is on the right and the lantern glows beside it. The lemming is hidden on the approach."
+              },
+              {
+                "path": "build/lantern-occlusion-001/M04-after/9444-actor.png",
+                "detail": "At the same camera and replay step, the lemming is visible beside the exit and the yellow glow is still drawn."
+              },
+              {
+                "path": "build/lantern-occlusion-001/M04-after/9467-actor.png",
+                "detail": "The lemming is visible at the start of the exit jump. The paired measurements show 0 to 123 visible pixels at the final walking frame and 0 to 117 at this jump frame."
+              },
+              {
+                "path": "build/lantern-occlusion-001/M04-solid-after/9465-actor.png",
+                "detail": "At yaw 199, the foreground tree branch still covers the lemming. The retained comparison records zero visible pixels both before and after."
+              },
+              {
+                "path": "build/lantern-occlusion-001/M04-solid-after/9465-unclipped.png",
+                "detail": "Shows the same lemming over the branch when clipping is bypassed, confirming its position behind the solid occluder."
+              },
+              {
+                "path": "build/lantern-occlusion-001/frame-compare.tsv",
+                "detail": "Records identical actor-free RGB and matching lantern RGB writes across all 40 inspected frame pairs, including the E22_KF_1 exit view. Lantern depth writes drop to zero."
+              }
+            ]
+          },
+          {
+            "criterion": "The level sweep frames of levels without these billboards are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lantern-occlusion-001/sweep-compare.tsv",
+                "detail": "The 84 rows match the installed sweep matrix after excluding the 18 affected levels. Both retained PNGs per level, settled and final, matched across all 168 pairs."
+              },
+              {
+                "path": "build/lantern-occlusion-001/replays.tsv",
+                "detail": "Covers all four active promoted recordings on affected levels. MM_BLOCK_BOMB_A, E22_KF_1, E11_KF_1, and M11_KF_1 each exited 0 with PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/agent-runs/20261121T203907-50060-3e890e33/verification.log",
+                "detail": "The supervisor built the smoke_tests target and passed 95 of 95 main smoke tests, including the level sweep, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/lantern-occlusion-001.md",
+                "detail": "Ends with a what-to-check note directing the player to Penelope Lem Stop, node 34, to rotate until the balloon is on the right and watch for a visible lemming through the halo up to the jump, with the branch still able to occlude it as the camera rotates."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T21:02:33.376026+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T203907-50060-3e890e33\\verification.log",
+        "verified_content": "9be42c8331433c3efddf54d079bbd0e2af792fb88a0c6919055170b14bf4ff9e"
+      }
     },
     {
       "id": "builder-brick-rotate-001",
       "title": "Carried builder plank rotates into place as it grows (playtest 25 Q11)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "lantern-occlusion-001"
       ],
@@ -33648,12 +33746,90 @@
         "The report names both rotations with static addresses (axis, angle range and driving parameter), how facing and gravity enter, any provisional choice with its reason, and the production call path changed.",
         "Clone framebuffers under build/ of a builder on MM_BUILD at four or more carry phases for left and right facing show the plank turning while it grows and matching the placed brick orientation and footprint at handoff.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T210233-50060-daadf4c0",
+      "started": "2026-11-21T21:02:33.901897+00:00",
+      "finished": "2026-11-21T21:23:26.016212+00:00",
+      "last_run": "build/agent-runs/20261121T210233-50060-daadf4c0",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by the retained evidence. The static trace accounts for both rotations, the clone framebuffers show the plank turning and seating in the sampled views, and all 29 promoted replays and the supervisor smoke profile passed. The folded geometry, pack anchor, and single-tile material remain provisional.",
+        "checks": [
+          {
+            "criterion": "The report names both rotations with static addresses (axis, angle range and driving parameter), how facing and gravity enter, any provisional choice with its reason, and the production call path changed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/builder-brick-rotate-001.md",
+                "detail": "Identifies local up and inward radial as the two axes, gives both angle ranges for all four facing and gravity combinations, and traces the carry phase through actor composition to drawBuilderBrick. It explains that the cuboid was retained because the turn is legible and identifies the pack, translation, radial, and material approximations."
+              },
+              {
+                "path": "build/builder-brick-rotate-001/static/rea-static.json",
+                "detail": "The retained Ghidra instructions show 0x410445\u20130x41046B passing twice the normalized carry progress and 0x4105D6\u20130x41065D reducing it to max(0, 2p \u2212 1). The x87 operations at 0x4109C8\u20130x410B1D agree with the reported angle table and branch on actor fields +0x40 and +0x44. The normal construction at 0x41173A\u20130x411862 and matrix calls at 0x410B67\u20130x410B94 support the up, inward, then cylinder-heading order."
+              },
+              {
+                "path": "src/app/BuilderBrick.h",
+                "detail": "The two turns are expressed relative to the placed pose. Their signs reverse when either facing or gravity reverses, and both reach identity as travel reaches one."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "drawBuilderBrick applies the rotation to the growing mesh in model coordinates. The mesh approaches the target cell coordinates and both cylinder shell layers through the existing actor render path."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffers under build/ of a builder on MM_BUILD at four or more carry phases for left and right facing show the plank turning while it grows and matching the placed brick orientation and footprint at handoff.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-brick-rotate-001/frames/MM_BUILD-right/contact-sheet.png",
+                "detail": "Eight right-facing carry samples show the plank growing upright, tipping forward, and flattening into the position occupied by the terrain step in the ninth frame."
+              },
+              {
+                "path": "build/builder-brick-rotate-001/frames/MM_BUILD-left/contact-sheet.png",
+                "detail": "Eight left-facing carry samples show the mirrored turn and a nearly flat final carry frame aligned with the placed step."
+              },
+              {
+                "path": "build/builder-brick-rotate-001/inspect-run.log",
+                "detail": "The installed-level inspector confirmed the two target cells in each view. At handoff, 676 of 681 visible carried pixels overlapped changed terrain pixels on the right and 628 of 636 on the left. These counts describe the sampled views and include the effects of actor coverage and terrain retessellation."
+              },
+              {
+                "path": "build/builder-brick-rotate-001/frames/M11_KF_1-inverted-left/contact-sheet.png",
+                "detail": "The additional installed-level view shows the inverted Builder turning the plank and seating it against the ceiling."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-brick-rotate-001/replays.tsv",
+                "detail": "The index matches all 29 current promoted recordings. Each returned exit 0 with PASS, won=1, and completed=1. Just Build finished at step 1685 and Designed with love at step 40836."
+              },
+              {
+                "path": "build/agent-runs/20261121T210233-50060-daadf4c0/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/builder-brick-rotate-001.md",
+                "detail": "The report ends with a what-to-check note naming Just Build for both facings and pause/resume, plus Designed with love for the inverted ceiling placement. The supervisor log resolves the earlier pending smoke status in the handoff."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T21:26:28.999237+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T210233-50060-daadf4c0\\verification.log",
+        "verified_content": "c48be2c34f435933e4c6ea635ad91c5e4303c2b8eff183a4b2e9e5f14944c789"
+      }
     },
     {
       "id": "examine-pause-001",
       "title": "Examine pause: Enter or Pause/Break freezes the level so the player can drag to look around, with switch highlights (playtest 25 Q12, clone addition)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-brick-rotate-001"
       ],
@@ -33668,12 +33844,128 @@
         "A clone run under build/ toggles the examine pause with Return, keypad Enter and Pause/Break, drags with the left button and shows the camera turned while the World step count and lemming positions stay the same, a left click on a lemming during it assigns nothing, and a clone framebuffer shows the centred text.",
         "During the examine pause a clone framebuffer under build/ of a level with a lever or switch shows the switch hover highlight on the switch and its receivers with the pointer over the switch.",
         "The promoted replays reproduce, the smoke profile passes, the controls are documented in the release README files, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T212629-50060-843e8c9f",
+      "started": "2026-11-21T21:26:29.530806+00:00",
+      "finished": "2026-11-21T21:48:45.785424+00:00",
+      "last_run": "build/agent-runs/20261121T212629-50060-843e8c9f",
+      "review": {
+        "decision": "accept",
+        "reason": "All four acceptance criteria are supported by the production source and retained clone evidence. The browser key mappings and page event handling were checked in source and in the built page handler. Live browser keyboard and pointer-lock behavior remain for the human playtest because Chrome exited before the probe ran.",
+        "checks": [
+          {
+            "criterion": "The report names the input handling and pause state changes in the production call path, labels the feature a clone addition, and shows P, the original bottom caption and assignment-resumes-pause behaviour unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/examine-pause-001.md",
+                "detail": "Identifies Playtest 25 Q12 as a clone addition and traces runApplicationLeg through RuntimeSimState and the HUD. It distinguishes the retained clone behavior from the static reference findings."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level event loop routes P to togglePause and the three examine keys to toggleExaminePause after menu handling. The examine mouse branch consumes clicks before assignment. The standard path still calls resume after World::assign succeeds and still draws shell::drawCaption for standard pause."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "Both modes share paused(), which stops both World update paths. P still toggles between play and standard pause, and P from examine resumes play."
+              },
+              {
+                "path": "build/examine-pause-001/frames/just-climb-standard-scale1.png",
+                "detail": "The inspected clone framebuffer shows the original-style Paused panel at the bottom of the 640\u00d7480 viewport."
+              },
+              {
+                "path": "build/examine-pause-001/sdl-probe-run.log",
+                "detail": "In Just Climb, frames 14 and 15 show a successful Climber assignment during standard pause spending one skill, setting the actor's Climber flag, and resuming World updates."
+              }
+            ]
+          },
+          {
+            "criterion": "A clone run under build/ toggles the examine pause with Return, keypad Enter and Pause/Break, drags with the left button and shows the camera turned while the World step count and lemming positions stay the same, a left click on a lemming during it assigns nothing, and a clone framebuffer shows the centred text.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/examine-pause-001/sdl_probe.cpp",
+                "detail": "Drives the production SDL loop with down/up events for Return, keypad Enter and Pause/Break. It checks entry and exit for each key, verifies that the hovered lemming can receive Climber before clicking, and compares World and actor snapshots during the left drag."
+              },
+              {
+                "path": "build/examine-pause-001/sdl-probe-run.log",
+                "detail": "The dummy-driver run passed at both window scales. A 24-pixel logical left drag changed yaw from 32 to 42 while World tick 20, explicit update count 1, clock 4020 ms and the only lemming at (39,63) held steady. The assignable click left Climber stock at 10 and the actor's Climber flag clear."
+              },
+              {
+                "path": "build/examine-pause-001/frames/just-climb-dragged-scale1.png",
+                "detail": "The inspected framebuffer shows the turned cylinder with the two-line Paused / Drag to look around caption centred in the play area."
+              },
+              {
+                "path": "build/examine-pause-001/frames/just-climb-examine-scale2.png",
+                "detail": "The 2\u00d7 window run retains the centred caption in the logical framebuffer."
+              }
+            ]
+          },
+          {
+            "criterion": "During the examine pause a clone framebuffer under build/ of a level with a lever or switch shows the switch hover highlight on the switch and its receivers with the pointer over the switch.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/examine-pause-001/frames/switch-examine-hover.png",
+                "detail": "The inspected Designed with love framebuffer shows the centred examine caption and the pointer over the brightened laser switch at (319,125)."
+              },
+              {
+                "path": "build/examine-pause-001/frame-audit.log",
+                "detail": "The comparison identifies 192 brightened switch pixels outside the cursor and confirms that all 24 visible pixels of receiver gate ID 5 brighten. Both highlights return at the restored pointer after either drag button releases."
+              },
+              {
+                "path": "build/examine-pause-001/frames/switch-examine-held.png",
+                "detail": "The matching framebuffer shows the grab cursor and the scene with the hover effect suspended during the drag."
+              },
+              {
+                "path": "build/examine-pause-001/frames/switch-examine-restored.png",
+                "detail": "The matching release framebuffer shows the pointer back over the switch and the hover highlight restored."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, the controls are documented in the release README files, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/examine-pause-001/native-replays.tsv",
+                "detail": "All 29 entries match the active promoted recording set. Each exited 0 with PASS, won=1 and completed=1. Designed with love finished at step 40836 with 97 saved against 85 required."
+              },
+              {
+                "path": "build/examine-pause-001/wasm-replays.tsv",
+                "detail": "All 29 Wasm replay results match the native final steps and save counts."
+              },
+              {
+                "path": "build/agent-runs/20261121T212629-50060-843e8c9f/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "release/main/packaging/windows/README.txt",
+                "detail": "Documents P, both Enter keys, Pause/Break, dragging with either button, wheel zoom, switch hover and the level-menu controls."
+              },
+              {
+                "path": "release/main/packaging/linux/README.txt",
+                "detail": "Documents the same examine controls for the Linux release."
+              },
+              {
+                "path": "docs/scratch/examine-pause-001.md",
+                "detail": "Ends with a two-line handoff and a what-to-check note naming Designed with love, the pause and drag actions, and the expected caption, freeze, switch and gate highlight, and resume behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T21:51:48.880225+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T212629-50060-843e8c9f\\verification.log",
+        "verified_content": "14d4e17c89819152ddb908ce6e7f36ae43cfbf18984bd24dd7270f6c4a79202a"
+      }
     },
     {
       "id": "exit-hover-count-001",
       "title": "Hovering an exit balloon shows the number of lemmings needed to win (playtest 25 Q13, clone addition)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "examine-pause-001"
       ],
@@ -33687,7 +33979,105 @@
         "The report names the production call path (exit hover geometry, materialize, the draw), labels the feature a clone addition, and states the precedence with lemming, hatch and switch hover.",
         "Clone framebuffers under build/ show the needed-to-win number beside an exit balloon under the pointer, none with the pointer elsewhere, the same during a pause, and the number equals the installed level save target.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T215148-50060-d4e9961b",
+      "started": "2026-11-21T21:51:49.422779+00:00",
+      "finished": "2026-11-21T22:04:58.236174+00:00",
+      "last_run": "build/agent-runs/20261121T215148-50060-d4e9961b",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by the production source, retained clone framebuffers, 29 promoted replay results, and the supervisor\u2019s passing smoke profile. Human playtest confirmation remains pending.",
+        "checks": [
+          {
+            "criterion": "The report names the production call path (exit hover geometry, materialize, the draw), labels the feature a clone addition, and states the precedence with lemming, hatch and switch hover.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/exit-hover-count-001.md",
+                "detail": "Identifies Playtest 25 Q13 as a clone addition and traces the animated exit geometry through materialize to drawExitHover. It states that lemming, hatch and switch hover take precedence."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "exitHoverTarget computes half-open, depth-checked bounds from the current exit model pose, which includes the existing bob and departure sway."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "materialize uses the switch hover guards and draws the exit count after hatch handling, with no lemming or switch hover active. It passes World::setup().saveTarget to drawExitHover. Mouse-down still uses the existing hatch and actor paths."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "drawExitHover uses the shared hatch count formatter and white HUD font, centering the count above the visible model or placing it below when top space runs out."
+              },
+              {
+                "path": "build/exit-hover-count-001/rea-static.json",
+                "detail": "The retained Ghidra packet ties caller 0x45E311 to 0x454A85 in the registered x86 executable. Instructions at 0x454B86\u20130x454B9C show the hatch pointer at screen +0x1894 and the numeric argument from hatch +0xA0. Instructions at 0x454C34\u20130x454C64 place that text. This supports the report\u2019s attribution of the hatch feedback pattern."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffers under build/ show the needed-to-win number beside an exit balloon under the pointer, none with the pointer elsewhere, the same during a pause, and the number equals the installed level save target.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-hover-count-001/frames/just-climb-play-exit-1.png",
+                "detail": "The pointer is on the blue exit balloon and a white 1 appears above it."
+              },
+              {
+                "path": "build/exit-hover-count-001/frames/just-climb-play-away.png",
+                "detail": "The balloon remains visible and the count is absent with the pointer on the tower."
+              },
+              {
+                "path": "build/exit-hover-count-001/frames/just-climb-p-exit-1.png",
+                "detail": "The P pause caption is visible and the hovered balloon still shows 1."
+              },
+              {
+                "path": "build/exit-hover-count-001/frames/swings-both-ways-examine-exit-1.png",
+                "detail": "In examine pause, 16 appears over the right balloon under the pointer."
+              },
+              {
+                "path": "build/exit-hover-count-001/frames/swings-both-ways-examine-exit-2.png",
+                "detail": "Moving the pointer to the left balloon moves the same 16 to that balloon. The right balloon has no label."
+              },
+              {
+                "path": "build/exit-hover-count-001/frame-audit.log",
+                "detail": "The retained pixel comparisons confirm the same count glyphs in play, P pause and examine pause on both levels. The label disappears during a drag and returns on release."
+              },
+              {
+                "path": "build/exit-hover-count-001/frames-MM_CLIMB_002.log",
+                "detail": "Records an installed target of 1 for Just Climb with one exit and a matching World target on every observed frame."
+              },
+              {
+                "path": "build/exit-hover-count-001/frames-MM_E1_5_SKILLS.log",
+                "detail": "Records an installed target of 16 for Swings Both Ways with two exits and a matching World target on every observed frame."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-hover-count-001/native-replays.tsv",
+                "detail": "The entries match all 29 active promoted recordings. Each linked command log records exit 0 and PASS with won=1 and completed=1, including Just Climb at step 1252 and Swings Both Ways at step 12922."
+              },
+              {
+                "path": "build/agent-runs/20261121T215148-50060-d4e9961b/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 of 95 main smoke tests passing, including the 102-level sweep, plus 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/exit-hover-count-001.md",
+                "detail": "Ends with a what-to-check note naming both levels, the hover actions and pause modes, and the expected count of 1 or 16 above the hovered balloon."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T22:07:02.043752+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T215148-50060-d4e9961b\\verification.log",
+        "verified_content": "30a0705c715cbc51b730da17f767221c8b139b2fb03aa83e96abf1f3ea5cc30d"
+      }
     }
   ]
 }

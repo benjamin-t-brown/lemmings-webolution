@@ -16,6 +16,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - web-mobile-warning-001: **ready** — Web: warn mobile players before they start (clone addition)
 - water-motion-001: **ready** — Animated water on Just Climb: the pool and the pipe stream (playtest 25 Q5)
 - windmill-motion-001: **ready** — Turning windmill blades on Escape to victory (playtest 25 Q6)
+- linux-build-001: **ready** — Linux build and release archive, built and checked on GitHub Actions (clone addition)
 
 ## Recently completed queue entries
 

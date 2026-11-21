@@ -13,6 +13,13 @@ Order below is the lead's suggestion, not a commitment.
 - Hardware mouse cursor, so the pointer does not lag behind the system cursor.
 - Better fast-forward: selectable 2x / 4x / 8x and a clearer control.
 - Custom soundtrack.
+- The six FMV clips (frontend, complete, failed, congrats, gameover, credits .avi; user request,
+  playtest 25 Q4, lower priority). All are Indeo 5 (IV50) 640x360 at 25 fps with MS ADPCM stereo
+  22050 Hz audio (credits has none), 48 MB in total, beside the install and in the CD root. They
+  cannot ship, so they come from the player's own files like the boxes. Lead suggestion: decode
+  IV50 and MS ADPCM in our own C++ (works natively and in the browser, no re-encode, store the
+  originals) rather than transcoding to a smaller codec at import time; locate the original play
+  sites statically first.
 
 ## New content
 - Level editor.

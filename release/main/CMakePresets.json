@@ -1,0 +1,48 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/cmake/${presetName}"
+    },
+    {
+      "name": "gcc-debug",
+      "inherits": "base",
+      "displayName": "GCC debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "gcc-release",
+      "inherits": "base",
+      "displayName": "GCC release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "emscripten-release",
+      "inherits": "base",
+      "displayName": "WebAssembly (Emscripten)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+      }
+    }
+  ],
+  "buildPresets": [
+    {"name": "gcc-debug", "configurePreset": "gcc-debug"},
+    {"name": "gcc-release", "configurePreset": "gcc-release"},
+    {"name": "emscripten-release", "configurePreset": "emscripten-release"}
+  ]
+}

@@ -10,14 +10,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- main-export-001: **ready** — Clean source export for the public main branch, with a GitHub Pages build (release)
 
 ## Recently completed queue entries
 
-- inverted-builder-fluid-001: An upside-down builder treats water ahead as a roof instead of empty space
-  Accepted: 2026-11-20T19:12:32.572984+00:00
-  Verification evidence: `build/agent-runs/20261120T185523-37944-57dd5e50/verification.log`
-  Verification evidence: `build\agent-runs\20261120T185523-37944-57dd5e50\verification.log`
 - antigrav-lift-quads-001: Anti-grav lift effects show their quads; draw them as smoothly as the original
   Accepted: 2026-11-20T19:47:20.821813+00:00
   Verification evidence: `build/agent-runs/20261120T192757-42720-28d85b6e/verification.log`
@@ -34,14 +29,18 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-21T02:21:18.769648+00:00
   Verification evidence: `build/agent-runs/20261121T020419-49632-e97b4560/verification.log`
   Verification evidence: `build\agent-runs\20261121T020419-49632-e97b4560\verification.log`
+- main-export-001: Clean source export for the public main branch, with a GitHub Pages build (release)
+  Accepted: 2026-11-21T03:53:13.543989+00:00
+  Verification evidence: `build/agent-runs/20261121T034237-10280-b3b49126/verification.log`
+  Verification evidence: `build\agent-runs\20261121T034237-10280-b3b49126\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-e65686922b7a4920884a73e4976839d6/result.json`
+- Result: `build/agent-runs/loop-2d215c569d0f4a1da3785681f9761dc7/result.json`
 - Status: **blocked**
-- Duration: 0h 12m 42s
-- Completed in this invocation: none
-- Reason: The standalone build, Pages startup, and smoke criteria pass. The history scan skips 21 prohibited matches in 12 compiled cue-evidence lines. Removing the skip would make the export fail, and removing the citations requires authorization for a narrowly scoped change to C++ string literals under the comment-only HEAD constraint.
+- Duration: 0h 12m 57s
+- Completed in this invocation: main-export-001
+- Reason: No authorized production task is supported by the current playtest evidence. Playtest 24 confirmed the lift crossing, inverted Builder, and lift rendering on Designed with love (M11_KF_1, node 33). Its remaining report about switch-hover rectangles was addressed by switch-hover-highlight-002. The latest retained attempt returned to the map with 0/85 saved and gives no cause for a further gameplay fix. The next milestone evidence is a human win through the ordinary frontend followed by a restart 
 
 ## Documentation handoff
 

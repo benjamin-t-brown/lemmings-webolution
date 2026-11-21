@@ -13,6 +13,7 @@ compile_commands.json
 *.js
 !/src/web/node-mount.js
 !/src/web/web-audio.js
+!/src/web/isolate.js
 *.data
 __pycache__/
 .DS_Store

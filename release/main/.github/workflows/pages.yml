@@ -1,0 +1,55 @@
+name: Publish browser game
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+env:
+  EMSDK_VERSION: '5.0.3'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build WebAssembly
+        shell: bash
+        run: |
+          git clone --depth 1 --branch "$EMSDK_VERSION" https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install "$EMSDK_VERSION"
+          "$RUNNER_TEMP/emsdk/emsdk" activate "$EMSDK_VERSION"
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          cmake --preset emscripten-release
+          cmake --build --preset emscripten-release --parallel 2
+      - name: Stage site
+        run: |
+          output=build/cmake/emscripten-release
+          mkdir site
+          cp "$output/webolution.html" site/index.html
+          cp "$output/webolution.js" "$output/webolution.wasm" "$output/web-game-data.mjs" "$output/isolate.js" site/
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -17,39 +17,39 @@ namespace {
 // Cue strings are packed at 0x004C0C7C (docs/lessons/hud-and-panel.md).
 constexpr CueRoute kRoutes[] = {
     {sim::SoundCue::Assign, "Action",
-     "docs/scratch/ui-sounds-001.md: assignment 0x00455657 tests the candidate "
+     "assignment 0x00455657 tests the candidate "
      "and acceptance, loads Action handle 0x004E32FC at 0x004556AA and plays "
      "at 0x004556B5; refused assignments bypass this call"},
     {sim::SoundCue::OhNo, "Ohno",
-     "old/docs/scratch/phase3-round7.md 'When Ohno plays': helper step 0x00414370 "
+     "helper step 0x00414370 "
      "tests [0x004CBB40] at 0x00414420 and plays Ohno at 0x00414443 if zero; "
-     "docs/scratch/letsgo-text-nuke-ohno-001.md identifies that byte as "
+     "the tested byte is "
      "level+0x5138, the nuke request; ordinary bombs play at fuse end"},
     {sim::SoundCue::Explode, "Explode",
-     "docs/scratch/work-sounds-001.md: 0x0045E570..0x0045E582 registers Explode "
+     "0x0045E570..0x0045E582 registers Explode "
      "as 0x004E32C0; helper 0x004081FC loads it at 0x00408205 and plays at "
      "0x0040821C; provisional clone trigger is the existing completed blast cue"},
     // Fall deaths play FallSplat. The retail Splat cue (DAT_004E32D4) has no play references.
     {sim::SoundCue::Splat, "FallSplat",
-     "old/docs/scratch/phase3-round28-die.md: FallSplat (DAT_004E32E0) is played "
+     "FallSplat (DAT_004E32E0) is played "
      "once, at 0x0040B4B6 inside splat enter FUN_0040b3ec (type 0x1a) after a "
      "long fall; Splat (DAT_004E32D4) has 0 play references"},
     {sim::SoundCue::Exit, "Yippee",
-     "docs/scratch/exit-yippee-sound-001.md: 0x0045E540..0x0045E552 loads Yippee "
+     "0x0045E540..0x0045E552 loads Yippee "
      "into level+0x1C8B0 (=0x004E32B8); save step 0x0041818A increments saved "
      "at 0x004182A1, then plays that handle at 0x004182E5 via 0x00445274"},
     {sim::SoundCue::LevelStart, "Letsgo",
-     "docs/scratch/gameplay-sounds-001.md: hatch step 0x00425A95 tests its "
+     "hatch step 0x00425A95 tests its "
      "+0xAE latch, plays Letsgo handle 0x004E32B4 at 0x00425ADB before hatch "
-     "opening/release; docs/scratch/letsgo-voice-with-text-001.md: player-requested "
-     "clone point is the first drawn Let's Go text frame (playtest 11 A12)"},
+     "opening/release; player-requested "
+     "clone point is the first drawn Let's Go text frame"},
     {sim::SoundCue::Work, "Mine",
-     "docs/scratch/gameplay-sounds-001.md: destructible-cell arm 0x0040C0AF "
+     "destructible-cell arm 0x0040C0AF "
      "loads Mine handle 0x004E32E8 at 0x0040C317 and plays at 0x0040C32F; "
-     "docs/scratch/work-sounds-001.md: miner success plays at 0x00418D39, "
+     "miner success plays at 0x00418D39, "
      "digger success at 0x00415D81; provisional once per successful hybrid stroke"},
     {sim::SoundCue::BuilderWarning, "Chink",
-     "docs/scratch/gameplay-sounds-001.md: 0x0040FF54 tests bricks < 4, "
+     "0x0040FF54 tests bricks < 4, "
      "0x0040FF5C loads Chink handle 0x004E32BC, 0x0040FF73 plays it before "
      "the brick counter decrement at 0x0040FF93"},
 };

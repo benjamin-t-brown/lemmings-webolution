@@ -32126,7 +32126,7 @@
     {
       "id": "main-export-001",
       "title": "Clean source export for the public main branch, with a GitHub Pages build (release)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "web-game-data-001"
       ],
@@ -32141,11 +32141,11 @@
         "A copy of the export under build/ configures and builds the game natively and with the emscripten-release preset, with no test sources present; on this branch the ctest -N listing and target list archived before and after the CMake split are identical.",
         "The export contains a README.md, a .gitignore and a Pages workflow pinned to emsdk 5.0.3, the page works under a subpath with relative URLs and a service worker that provides cross-origin isolation, the export carries the MIT LICENSE, and the smoke profile passes."
       ],
-      "loop_attempts": 4,
-      "run_id": "20261121T032836-36712-f7fa87e9",
-      "started": "2026-11-21T03:28:37.372492+00:00",
-      "finished": "2026-11-21T03:39:12.804606+00:00",
-      "last_run": "build/agent-runs/20261121T032836-36712-f7fa87e9",
+      "loop_attempts": 5,
+      "run_id": "20261121T034237-10280-b3b49126",
+      "started": "2026-11-21T03:42:37.719962+00:00",
+      "finished": "2026-11-21T03:50:12.875446+00:00",
+      "last_run": "build/agent-runs/20261121T034237-10280-b3b49126",
       "review_feedback": {
         "decision": "revise",
         "reason": "Lead, 2026-11-20: attempt 4 was right to stop. You are now authorized (see the scope) to reword the 12 evidence string literals in src/audio/CuePlayback.cpp kRoutes listed in build/main-export-001/retained-diagnostics/retained-cue-citations.log: drop the docs/scratch and old/docs/scratch paths, task ids and the playtest citation, keep every address and original name exactly (src/__test__/test_cueplayback.cpp requires each string to stay non-empty and contain 0x). Remove CUE_EVIDENCE_LINES and any other line exemption from scripts/export_main.py, rerun the export twice, refresh the standalone builds and evidence, list each reworded string before and after in the report, and run smoke. Everything else from attempt 4 stays as it is."
@@ -32260,32 +32260,40 @@
         }
       ],
       "review": {
-        "decision": "blocked",
-        "reason": "The standalone build, Pages startup, and smoke criteria pass. The history scan skips 21 prohibited matches in 12 compiled cue-evidence lines. Removing the skip would make the export fail, and removing the citations requires authorization for a narrowly scoped change to C++ string literals under the comment-only HEAD constraint.",
+        "decision": "accept",
+        "reason": "All three acceptance criteria pass. The export matches its allowlisted inputs, the standalone native and Emscripten builds succeeded, and the current supervisor smoke profile passed. The retained browser trace verifies cross-origin isolation and startup through game-data setup under /lemmings-webolution/. Live Pages deployment and archive.org transfer remain unverified.",
         "checks": [
           {
-            "criterion": "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, copies every exported src/ file byte-identical to this checkout, and every src/ file outside src/web differs from HEAD at most in comment text, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
-            "passed": false,
+            "criterion": "scripts/export_main.py writes build/main-export/ from an explicit allowlist plus release/main/, runs twice with identical output, copies every exported src/ file byte-identical to this checkout, and every src/ file outside src/web differs from HEAD at most in comment text and in the reworded CuePlayback.cpp evidence strings, the scanner has no per-line exemptions, and its scan reports no original game file, no excluded path and no development-history term; the report lists every included path with a reason.",
+            "passed": true,
             "evidence": [
               {
                 "path": "scripts/export_main.py",
-                "detail": "The explicit allowlist and release overlay are copied byte for byte. The scanner checks paths, binary signatures, and the reference hash, but scan_file skips every line in CUE_EVIDENCE_LINES."
+                "detail": "Copies explicitly listed production files and the release/main overlay byte for byte. The scanner checks every line and distinguishes specific technical tokens by their context. It skips no complete line."
               },
               {
-                "path": "build/main-export/src/audio/CuePlayback.cpp",
-                "detail": "Lines 20\u201352 contain compiled strings with docs/scratch paths, task IDs, and a playtest citation. The exported file matches the checkout and HEAD. The cited original addresses can be retained if changes to the provenance strings are authorized."
+                "path": "build/main-export-001/cue-citations/export-second.sha256",
+                "detail": "The two archived manifests and scan logs match byte for byte. I checked all 213 manifest hashes against the export, checkout inputs, and standalone copy, including the 27 relocated production reader files."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/retained-cue-citations.log",
-                "detail": "Lists all 21 prohibited matches across the 12 lines exempted from the scan."
+                "path": "build/main-export-001/cue-citations/export-second.log",
+                "detail": "Reports a clean scan of all 213 files for excluded paths, game files and binaries, and development history."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/export-comparison.txt",
-                "detail": "Records identical output across both runs and unchanged tracked sources outside src/web. Read-only hashes confirmed that all 213 current export files match their checkout inputs and the standalone copy."
+                "path": "build/main-export-001/cue-citations/scanner-negative.log",
+                "detail": "The archived probes detect all 21 former cue citation hits, history beside legitimate technical terms, excluded paths, binary signatures, data extensions, and the reference executable hash."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "The tracked source diff outside src/web contains only the 12 authorized evidence-string edits. All original addresses, DAT_ and FUN_ names, offsets, and provisional labels remain."
+              },
+              {
+                "path": "build/agent-runs/20261121T034237-10280-b3b49126/before-source-hashes.json",
+                "detail": "The pre-existing untracked web-data test still matches its pre-run hash and is absent from the export."
               },
               {
                 "path": "docs/scratch/main-export-001.md",
-                "detail": "Lists the 213 exported paths with inclusion reasons and documents the scanner exception."
+                "detail": "Lists all 213 included paths and their reasons, which match the scan inventory. It also shows each of the 12 cue string fragments before and after."
               }
             ]
           },
@@ -32294,28 +32302,28 @@
             "passed": true,
             "evidence": [
               {
-                "path": "build/main-export-001/retained-diagnostics/standalone-native-configure.log",
-                "detail": "Records a successful configuration of the standalone copy under build/ using the registered MinGW-w64 GCC."
+                "path": "build/main-export-001/cue-citations/standalone-native-configure.log",
+                "detail": "Records successful configuration of the standalone copy with the registered MinGW-w64 GCC."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/standalone-native-build.log",
-                "detail": "Records the standalone native build through the final webolution.exe link."
+                "path": "build/main-export-001/cue-citations/standalone-native-build.log",
+                "detail": "Records the completed native build and final webolution.exe link."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/standalone-web-configure.log",
-                "detail": "Records successful generation in the standalone copy's emscripten-release preset directory."
+                "path": "build/main-export-001/cue-citations/standalone-web-configure.log",
+                "detail": "Records successful configuration and generation under the standalone emscripten-release preset directory."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/standalone-web-build.log",
-                "detail": "Records the standalone WebAssembly build through the final webolution.js link. Inspection of the standalone source tree found no test source directories."
+                "path": "build/main-export-001/cue-citations/standalone-web-build.log",
+                "detail": "Records the completed Emscripten build and final webolution.js link."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/standalone-web-startup.log",
-                "detail": "Shows the exported WebAssembly build reached its help output through the registered emsdk Node and retained the approved diagnostic options."
+                "path": "build/main-export-001/cue-citations/standalone-web-startup.log",
+                "detail": "Shows the linked build reaching its help output under the registered emsdk Node. The standalone source inventory contains no test sources, and the archived native and web build graph checks found zero CTest registrations and test translation units."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/cmake-comparison.txt",
-                "detail": "Records 218 native targets and 256 native tests, plus 34 web targets and one web test. Read-only SHA-256 comparisons confirmed that all four before-and-after target and ctest -N listing pairs match byte for byte."
+                "path": "build/main-export-001/cue-citations/cmake-comparison.txt",
+                "detail": "Records 218 native targets and 256 native tests, plus 34 web targets and one web test. I independently matched the SHA-256 hashes of all four before-and-after target and ctest -N listing pairs."
               }
             ]
           },
@@ -32325,7 +32333,7 @@
             "evidence": [
               {
                 "path": "build/main-export/README.md",
-                "detail": "Explains browser setup, original data requirements, native and Emscripten builds, unofficial status, and the scope of the MIT license."
+                "detail": "Explains browser setup, original data requirements, native and Emscripten build steps, unofficial status, and the source-only scope of the MIT license."
               },
               {
                 "path": "build/main-export/.gitignore",
@@ -32333,27 +32341,32 @@
               },
               {
                 "path": "build/main-export/.github/workflows/pages.yml",
-                "detail": "Pins emsdk 5.0.3, builds emscripten-release, stages the generated HTML as index.html with the Wasm and browser scripts, and uses the official Pages upload and deploy actions."
+                "detail": "Pins emsdk to 5.0.3, builds emscripten-release, stages index.html with the generated JavaScript, Wasm, and browser scripts, and uses the official Pages upload and deploy actions."
               },
               {
                 "path": "build/main-export/LICENSE",
-                "detail": "Contains the standard MIT License and the requested 2026 Benjamin Brown copyright."
+                "detail": "Contains the standard MIT License with Copyright (c) 2026 Benjamin Brown."
               },
               {
                 "path": "build/main-export/src/web/isolate.js",
-                "detail": "Adds COOP same-origin and COEP require-corp to responses within the service worker scope."
+                "detail": "Supplies COOP same-origin and COEP require-corp to responses inside its scope and leaves external CORS requests on the browser's normal fetch path."
               },
               {
-                "path": "build/main-export-001/retained-diagnostics/pages-startup-http.json",
-                "detail": "The fresh browser probe against the rebuilt package records one reload and loads the service worker, JavaScript, Wasm, and game-data module under /lemmings-webolution/ before reaching the relative archive lookup. The probe used a loopback server without isolation headers."
+                "path": "build/main-export-001/cue-citations/pages-startup-http.json",
+                "detail": "The retained fresh-browser probe used a server that supplied no isolation headers. Its trace shows one reload through the service worker and requests for JavaScript, Wasm, the game-data module, and the hosted archive lookup under /lemmings-webolution/."
               },
               {
-                "path": "build/agent-runs/20261121T032836-36712-f7fa87e9/verification.log",
-                "detail": "The current supervisor run built smoke_tests and passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests."
+                "path": "build/agent-runs/20261121T034237-10280-b3b49126/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests."
               }
             ]
           }
         ]
+      },
+      "accepted_at": "2026-11-21T03:53:13.543989+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T034237-10280-b3b49126\\verification.log",
+        "verified_content": "2f5a5e9f42d29f42f2caf0cc5c3de0c5c8b54bcf6163b8c28d970fb2a0bed066"
       }
     }
   ]

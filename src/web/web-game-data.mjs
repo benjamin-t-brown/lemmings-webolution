@@ -343,16 +343,16 @@ export function createGameData({
     async download(report, signal) {
       return boxesFromIso(await downloadIso(fetchFile, report, signal), extractPatch, signal);
     },
-    async playtestData() {
+    async hostedData() {
       // On public hosts a missing path can be routed to an HTML index page.
-      const base = await fetchFile('/game/lemmings.box');
+      const base = await fetchFile('./game/lemmings.box');
       if (!base.ok || base.headers.get('Content-Type')?.includes('text/html')) {
         await base.body?.cancel();
         return null;
       }
       const lemmings = await base.blob();
       if (!await hasBoxMagic(lemmings)) throw new Error('Server lemmings.box has no LEMB box header.');
-      const patch = await fetchFile('/game/patch.box');
+      const patch = await fetchFile('./game/patch.box');
       if (!patch.ok) {
         await patch.body?.cancel();
         throw new Error('Server patch.box returned HTTP ' + patch.status + '.');

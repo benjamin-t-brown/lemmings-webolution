@@ -3,6 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lemmings Webolution</title>
+<link rel="icon" href="data:,">
 <style>
   :root { color-scheme: dark; font-family: system-ui, sans-serif; }
   body { margin: 0; background: #141414; }
@@ -333,12 +334,12 @@
         }
       } catch (error) { failure = 'Could not read stored game data. ' + error.message; }
       try {
-        const playtest = await gameData.playtestData();
-        if (playtest) {
-          await prepareLaunch(playtest, []);
+        const hosted = await gameData.hostedData();
+        if (hosted) {
+          await prepareLaunch(hosted, []);
           return;
         }
-      } catch (error) { failure = 'Could not load playtest game data. ' + error.message; }
+      } catch (error) { failure = 'Could not load hosted game data. ' + error.message; }
     }
     setup.hidden = false;
     if (failure) message(failure);
@@ -365,6 +366,48 @@
     },
     onAbort(reason) { message('Game stopped. ' + reason); releaseStore?.(); }
   };
+
+  async function loadGame() {
+    const scope = new URL('.', location.href);
+    const reloadKey = scope.pathname + 'isolation-reload';
+    if (!globalThis.crossOriginIsolated) {
+      if (!globalThis.isSecureContext || !('serviceWorker' in navigator)) {
+        throw new Error('This game requires HTTPS or localhost and Service Worker support to enable WebAssembly threads.');
+      }
+      const service = navigator.serviceWorker;
+      const scriptUrl = new URL('./isolate.js', scope).href;
+      if (sessionStorage.getItem(reloadKey)) {
+        throw new Error('Cross-origin isolation is still unavailable. Open the game in its own tab and allow Service Workers in your browser.');
+      }
+      message('Enabling WebAssembly threads. This page will reload once.');
+      const registration = await service.register(scriptUrl);
+      // A hard refresh can bypass an active script for the current navigation.
+      if (registration.active?.state !== 'activated' && service.controller?.scriptURL !== scriptUrl) {
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            service.removeEventListener('controllerchange', onControl);
+            reject(new Error('The isolation script did not take control of this page.'));
+          }, 10000);
+          function onControl() {
+            if (service.controller?.scriptURL !== scriptUrl) return;
+            clearTimeout(timer);
+            service.removeEventListener('controllerchange', onControl);
+            resolve();
+          }
+          service.addEventListener('controllerchange', onControl);
+          onControl();
+        });
+      }
+      sessionStorage.setItem(reloadKey, '1');
+      location.reload();
+      return;
+    }
+    sessionStorage.removeItem(reloadKey);
+    const script = document.createElement('script');
+    script.src = './webolution.js';
+    script.onerror = () => message('Could not load webolution.js.');
+    document.head.append(script);
+  }
+  loadGame().catch(error => message('Cannot start game. ' + error.message));
 </script>
-<script src="webolution.js" onerror="message('Could not load webolution.js.')"></script>
 </html>

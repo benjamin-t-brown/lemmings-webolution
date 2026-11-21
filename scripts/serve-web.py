@@ -13,6 +13,7 @@ FILES = {
     "/": BUILD / "webolution.html",
     **{f"/webolution.{ext}": BUILD / f"webolution.{ext}" for ext in ("html", "js", "wasm")},
     "/web-game-data.mjs": BUILD / "web-game-data.mjs",
+    "/isolate.js": BUILD / "isolate.js",
     **{f"/game/{name}": GAME / name for name in ("lemmings.box", "patch.box")},
 }
 

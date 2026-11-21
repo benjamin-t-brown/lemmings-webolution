@@ -33240,6 +33240,24 @@
         "log": "build\\agent-runs\\20261121T102857-14440-b4257d13\\verification.log",
         "verified_content": "14a7393a57ed84071a7826ad8ead358b57b182723f254c7ef4e8229501f8076a"
       }
+    },
+    {
+      "id": "disc-volume-warning-001",
+      "title": "CD image: a file shorter than its declared volume is a warning when both boxes are intact",
+      "status": "ready",
+      "depends_on": [
+        "windmill-motion-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Lead follow-up to windows-release-001 (2026-11-21). src/assets/DiscGameData.cpp (around line 158) rejects a CD image whose file is shorter than its declared ISO 9660 volume space size. Many real rips drop trailing padding or lead-out sectors, and the extracted boxes are already verified by size, box header and the known SHA-256 values, so that condition alone must not reject an image. Change it to a stderr warning when every sector of LEMMINGS.BOX, LEMPATCH.EXE (or the root PATCH.BOX) and the directory records lies inside the file and the extracted files validate; keep rejecting when any needed extent is cut off or a box fails validation, leaving no partial output. Keep the windows-release-001 truncation tests and add a synthetic case: an image cut short after both boxes extracts successfully with the warning. The archive.org image (build/disc-inputs/lemmings-revolution.iso, 232 sectors longer than declared) still extracts with both hashes. Clone addition. Difficulty: routine. Recommended model: Sonnet. Reason: one validation rule and a test. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "A synthetic image shorter than its declared volume but containing every needed extent extracts both boxes with a stderr warning, while images cut inside a needed extent are still rejected without partial output.",
+        "The legacy disc test passes including the archive.org image hashes when present, the smoke profile passes, and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

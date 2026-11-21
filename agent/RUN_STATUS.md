@@ -13,6 +13,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - web-mobile-warning-001: **needs_review** — Web: warn mobile players before they start (clone addition)
 - water-motion-001: **ready** — Animated water on Just Climb: the pool and the pipe stream (playtest 25 Q5)
 - windmill-motion-001: **ready** — Turning windmill blades on Escape to victory (playtest 25 Q6)
+- disc-volume-warning-001: **ready** — CD image: a file shorter than its declared volume is a warning when both boxes are intact
 
 ## Recently completed queue entries
 

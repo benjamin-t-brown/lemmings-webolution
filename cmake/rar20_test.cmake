@@ -1,0 +1,15 @@
+# SHA-256 is independent of the extractor and CRCs checked in the source test.
+get_filename_component(output_dir "${OUTPUT}" DIRECTORY)
+file(MAKE_DIRECTORY "${output_dir}")
+execute_process(COMMAND "${TEST_EXE}" "${ARCHIVE}" "${OUTPUT}"
+  RESULT_VARIABLE result)
+if(NOT result STREQUAL "0")
+  message(FATAL_ERROR "RAR source test failed (${result})")
+endif()
+if(EXISTS "${ARCHIVE}")
+  file(SHA256 "${OUTPUT}" digest)
+  if(NOT digest STREQUAL "a393a45e71d797fc5b646a9a235d1f64298129f378c6f4b79f47ec773d00de53")
+    message(FATAL_ERROR "Disc patch.box SHA-256 mismatch: ${digest}")
+  endif()
+  message(STATUS "patch.box SHA-256 ${digest}")
+endif()

@@ -1,0 +1,21 @@
+# web-game-data-001 · Browser game data setup
+
+The November 20 web-release entry covers startup on a host without the installed archives. The previous launcher stopped before Start when a `/game` fetch failed. This clone addition offers the installed folder or file pair, a local CD image, and an archive.org download. A local playtest server that serves both boxes still goes straight to Start when browser storage is empty. [Prior launcher](../../build/web-game-data-001/previous-webolution.html)
+
+`webolution.html` calls `createGameData` in `web-game-data.mjs` to select, validate, and store the boxes. The CD and download paths read ISO 9660 and Joliet extents. For the November 20 disc, they find `LEMPATCH.EXE` and call `webolution_extract_rar20` before main to obtain the 1.1 `patch.box`. The installer and temporary output are removed from MEMFS after extraction. Discs without the installer supply their root `patch.box`. The archive.org item link stays available if the download fails. [Disc extents and RAR headers](../../build/disc-unrar-001/disc-layout.txt)
+
+Both validated blobs and any hash notes are stored in one record in the `webolution-game-data` IndexedDB database. The page reports the persistence result. At launch it copies the boxes to read-only MEMFS `/game`, loads the separate IDBFS save tree at `/store`, and enables Start. **Change game data** is available before Start and after the game closes. It confirms, deletes the game-data record, and reopens setup even on the playtest server. [Launcher](../../src/web/webolution.html) · [Setup module](../../src/web/web-game-data.mjs)
+
+## Checks
+
+- The Emscripten release built from the cached SDL2 port. The copied page and module matched the sources, the inline script parsed, and the local server maps the module to `text/javascript`. [Release build](../../build/web-game-data-001/web-build-final.log) · [Package check](../../build/web-game-data-001/web-package-check.log)
+- The legacy Node test passed the synthetic 2048-byte, raw Mode 1, and raw Mode 2 Joliet images, root patch fallback, case-insensitive selection, both known patch versions, unknown-hash notes, named header rejection, and cancellation. It reported a missing disc fixture after running the synthetic checks. [CTest](../../build/web-game-data-001/web-game-data-ctest-final.log) · [Missing fixture](../../build/web-game-data-001/missing-image-final.log)
+- Both real-disc stub paths verified `lemmings.box` SHA-256 `74b544beee769b0354e64b25eaec06fe725d50d2df11a94270600ae03a7e6a51` and the Wasm-extracted `patch.box` SHA-256 `a393a45e71d797fc5b646a9a235d1f64298129f378c6f4b79f47ec773d00de53`. Range reads received 377,136,304 bytes. The single stream canceled after consuming the final needed sector at byte 494,682,048, with 494,884,727 bytes delivered by the stub for the 773,944,416-byte image. [Exact hashes and counts](../../build/web-game-data-001/web-game-data-ctest-final.log)
+- The Windows clone from `disc-unrar-001` reproduced all 28 promoted human wins using the installed data, with a private save directory. The sole installed level with different assets under 1.0 is node 45, `VH04_JC1` (“Nice shootin tex!”), marked OK in the ledger and without a promoted recording. [Per-recording results](../../build/web-game-data-001/installed-replays.tsv) · [Replay commands](../../build/web-game-data-001/installed-replays.log) · [Level ledger](../playtest/levels.md#L59)
+
+The reader supports single, non-interleaved file extents. Streamed setup relies on the archive image's directories preceding both selected files. Live archive.org transfer, browser storage behavior, and phone layout remain for the next playtest.
+
+- **Handoff** `needs_review`. The supervisor's `verify.py --profile smoke` build and test gate is pending.
+- **Next action** Review the setup-to-MEMFS path and supervisor result, then check the release in a browser.
+
+**What to check** On a host without `/game`, import the CD image, refresh, and start from the saved browser data. Unlock all levels and open “Nice shootin tex!” (`VH04_JC1`). Expect the scene to render and the hatches to release. After quitting, use **Change game data**, add the files again, and confirm that saved progress is still available.

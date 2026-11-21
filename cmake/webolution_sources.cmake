@@ -9,6 +9,7 @@
 set(WEBOLUTION_SOURCES
   # assets -- reading the original game's data files
   src/assets/Box.cpp
+  src/assets/Rar20.cpp
   src/assets/Lrz.cpp
   src/assets/Bitmap.cpp
   src/assets/Png.cpp

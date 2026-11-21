@@ -3,6 +3,7 @@
 //   lrtool info    <game-dir>
 //   lrtool list    <game-dir> [substring]
 //   lrtool extract <game-dir> <name> <out-file>
+//   lrtool unrar   <archive> <entry> <out-file>
 //   lrtool dump    <game-dir> <out-dir> [substring]
 //   lrtool lvlmap  <game-dir> <level> <out.png>
 //   lrtool lvlkeys <game-dir> [level]
@@ -22,6 +23,7 @@
 #include "assets/SurfaceMesh.h"
 #include "assets/Lrz.h"
 #include "assets/Png.h"
+#include "assets/Rar20.h"
 #include "assets/Sprite.h"
 #include "sim/World.h"
 
@@ -53,6 +55,7 @@ int usage() {
                "  lrtool info    <game-dir>\n"
                "  lrtool list    <game-dir> [substring]\n"
                "  lrtool extract <game-dir> <name> <out-file>\n"
+               "  lrtool unrar   <archive> <entry> <out-file>\n"
                "  lrtool dump    <game-dir> <out-dir> [substring]\n"
                "  lrtool lvlmap  <game-dir> <level> <out.png>\n"
                "  lrtool lvlkeys <game-dir> [level]\n"
@@ -618,6 +621,20 @@ int cmdExtract(const fs::path& dir, std::string_view name, const fs::path& out) 
   return 0;
 }
 
+int cmdUnrar(const fs::path& archive, std::string_view entry, const fs::path& out) {
+  const auto crc = webo::extractRar20File(archive, entry, out,
+      [](std::string_view name, std::uint32_t predecessorCrc) {
+        std::cout << std::format("{} (solid predecessor, discarded, CRC32 {:08x})\n",
+                                 name, predecessorCrc);
+      });
+  if (!crc) {
+    std::cerr << crc.error() << '\n';
+    return 1;
+  }
+  std::cout << std::format("{} -> {} (CRC32 {:08x})\n", entry, out.string(), *crc);
+  return 0;
+}
+
 int cmdDump(const fs::path& dir, const fs::path& outDir, std::string_view filter) {
   auto lib = openGame(dir);
   if (!lib) {
@@ -955,6 +972,11 @@ int main(int argc, char** argv) {
     if (argc < 5)
       return usage();
     return cmdExtract(dir, argv[3], argv[4]);
+  }
+  if (cmd == "unrar") {
+    if (argc != 5)
+      return usage();
+    return cmdUnrar(dir, argv[3], argv[4]);
   }
   if (cmd == "anim") {
     if (argc < 6)

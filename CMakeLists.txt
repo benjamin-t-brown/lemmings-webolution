@@ -124,17 +124,26 @@ if(EMSCRIPTEN)
     -sPTHREAD_POOL_SIZE_STRICT=2
     -sSTACK_SIZE=4194304 -sALLOW_MEMORY_GROWTH -sENVIRONMENT=web,worker,node
     -sEXIT_RUNTIME=1 -lidbfs.js -lnodefs.js
-    -sEXPORTED_FUNCTIONS=_main -sEXPORTED_RUNTIME_METHODS=ccall,FS,IDBFS,ENV
+    -sEXPORTED_FUNCTIONS=_main,_webolution_extract_rar20 -sEXPORTED_RUNTIME_METHODS=ccall,FS,IDBFS,ENV
     --pre-js "${web_dir}/node-mount.js"
     "--js-library=${web_dir}/web-audio.js")
   set_property(TARGET webolution APPEND PROPERTY LINK_DEPENDS
-    "${web_dir}/node-mount.js" "${web_dir}/webolution.html" "${web_dir}/web-audio.js")
+    "${web_dir}/node-mount.js" "${web_dir}/webolution.html" "${web_dir}/web-audio.js"
+    "${web_dir}/web-game-data.mjs")
   add_custom_command(TARGET webolution POST_BUILD
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/webolution.wasm" "${CMAKE_CURRENT_BINARY_DIR}/webolution.html"
+      "${CMAKE_CURRENT_BINARY_DIR}/web-game-data.mjs"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-      "${web_dir}/webolution.html" "${CMAKE_CURRENT_BINARY_DIR}/webolution.html"
+      "${web_dir}/webolution.html" "${web_dir}/web-game-data.mjs" "${CMAKE_CURRENT_BINARY_DIR}"
     VERBATIM)
-  return() # The browser distribution contains only the game.
+  include(CTest)
+  if(BUILD_TESTING AND CMAKE_CROSSCOMPILING_EMULATOR)
+    add_test(NAME web_game_data COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR}
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/__test__/test_web_game_data.mjs"
+      "$<TARGET_FILE:webolution>" "${CMAKE_CURRENT_SOURCE_DIR}/build/disc-inputs/lemmings-revolution.iso")
+    set_tests_properties(web_game_data PROPERTIES LABELS legacy)
+  endif()
+  return()
 endif()
 
 # ---- tools ----------------------------------------------------------------
@@ -233,6 +242,14 @@ set_tests_properties(fluidgate PROPERTIES TIMEOUT 15)
 add_executable(test_box src/__test__/test_box.cpp)
 target_link_libraries(test_box PRIVATE webolution_objects)
 add_test(NAME box COMMAND test_box)
+
+add_executable(test_rar20 src/__test__/test_rar20.cpp)
+target_link_libraries(test_rar20 PRIVATE webolution_objects z)
+add_test(NAME rar20 COMMAND "${CMAKE_COMMAND}"
+  "-DTEST_EXE=$<TARGET_FILE:test_rar20>"
+  "-DARCHIVE=${CMAKE_SOURCE_DIR}/build/disc-inputs/LEMPATCH.EXE"
+  "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/rar20-test/patch.box"
+  -P "${CMAKE_SOURCE_DIR}/cmake/rar20_test.cmake")
 
 add_executable(test_spriteview src/__test__/test_spriteview.cpp)
 target_link_libraries(test_spriteview PRIVATE webolution_objects)

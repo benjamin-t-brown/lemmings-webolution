@@ -444,6 +444,12 @@ class LoopTests(unittest.TestCase):
             loop.validate({'decision': 'accept'}, loop.REVIEW)
         with self.assertRaises(ValueError):
             loop.validate_queue({'tasks': [task('a', deps=['b']), task('b', deps=['a'])]})
+        quoted = task('q')
+        quoted['acceptance'] = ['Shows the text "Hello"']
+        with self.assertRaises(ValueError):
+            loop.validate_queue({'tasks': [quoted]})
+        quoted['status'] = 'done'
+        loop.validate_queue({'tasks': [quoted]})
         evidence = checks(['criterion'])
         evidence[0]['evidence'][0]['path'] = '../outside.txt'
         with self.assertRaises(ValueError):

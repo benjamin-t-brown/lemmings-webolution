@@ -32370,7 +32370,7 @@
       }
     },
     {
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
@@ -32384,10 +32384,80 @@
         "The report names the call path changed (main.cpp hold and press handling, RuntimeReleaseRateControl) and the precedence rule, labelled provisional.",
         "A source-level or headless clone check shows a held hatch press keeps changing the rate while a lemming overlaps the pointer over that hatch, stops on release and on leaving the hatch, and that a right press on a hatch with a lemming over it adjusts the rate.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T090624-14440-8cbc547a",
+      "started": "2026-11-21T09:06:24.694471+00:00",
+      "finished": "2026-11-21T09:16:34.766252+00:00",
+      "last_run": "build/agent-runs/20261121T090624-14440-8cbc547a",
+      "review": {
+        "decision": "accept",
+        "reason": "The source trace and retained headless check support the hatch input fix. All 29 promoted replays reproduced their wins, and the supervisor smoke profile passed 95 main tests and 84 recovery tests. The next human playtest will check the live cursor and RATE readout on Designed with love. The overlap precedence remains provisional.",
+        "checks": [
+          {
+            "criterion": "The report names the call path changed (main.cpp hold and press handling, RuntimeReleaseRateControl) and the precedence rule, labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hatch-rate-hold-001.md",
+                "detail": "Identifies Playtest 25 Q1 on Designed with love (M11_KF_1, node 33) and traces presses, mouse motion, and per-frame hold updates from runApplicationLeg to RuntimeReleaseRateControl. It labels the clone precedence provisional. Right-click adjusts the hatch during overlap, and left-click gives an eligible skill assignment priority."
+              },
+              {
+                "path": "build/hatch-rate-hold-001/static-evidence.json",
+                "detail": "For the registered executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the instructions at 0x453A42..0x453AAF show rate increment and decrement calls to 0x425DE3. The wrapper pseudocode leads to 0x455DF0 and 0x455DB0, whose instructions compare state fields at +4 and +0 with 1. This supports held-button polling. Actor-versus-hatch precedence remains a clone choice."
+              }
+            ]
+          },
+          {
+            "criterion": "A source-level or headless clone check shows a held hatch press keeps changing the rate while a lemming overlaps the pointer over that hatch, stops on release and on leaving the hatch, and that a right press on a hatch with a lemming over it adjusts the rate.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The right-button handler tries the hatch before camera grab and bypasses actor picking. Mouse motion and the per-frame update pass displayed hatch geometry to advance. Both button-up handlers release the matching hold, and the HUD uses the held hatch for the cursor and RATE readout."
+              },
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "advance checks whether the pointer is still inside the specific held hatch. Its repeat path has no actor eligibility dependency and resets when the pointer leaves that hatch, even if another hatch is under the pointer."
+              },
+              {
+                "path": "src/__test__/test_hatch_rate.cpp",
+                "detail": "The windowless assertions model overlap with an assignable lemming and synthetic hatch rectangles. Right press raises the rate from 20 to 21 and repeats to 22. Release keeps it at 22. A left hold continues lowering the rate during overlap, and leaving the hatch cancels the hold even after re-entry."
+              },
+              {
+                "path": "build/agent-runs/20261121T090624-14440-8cbc547a/worker.jsonl",
+                "detail": "The retained command output records hatch-rate unit exit=0 for the windowless assertions."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hatch-rate-hold-001/promoted-replays.tsv",
+                "detail": "All 29 active promoted recordings have exit code 0 and report won=1 and completed=1. Designed with love reproduced at step 40836 with 97 of the required 85 saved."
+              },
+              {
+                "path": "build/agent-runs/20261121T090624-14440-8cbc547a/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including the level-sweep chunks and aggregate report, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/hatch-rate-hold-001.md",
+                "detail": "The worker report records the supervisor gate as pending at handoff. It ends with a What to check note for Designed with love covering a lemming crossing the pointer during a hold, the cursor and RATE display, cancellation on release or exit, and click precedence during overlap."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T09:18:18.959012+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T090624-14440-8cbc547a\\verification.log",
+        "verified_content": "cf501c6f01b0261e6d29b7be94bf9652b6dd1b17f703cd899eaa7fa0920653cd"
+      }
     },
     {
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
@@ -32404,12 +32474,227 @@
         "Ordinary startup from a folder without the boxes prints the missing-data message naming the file and folder and exits nonzero under the dummy video driver, and startup from a folder holding the boxes finds them through the executable directory; --game-dir and WEBOLUTION_GAME_DIR still take precedence.",
         "With the LocalAppData root pointed at a temporary directory, a folder holding only the exe and build/disc-inputs/lemmings-revolution.iso extracts lemmings.box (SHA-256 74b544be...) and the 1.1 patch.box (SHA-256 a393a45e...) into that root and starts from them; synthetic images without the files or truncated are rejected with a message and leave no partial box; the legacy extraction test shows this.",
         "release/main/.github/workflows/release.yml builds gcc-release on a v* tag or a workflow_dispatch version input (which validates the version and creates the tag), and attaches lemmings-webolution-<tag>-windows-x64.zip and its .sha256 to a GitHub release with generated notes; release/main/RELEASING.md describes both paths; the built game reports the version passed to WEBOLUTION_VERSION in --version, --help and the window title; the export scan passes with it; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261121T095547-14440-7d3c0d79",
+      "started": "2026-11-21T09:55:47.696326+00:00",
+      "finished": "2026-11-21T10:00:49.291855+00:00",
+      "last_run": "build/agent-runs/20261121T095547-14440-7d3c0d79",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The ISO reader rejects truncation that cuts into a game-data extent, but it can accept an image that ends before its declared volume size when both boxes are intact. Validate the declared volume length and add a synthetic case that cuts off a trailing sector beyond both boxes. The other three checks pass on retained evidence. GitHub publication was checked through local dry runs and mocks.",
+        "checks": [
+          {
+            "criterion": "Installed into a folder under build/, webolution.exe --help runs with a PATH that excludes C:/progs/msys2, and the folder holds the exe, its runtime DLLs, README.txt and LICENSE and no original game file.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windows-release-001/installed-logs/help.log",
+                "detail": "The installed executable ran from an unrelated working directory and returned 0 for --help with PATH limited to Windows system directories."
+              },
+              {
+                "path": "build/windows-release-001/installed-logs/files.log",
+                "detail": "The package inventory lists only webolution.exe, SDL2.dll, three MinGW runtime DLLs, README.txt, and LICENSE."
+              }
+            ]
+          },
+          {
+            "criterion": "Ordinary startup from a folder without the boxes prints the missing-data message naming the file and folder and exits nonzero under the dummy video driver, and startup from a folder holding the boxes finds them through the executable directory; --game-dir and WEBOLUTION_GAME_DIR still take precedence.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windows-release-001/installed-logs/missing-base.log",
+                "detail": "Bare startup exited 1. Stderr named lemmings.box, the fallback folder, and the directory beside webolution.exe, then gave the setup instructions."
+              },
+              {
+                "path": "build/windows-release-001/check-package.py",
+                "detail": "The harness sets the dummy video driver and a private LocalAppData root. It checks that startup finds both boxes beside the executable from an unrelated working directory, that WEBOLUTION_GAME_DIR overrides those boxes, and that --game-dir overrides WEBOLUTION_GAME_DIR."
+              },
+              {
+                "path": "build/windows-release-001/package-check.log",
+                "detail": "The retained run records exit 1 for missing base, missing patch, and the deliberately bad environment override. The executable-directory runs with both patch versions and the explicit CLI override returned 0."
+              }
+            ]
+          },
+          {
+            "criterion": "With the LocalAppData root pointed at a temporary directory, a folder holding only the exe and build/disc-inputs/lemmings-revolution.iso extracts lemmings.box (SHA-256 74b544be...) and the 1.1 patch.box (SHA-256 a393a45e...) into that root and starts from them; synthetic images without the files or truncated are rejected with a message and leave no partial box; the legacy extraction test shows this.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/windows-release-001/installed-logs/disc-first-start.log",
+                "detail": "The packaged executable printed the preparation notice and returned 0 after two frontend frames using a temporary LocalAppData root."
+              },
+              {
+                "path": "build/windows-release-001/installed-logs/disc-sha256.log",
+                "detail": "The extracted base and 1.1 patch independently matched the full expected SHA-256 values."
+              },
+              {
+                "path": "src/assets/DiscGameData.cpp",
+                "detail": "At lines 142\u2013165, readVolume checks the logical block size and copyFile bounds each requested extent against the physical file. The reader never checks the declared volume space size. Source inspection therefore shows that an image cut short after all accessed sectors can still publish GameData."
+              },
+              {
+                "path": "src/__test__/test_disc_game_data.cpp",
+                "detail": "The legacy test asserts a diagnostic and no output for missing base data and for truncation through the base extent. Its synthetic volume descriptors omit the declared volume size, so the test cannot catch truncation beyond the required extents."
+              },
+              {
+                "path": "build/windows-release-001/disc-test.log",
+                "detail": "The legacy test passed its existing synthetic cases and independently checked both retail disc hashes."
+              }
+            ]
+          },
+          {
+            "criterion": "release/main/.github/workflows/release.yml builds gcc-release on a v* tag or a workflow_dispatch version input (which validates the version and creates the tag), and attaches lemmings-webolution-<tag>-windows-x64.zip and its .sha256 to a GitHub release with generated notes; release/main/RELEASING.md describes both paths; the built game reports the version passed to WEBOLUTION_VERSION in --version, --help and the window title; the export scan passes with it; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "release/main/.github/workflows/release.yml",
+                "detail": "Both triggers feed a clean Windows UCRT64 gcc-release build. The workflow validates SemVer, creates the dispatch tag on the built commit, verifies the remote tag, and passes the zip and checksum to gh release create with generated notes."
+              },
+              {
+                "path": "release/main/RELEASING.md",
+                "detail": "The guide documents both Actions dispatch and pushing a tag from public main. It identifies GitHub Actions as the source of published artifacts."
+              },
+              {
+                "path": "build/windows-release-001/workflow-check.log",
+                "detail": "Mocked validation and publication checks passed for both trigger paths, duplicate handling, the checksum attachment, and rejection of a tag moved during the build."
+              },
+              {
+                "path": "build/windows-release-001/installed-logs/version.log",
+                "detail": "The installed binary returned 0 and showed the configured 0.2.0-rc.1 version. The retained --help log shows the same version."
+              },
+              {
+                "path": "build/windows-release-001/window-title.log",
+                "detail": "The retained SDL window probe showed Lemmings Webolution 0.2.0-rc.1. The ordinary frontend uses the same SdlWindow::ensure default title."
+              },
+              {
+                "path": "build/windows-release-001/export-scan.log",
+                "detail": "The 221-file export scan passed and listed the release workflow, publishing guide, and package README."
+              },
+              {
+                "path": "build/agent-runs/20261121T091819-14440-c92fb668/verification.log",
+                "detail": "The supervisor recorded 95 passing smoke tests, including the installed-level sweep, and 84 passing recovery tests."
+              },
+              {
+                "path": "docs/scratch/windows-release-001.md",
+                "detail": "The report ends with a what-to-check note for Just Climb covering disc import, cache reuse, and the missing-data dialog. It identifies the hosted release and desktop dialog as awaiting live verification."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The ISO reader rejects truncation that cuts into a game-data extent, but it can accept an image that ends before its declared volume size when both boxes are intact. Validate the declared volume length and add a synthetic case that cuts off a trailing sector beyond both boxes. The other three checks pass on retained evidence. GitHub publication was checked through local dry runs and mocks.",
+      "review": {
+        "decision": "accept",
+        "reason": "All four acceptance criteria are supported. The ISO reader now rejects images that end before the declared volume boundary, even when both boxes are intact. The revised legacy extraction test and the supervisor\u2019s smoke profile passed. GitHub publication was verified with local dry runs and mocks. The hosted workflow and desktop dialog remain unverified live.",
+        "checks": [
+          {
+            "criterion": "Installed into a folder under build/, webolution.exe --help runs with a PATH that excludes C:/progs/msys2, and the folder holds the exe, its runtime DLLs, README.txt and LICENSE and no original game file.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windows-release-001/installed-logs/help.log",
+                "detail": "The installed executable in build/windows-release-001/public-package-final returned exit 0 for --help from an unrelated working directory with PATH limited to the Windows system directories."
+              },
+              {
+                "path": "build/windows-release-001/installed-logs/files.log",
+                "detail": "The installed folder contains exactly webolution.exe, SDL2.dll, three MinGW runtime DLLs, README.txt, and LICENSE."
+              }
+            ]
+          },
+          {
+            "criterion": "Ordinary startup from a folder without the boxes prints the missing-data message naming the file and folder and exits nonzero under the dummy video driver, and startup from a folder holding the boxes finds them through the executable directory; --game-dir and WEBOLUTION_GAME_DIR still take precedence.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windows-release-001/installed-logs/missing-base.log",
+                "detail": "Ordinary startup without arguments returned exit 1. Stderr named lemmings.box, the working-directory fallback, and the directory beside webolution.exe, then gave the setup instructions."
+              },
+              {
+                "path": "build/windows-release-001/check-package.py",
+                "detail": "The harness uses SDL\u2019s dummy video driver, an unrelated working directory, and isolated LocalAppData roots. It asserts that a bad WEBOLUTION_GAME_DIR overrides usable boxes beside the executable and that a usable --game-dir overrides the bad environment setting."
+              },
+              {
+                "path": "build/windows-release-001/package-check.log",
+                "detail": "The installed executable started successfully with either patch version beside it. The bad environment override returned exit 1, the explicit CLI override returned exit 0, and the missing-patch case returned exit 1."
+              }
+            ]
+          },
+          {
+            "criterion": "With the LocalAppData root pointed at a temporary directory, a folder holding only the exe and build/disc-inputs/lemmings-revolution.iso extracts lemmings.box (SHA-256 74b544be...) and the 1.1 patch.box (SHA-256 a393a45e...) into that root and starts from them; synthetic images without the files or truncated are rejected with a message and leave no partial box; the legacy extraction test shows this.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windows-release-001/installed-logs/disc-first-start.log",
+                "detail": "The packaged frontend found the retail CD image beside the executable, printed the preparation notice, and returned exit 0 after two frames with a temporary LocalAppData root and no loose game boxes."
+              },
+              {
+                "path": "build/windows-release-001/installed-logs/disc-sha256.log",
+                "detail": "The packaged startup\u2019s extracted base box and 1.1 patch matched the full expected SHA-256 values."
+              },
+              {
+                "path": "src/assets/DiscGameData.cpp",
+                "detail": "Iso9660::readVolume reads the declared block count from the primary and recognized Joliet descriptors and rejects a count that exceeds the available complete physical sectors. This check runs before file lookup or staging."
+              },
+              {
+                "path": "src/__test__/test_disc_game_data.cpp",
+                "detail": "The legacy test checks the diagnostic for a missing base, truncation through a box, and truncation after both boxes in 2048-byte, raw Mode 1, and raw Mode 2 Joliet layouts. Each rejected case must leave only its input image."
+              },
+              {
+                "path": "build/windows-release-001/revision/disc-test.log",
+                "detail": "The rebuilt legacy test passed the synthetic cases and independently matched both full SHA-256 digests after extracting build/disc-inputs/lemmings-revolution.iso."
+              }
+            ]
+          },
+          {
+            "criterion": "release/main/.github/workflows/release.yml builds gcc-release on a v* tag or a workflow_dispatch version input (which validates the version and creates the tag), and attaches lemmings-webolution-<tag>-windows-x64.zip and its .sha256 to a GitHub release with generated notes; release/main/RELEASING.md describes both paths; the built game reports the version passed to WEBOLUTION_VERSION in --version, --help and the window title; the export scan passes with it; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "release/main/.github/workflows/release.yml",
+                "detail": "Both triggers build gcc-release on a clean Windows UCRT64 runner. Dispatch validates SemVer and creates the tag on the built commit. Publication verifies the tag target and passes the named zip and its .sha256 file to gh release create with generated notes."
+              },
+              {
+                "path": "release/main/RELEASING.md",
+                "detail": "The guide documents dispatch from public main and pushing a version tag. It identifies GitHub Actions as the source of published artifacts."
+              },
+              {
+                "path": "build/windows-release-001/workflow-check.log",
+                "detail": "Mocked Git and GitHub CLI checks passed for both triggers, duplicate rejection, attachment of the zip and checksum, and rejection of a tag moved during the build."
+              },
+              {
+                "path": "build/windows-release-001/installed-logs/version.log",
+                "detail": "The installed --version command returned exit 0 and printed Lemmings Webolution 0.2.0-rc.1. The installed --help log records the same configured version."
+              },
+              {
+                "path": "build/windows-release-001/window-title.log",
+                "detail": "A retained probe of the production SDL window path reported the title Lemmings Webolution 0.2.0-rc.1."
+              },
+              {
+                "path": "build/windows-release-001/export-scan.log",
+                "detail": "The export scan passed and listed 221 files, including the release workflow, publishing guide, and Windows package README."
+              },
+              {
+                "path": "build/agent-runs/20261121T095547-14440-7d3c0d79/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 of 95 smoke tests passing, including the installed-level sweep, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/windows-release-001.md",
+                "detail": "The report ends with a what-to-check note for Just Climb that gives actions and expected results for first disc import, cache reuse, and the truncated-image dialog."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T10:02:28.130576+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T095547-14440-7d3c0d79\\verification.log",
+        "verified_content": "a7c814840f1a2045c1de0861bef8fbece4fe49875f9c5b271cb9caa2e0deb302"
+      }
     },
     {
       "id": "app-icon-001",
       "title": "Site favicon and Windows executable icon from the user-supplied yay icon (clone addition)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "linux-build-001"
       ],
@@ -32423,12 +32708,235 @@
         "The repository holds the icon PNG byte-identical to build/icon/exe-icon-32x32-32bit-yay.png and a generated multi-size .ico (16, 32, 64, 128, 256) whose 32x32 frame matches the PNG's pixels, with the generator script and the frames extracted back to PNG under build/.",
         "A static PE resource read of the built Windows webolution.exe shows an RT_GROUP_ICON with these sizes, test and tool executables are unaffected, and the SDL window uses the same icon.",
         "The Emscripten build output and the Pages workflow stage favicon.png, the page links it relatively, the export scan passes with only these icon files allowed by path and hash, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261121T105115-14440-0637bbaa",
+      "started": "2026-11-21T10:51:16.109793+00:00",
+      "finished": "2026-11-21T11:02:21.978373+00:00",
+      "last_run": "build/agent-runs/20261121T105115-14440-0637bbaa",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The Windows resource and favicon checks pass. Normal Windows startup creates the shared SDL window through code compiled without the icon setter, and the game links two different inline definitions of SdlWindow::ensure. Give both callers one definition, then verify the icon through the packaged game's normal map startup.",
+        "checks": [
+          {
+            "criterion": "The repository holds the icon PNG byte-identical to build/icon/exe-icon-32x32-32bit-yay.png and a generated multi-size .ico (16, 32, 64, 128, 256) whose 32x32 frame matches the PNG's pixels, with the generator script and the frames extracted back to PNG under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/icon/webolution.png",
+                "detail": "Its SHA-256 matches the supplied PNG: 1e0aa7fe2ce790c480e959ec94604bd129fb0009a61c4169a6d0d73a6453f308."
+              },
+              {
+                "path": "src/app/icon/generate_ico.py",
+                "detail": "The standard-library generator uses an alpha-weighted downscale at 16 pixels, preserves the original 32\u00d732 RGBA pixels, and uses integer nearest-neighbour upscales at 64, 128, and 256 pixels."
+              },
+              {
+                "path": "build/app-icon-001/check-icons.py",
+                "detail": "The retained checker compares the source PNG bytes directly, reproduces the ICO byte for byte, decodes its five frames, and asserts that every pixel at 32\u00d732 matches the PNG."
+              },
+              {
+                "path": "build/app-icon-001/pe-and-frames.log",
+                "detail": "The checker exited successfully after validating all five 32-bit frames and their transparency masks. The reported ICO hash matches the current repository file."
+              },
+              {
+                "path": "build/app-icon-001/ico-16.png",
+                "detail": "The requested 16\u00d716 extraction is present and displays the downscaled raised-hands lemming."
+              },
+              {
+                "path": "build/app-icon-001/ico-32.png",
+                "detail": "The requested 32\u00d732 extraction is present and displays the supplied icon."
+              },
+              {
+                "path": "build/app-icon-001/ico-256.png",
+                "detail": "The requested 256\u00d7256 extraction is present and displays the integer-upscaled icon."
+              }
+            ]
+          },
+          {
+            "criterion": "A static PE resource read of the built Windows webolution.exe shows an RT_GROUP_ICON with these sizes, test and tool executables are unaffected, and the SDL window uses the same icon.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/app-icon-001/pe-and-frames.log",
+                "detail": "Static reads found RT_GROUP_ICON 1 with sizes 16, 32, 64, 128, and 256 in the native executable, installed executable, and release ZIP. All five RT_ICON payloads match the ICO. The sampled test executables and lrtool.exe contain neither icon resource type."
+              },
+              {
+                "path": "build/app-icon-001/windows/build.ninja",
+                "detail": "The packaged build defines WEBOLUTION_WINDOWS_ICON for main.cpp and omits it when compiling FrontendWindow.cpp in webolution_app. Both translation units include SdlWindow.hpp, so the linked program has different definitions of the same inline method."
+              },
+              {
+                "path": "src/app/FrontendWindow.cpp",
+                "detail": "runFrontendWindow calls presentation.ensure() on the shared window at line 77. This is where the normal map route creates the window, and this translation unit omits the icon call."
+              },
+              {
+                "path": "src/app/SdlWindow.hpp",
+                "detail": "The icon setter is behind the target-specific macro and runs only inside the window-creation branch. A later gameplay call returns immediately once the frontend has created the renderer."
+              },
+              {
+                "path": "build/app-icon-001/check-window.cpp",
+                "detail": "The probe explicitly defines WEBOLUTION_WINDOWS_ICON and calls ensure() directly. Its matching icon handles establish that the setter works when called. The probe does not exercise the production frontend call path."
+              }
+            ]
+          },
+          {
+            "criterion": "The Emscripten build output and the Pages workflow stage favicon.png, the page links it relatively, the export scan passes with only these icon files allowed by path and hash, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/cmake/emscripten-release/favicon.png",
+                "detail": "The generated web output contains favicon.png and its SHA-256 matches the supplied PNG."
+              },
+              {
+                "path": "release/main/.github/workflows/pages.yml",
+                "detail": "The workflow stages favicon.png beside index.html in the Pages artifact. The locally staged favicon also matches the source PNG."
+              },
+              {
+                "path": "build/app-icon-001/node-favicon.log",
+                "detail": "The retained Node check resolved the relative link from the built and staged HTML at both the local root and the Pages project subpath. Both checks matched the PNG hash, media type, and isolation headers."
+              },
+              {
+                "path": "scripts/export_main.py",
+                "detail": "The binary exception requires an exact repository-relative path and SHA-256 for each of the two icon assets. Other paths remain subject to the binary suffix and signature checks."
+              },
+              {
+                "path": "build/app-icon-001/export-scan-final.log",
+                "detail": "The export scan included both named icon files and passed all 230 exported files."
+              },
+              {
+                "path": "build/app-icon-001/wiring-check.log",
+                "detail": "The retained negative checks rejected substituted bytes at the two allowed paths and rejected the supplied icon bytes at other paths. The loopback server returned HTTP 200 for favicon.png."
+              },
+              {
+                "path": "build/agent-runs/20261121T103711-14440-815732dd/verification.log",
+                "detail": "The supervisor recorded 95 passing smoke tests, including the level sweep, and 84 passing recovery tests."
+              },
+              {
+                "path": "docs/scratch/app-icon-001.md",
+                "detail": "The report ends with a what-to-check note naming Just Climb (MM_CLIMB_002), the map-to-level action, and the expected icons in the browser tab, Windows title bar and taskbar, and Explorer."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The Windows resource and favicon checks pass. Normal Windows startup creates the shared SDL window through code compiled without the icon setter, and the game links two different inline definitions of SdlWindow::ensure. Give both callers one definition, then verify the icon through the packaged game's normal map startup.",
+      "review": {
+        "decision": "accept",
+        "reason": "The packaged Windows clone uses the supplied icon on the SDL window created during normal startup. Source tracing confirms that the map and gameplay reuse that window. The interactive Just Climb check timed out, so continuity into gameplay is supported by source inspection. Pages staging was verified locally, and the supervisor smoke gate passed for this revision.",
+        "checks": [
+          {
+            "criterion": "The repository holds the icon PNG byte-identical to build/icon/exe-icon-32x32-32bit-yay.png and a generated multi-size .ico (16, 32, 64, 128, 256) whose 32x32 frame matches the PNG's pixels, with the generator script and the frames extracted back to PNG under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/icon/webolution.png",
+                "detail": "Its SHA-256 matches the supplied PNG at 1e0aa7fe2ce790c480e959ec94604bd129fb0009a61c4169a6d0d73a6453f308."
+              },
+              {
+                "path": "src/app/icon/webolution.ico",
+                "detail": "Its SHA-256 is f830b17e6eb42e96b1b4b8973efb354633ea9d42c414705280e0479a72288d75, matching the ICO verified in the retained log."
+              },
+              {
+                "path": "src/app/icon/generate_ico.py",
+                "detail": "The standard-library generator uses an alpha-weighted 16-pixel downscale, preserves all 32-pixel RGBA values, and uses integer nearest-neighbour scaling for the three larger frames."
+              },
+              {
+                "path": "build/app-icon-001/pe-and-frames.log",
+                "detail": "The retained checker passed the direct PNG byte comparison, byte-for-byte ICO regeneration, 32\u00d732 RGBA pixel comparison, and frame and transparency-mask checks for all five sizes."
+              },
+              {
+                "path": "build/app-icon-001/ico-16.png",
+                "detail": "The extracted 16\u00d716 PNG shows the downscaled raised-hands lemming."
+              },
+              {
+                "path": "build/app-icon-001/ico-32.png",
+                "detail": "The extracted 32\u00d732 PNG shows the supplied artwork at its original size."
+              },
+              {
+                "path": "build/app-icon-001/ico-256.png",
+                "detail": "The extracted 256\u00d7256 PNG shows the integer-upscaled artwork."
+              }
+            ]
+          },
+          {
+            "criterion": "A static PE resource read of the built Windows webolution.exe shows an RT_GROUP_ICON with these sizes, test and tool executables are unaffected, and the SDL window uses the same icon.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/app-icon-001/window-startup-revision/packaged-window-desktop.log",
+                "detail": "Static reads of the built, installed, and ZIP-extracted executables found RT_GROUP_ICON 1 with five RT_ICON payloads matching the ICO at 16, 32, 64, 128, and 256 pixels. On normal packaged startup, WM_GETICON returned both ICON_SMALL and ICON_BIG from the live SDL window, and every BGRA byte matched the embedded 32\u00d732 frame."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "The Windows resource is private to the webolution executable. The Windows SDL setter is also private to that executable and is compiled when SDL2 is available."
+              },
+              {
+                "path": "build/app-icon-001/pe-and-frames.log",
+                "detail": "The retained static PE checks found zero RT_ICON and RT_GROUP_ICON entries in test_frontendentry.exe, test_frontendwindowquit.exe, and lrtool.exe."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplication supplies the Windows icon setter to its shared SdlWindow. The connected frontend receives that object, and gameplay takes its renderer from the same object after level selection."
+              },
+              {
+                "path": "src/app/FrontendWindow.cpp",
+                "detail": "The production frontend selects the supplied shared window and calls ensure before displaying the menu and map."
+              },
+              {
+                "path": "src/app/SdlWindow.hpp",
+                "detail": "Both callers use one ensure definition. On creation it invokes the configured setter before SDL_ShowWindow. A later ensure call returns the existing renderer and preserves the window."
+              },
+              {
+                "path": "build/app-icon-001/window-startup-revision/packaged-window-keyboard.log",
+                "detail": "The icon queries still matched after the posted input. The probe timed out waiting for the Just Climb gameplay diagnostic, so the map label alone cannot establish that the transition occurred."
+              }
+            ]
+          },
+          {
+            "criterion": "The Emscripten build output and the Pages workflow stage favicon.png, the page links it relatively, the export scan passes with only these icon files allowed by path and hash, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/cmake/emscripten-release/favicon.png",
+                "detail": "The emitted favicon has the same SHA-256 as the supplied PNG. The Emscripten target tracks the source as a link dependency and copies it beside the HTML."
+              },
+              {
+                "path": "release/main/.github/workflows/pages.yml",
+                "detail": "The staging step copies favicon.png into the Pages artifact beside index.html."
+              },
+              {
+                "path": "build/app-icon-001/node-favicon.log",
+                "detail": "The Node check resolved the relative favicon.png link from both the built HTML at the local root and the staged HTML at the Pages project subpath. It checked the PNG hash, content type, and isolation headers."
+              },
+              {
+                "path": "scripts/export_main.py",
+                "detail": "Only the two explicit clone icon paths qualify for the binary exception, and each requires its pinned SHA-256. The retained negative checks rejected modified bytes at both paths and the same icon bytes at other paths."
+              },
+              {
+                "path": "build/app-icon-001/window-startup-revision/export-scan.log",
+                "detail": "The revised 231-file public export passed and lists both icon assets and the generator."
+              },
+              {
+                "path": "build/agent-runs/20261121T105115-14440-0637bbaa/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 passing smoke tests, including the level sweep, and 84 passing recovery tests."
+              },
+              {
+                "path": "docs/scratch/app-icon-001.md",
+                "detail": "The final what-to-check note names Just Climb (MM_CLIMB_002), directs the reader to open it from the map, and states the expected browser tab, Windows title bar and taskbar, and Explorer icons."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T11:04:15.582429+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T105115-14440-0637bbaa\\verification.log",
+        "verified_content": "f38bd378ed3264dfd86edb21cfb8cf098767bde078ec8a180bf52c4118440b0d"
+      }
     },
     {
       "id": "web-mobile-warning-001",
       "title": "Web: warn mobile players before they start (clone addition)",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "app-icon-001"
       ],
@@ -32439,10 +32947,15 @@
       "user_authorized": true,
       "scope": "User request (2026-11-21): on the web build, show mobile players this warning, worded exactly: \"This game does not play well on mobile. Play at your own discretion.\" Clone addition; label it so. Show it on the page before the game starts (above the game-data setup and the Start game button in src/web/webolution.html, in the existing dark style, readable at phone width), with a dismiss button; it never blocks setup, Start game or play. Detect mobile conservatively so desktop players never see it: a primary coarse pointer without any fine pointer (matchMedia('(pointer: coarse)') and not matchMedia('(any-pointer: fine)')), or navigator.userAgentData.mobile where available; a touchscreen laptop with a mouse or trackpad does not count. Remember a dismissal per browser in localStorage, wrapped in try/catch so the page works when storage is unavailable (then the warning simply shows again next visit). Keep the detection in a small function the existing Node web test can call with stubbed matchMedia and navigator. Evidence: a Node check covering phone (coarse only), desktop (fine), touch laptop (coarse plus fine) and the userAgentData path, plus dismissal with working and throwing storage; the Emscripten build output and the export carry the change; the export scan passes. Difficulty: routine. Recommended model: Sonnet. Reason: a small page notice with feature detection. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "src/web/webolution.html shows the exact text \"This game does not play well on mobile. Play at your own discretion.\" with a dismiss control only when the detection reports a mobile device, and never blocks setup or Start game.",
+        "src/web/webolution.html shows the exact warning text given in the scope (This game does not play well on mobile. Play at your own discretion.) with a dismiss control only when the detection reports a mobile device, and never blocks setup or Start game.",
         "A Node check shows the detection is true for a coarse-only pointer and for navigator.userAgentData.mobile, false for a fine pointer and for coarse plus fine, and that dismissal is remembered with working storage and tolerated with throwing storage.",
         "The Emscripten build output and the main export include the change, the export scan passes, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T110415-14440-15e74274",
+      "started": "2026-11-21T11:04:16.074321+00:00",
+      "finished": "2026-11-21T11:09:45.250958+00:00",
+      "last_run": "build/agent-runs/20261121T110415-14440-15e74274"
     },
     {
       "status": "ready",
@@ -32485,7 +32998,7 @@
     {
       "id": "linux-build-001",
       "title": "Linux build and release archive, built and checked on GitHub Actions (clone addition)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "windows-release-001"
       ],
@@ -32499,7 +33012,234 @@
         "The report's audit table covers every platform conditional and platform API in the game's non-test sources with its Linux behavior, the native non-Windows path has save and game-data locations under XDG_DATA_HOME or ~/.local/share and case-tolerant box and CD image lookup, and the minimum GCC version is stated.",
         "A source-level check run on this machine covers the case-tolerant lookup and the XDG data path selection, and the native Windows and Emscripten builds pass.",
         "release/main/.github/workflows/release.yml builds and attaches lemmings-webolution-<tag>-linux-x64.tar.gz and its .sha256 beside the Windows zip, a build-check workflow builds Linux and Windows on pushes and pull requests to main, README.md, RELEASING.md and BUILDING.md cover Linux (BUILDING.md with build-from-source steps), the export scan passes, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261121T102857-14440-b4257d13",
+      "started": "2026-11-21T10:28:57.534761+00:00",
+      "finished": "2026-11-21T10:34:45.454083+00:00",
+      "last_run": "build/agent-runs/20261121T102857-14440-b4257d13",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The Linux audit missed two SDL APIs that require SDL 2.0.22, while CMake and the report advertise SDL 2.0.18 support. Align the dependency floor or add compatible fallbacks, and document the remaining case-sensitive preflight in FrontendAssetDump. The retained Windows, Emscripten, path-check, export, and smoke results pass.",
+        "checks": [
+          {
+            "criterion": "The report's audit table covers every platform conditional and platform API in the game's non-test sources with its Linux behavior, the native non-Windows path has save and game-data locations under XDG_DATA_HOME or ~/.local/share and case-tolerant box and CD image lookup, and the minimum GCC version is stated.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/linux-build-001.md",
+                "detail": "The table states GCC 13 and SDL 2.0.18. Its SDL rows omit the version requirements for the cursor restore and video-driver hint APIs. Its tools row also omits the case-sensitive preflight in FrontendAssetDump."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "Lines 65 and 69 accept SDL 2.0.18 through either the SDL2 CMake config or pkg-config, so the desktop build can select headers that lack APIs it uses."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Line 1383 uses SDL_RenderGetWindow to restore the cursor after a right drag. This function was introduced in SDL 2.0.22."
+              },
+              {
+                "path": "src/app/GameDataLocation.cpp",
+                "detail": "Desktop discovery uses SDL_GetBasePath, case-tolerant box lookup, and ASCII case folding for adjacent ISO and BIN extensions. Line 136 uses SDL_HINT_VIDEODRIVER, which was introduced in SDL 2.0.22."
+              },
+              {
+                "path": "src/tools/FrontendAssetDump.cpp",
+                "detail": "Line 51 checks the literal lowercase lemmings.box before calling the shared resolver at line 55. On a case-sensitive filesystem the tool rejects a valid directory containing only uppercase LEMMINGS.BOX."
+              },
+              {
+                "path": "src/save/SaveStore.cpp",
+                "detail": "The native POSIX path selects an absolute XDG_DATA_HOME or falls back to an absolute HOME plus .local/share. The save uses LemmingsWebolution/SavedGame.dat. GameDataLocation derives the extracted GameData directory from the same root."
+              }
+            ]
+          },
+          {
+            "criterion": "A source-level check run on this machine covers the case-tolerant lookup and the XDG data path selection, and the native Windows and Emscripten builds pass.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_disc_game_data.cpp",
+                "detail": "The source check exercises production lookup for mixed-case base and patch filenames, excludes directories, and checks XDG precedence, HOME fallback, rejection of relative paths, and the resulting save path."
+              },
+              {
+                "path": "build/linux-build-001/windows-data-paths-final.log",
+                "detail": "The registered Windows CTest executable ran disc_game_data and explicitly recorded that the case-tolerant lookup and XDG checks passed. It exited 0."
+              },
+              {
+                "path": "build/linux-build-001/windows-rebuild.log",
+                "detail": "The native Windows rebuild completed with exit code 0."
+              },
+              {
+                "path": "build/linux-build-001/wasm-build-final.log",
+                "detail": "The full Emscripten build compiled the application and linked webolution.js with exit code 0."
+              },
+              {
+                "path": "build/linux-build-001/wasm-rebuild.log",
+                "detail": "The final Emscripten rebuild recompiled Box.cpp and relinked webolution.js with exit code 0."
+              }
+            ]
+          },
+          {
+            "criterion": "release/main/.github/workflows/release.yml builds and attaches lemmings-webolution-<tag>-linux-x64.tar.gz and its .sha256 beside the Windows zip, a build-check workflow builds Linux and Windows on pushes and pull requests to main, README.md, RELEASING.md and BUILDING.md cover Linux (BUILDING.md with build-from-source steps), the export scan passes, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "release/main/.github/workflows/release.yml",
+                "detail": "The Ubuntu 24.04 job configures, builds and installs the game, checks dynamic SDL2 linkage, and packages webolution, README.txt and LICENSE. The publish job verifies both checksums and supplies the Linux and Windows archives and sidecars to one GitHub release."
+              },
+              {
+                "path": "release/main/.github/workflows/build-check.yml",
+                "detail": "Pushes and pull requests targeting main trigger Ubuntu 24.04 and Windows UCRT64 builds with read-only repository permissions."
+              },
+              {
+                "path": "release/main/README.md",
+                "detail": "Documents the Linux download, SDL2 runtime, box and CD placement, and XDG data folder. Links to BUILDING.md."
+              },
+              {
+                "path": "release/main/RELEASING.md",
+                "detail": "Documents the two archives, checksum sidecars, Linux SDL2 runtime, asset placement and per-user storage."
+              },
+              {
+                "path": "release/main/BUILDING.md",
+                "detail": "Gives Linux package commands for Ubuntu, Debian, Fedora and Arch, the GCC preset commands, the output location and both launch methods. Also includes Windows and Emscripten build steps."
+              },
+              {
+                "path": "build/linux-build-001/export-scan-final.log",
+                "detail": "The scan passed 224 files, including both workflows, the build and release guides, and both package readmes."
+              },
+              {
+                "path": "build/agent-runs/20261121T100228-14440-cef06ae5/verification.log",
+                "detail": "The supervisor smoke profile passed 95 main tests, including every level-sweep chunk and the sweep report, and all 84 recovery tests."
+              },
+              {
+                "path": "build/linux-build-001/workflows.log",
+                "detail": "Retained local checks exercised the Windows archive, Linux archive and checksum commands with a fixture, and the mocked publish step with all four attachments. The hosted Linux build and publication remain unverified."
+              },
+              {
+                "path": "docs/scratch/linux-build-001.md",
+                "detail": "The final note names Just Climb, specifies the mixed-case loose-box and uppercase ISO setup actions, and gives the expected save persistence and cache reuse after restart."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The Linux audit missed two SDL APIs that require SDL 2.0.22, while CMake and the report advertise SDL 2.0.18 support. Align the dependency floor or add compatible fallbacks, and document the remaining case-sensitive preflight in FrontendAssetDump. The retained Windows, Emscripten, path-check, export, and smoke results pass.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves the SDL version and asset-dump findings. The retained Windows and Emscripten builds, path check, export scan, and supervisor smoke profile passed. The native Linux build and release publication await GitHub Actions.",
+        "checks": [
+          {
+            "criterion": "The report's audit table covers every platform conditional and platform API in the game's non-test sources with its Linux behavior, the native non-Windows path has save and game-data locations under XDG_DATA_HOME or ~/.local/share and case-tolerant box and CD image lookup, and the minimum GCC version is stated.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/linux-build-001.md",
+                "detail": "The audit table explains native behavior for the platform guards and APIs, including SDL cursor restoration, the video-driver hint, and the asset-dump preflight. It states GCC 13 with libstdc++ as the minimum for std::expected and std::format."
+              },
+              {
+                "path": "build/linux-build-001/review-revision/platform-inventory.txt",
+                "detail": "The retained source-line inventory backs the grouped audit entries for SDL, Emscripten, Windows guards, and native filesystem and environment calls."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "SDL2 CMake config and pkg-config discovery both require SDL 2.0.22, which supplies SDL_RenderGetWindow and SDL_HINT_VIDEODRIVER. Threads link on native builds, and resource compilation and DLL collection are scoped to Windows."
+              },
+              {
+                "path": "src/save/SaveStore.cpp",
+                "detail": "The non-Windows path uses an absolute XDG_DATA_HOME or falls back to an absolute HOME plus .local/share, then puts SavedGame.dat under LemmingsWebolution."
+              },
+              {
+                "path": "src/app/GameDataLocation.cpp",
+                "detail": "Desktop startup uses SDL_GetBasePath, checks loose and cached boxes through the shared resolver, folds the case of adjacent ISO and BIN extensions, and derives GameData from the same per-user root as the save."
+              },
+              {
+                "path": "src/assets/Box.cpp",
+                "detail": "The shared resolver returns the actual on-disk spelling of case-matched regular files and prefers an exact spelling. Both required and optional archive opens use it."
+              },
+              {
+                "path": "src/assets/DiscGameData.cpp",
+                "detail": "ISO 9660 and Joliet member lookup normalize case and numeric version suffixes. The native non-Windows import stages both validated boxes before publishing the cache directory."
+              },
+              {
+                "path": "src/tools/FrontendAssetDump.cpp",
+                "detail": "The base-box preflight resolves the on-disk spelling before checking that it is a regular file. AssetLibrary resolves the optional patch."
+              }
+            ]
+          },
+          {
+            "criterion": "A source-level check run on this machine covers the case-tolerant lookup and the XDG data path selection, and the native Windows and Emscripten builds pass.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_disc_game_data.cpp",
+                "detail": "The test calls production helpers to verify mixed-case base and patch lookup, directory exclusion, XDG precedence, HOME fallback, rejection of relative roots, and the resulting save path."
+              },
+              {
+                "path": "build/linux-build-001/review-revision/windows-data-paths.log",
+                "detail": "Windows CTest ran disc_game_data, explicitly reported that case-tolerant archive lookup and XDG selection passed, and exited 0."
+              },
+              {
+                "path": "build/linux-build-001/review-revision/windows-build.log",
+                "detail": "The revised native UCRT64 build completed successfully, including the rebuilt and relinked FrontendAssetDump."
+              },
+              {
+                "path": "build/linux-build-001/wasm-build-final.log",
+                "detail": "The full Emscripten build compiled the application and linked webolution.js with exit code 0."
+              },
+              {
+                "path": "build/linux-build-001/review-revision/wasm-build-configured.log",
+                "detail": "After the review revision, the Emscripten webolution target reconfigured and completed with exit code 0 using the registered SDK paths."
+              }
+            ]
+          },
+          {
+            "criterion": "release/main/.github/workflows/release.yml builds and attaches lemmings-webolution-<tag>-linux-x64.tar.gz and its .sha256 beside the Windows zip, a build-check workflow builds Linux and Windows on pushes and pull requests to main, README.md, RELEASING.md and BUILDING.md cover Linux (BUILDING.md with build-from-source steps), the export scan passes, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "release/main/.github/workflows/release.yml",
+                "detail": "The Ubuntu 24.04 job installs native build dependencies, builds and checks SDL2 linkage, and archives webolution, README.txt, and LICENSE. The publish job checks both platform checksums and passes both archives and sidecars to one GitHub release."
+              },
+              {
+                "path": "release/main/.github/workflows/build-check.yml",
+                "detail": "Pushes and pull requests targeting main trigger independent Ubuntu 24.04 and Windows UCRT64 builds with read-only repository permissions."
+              },
+              {
+                "path": "release/main/README.md",
+                "detail": "The player guide covers the Linux download, SDL2 runtime, box and CD placement, and XDG data folder, and links to BUILDING.md."
+              },
+              {
+                "path": "release/main/RELEASING.md",
+                "detail": "The release guide lists both archives and checksum files, the Linux SDL2 runtime dependency, setup, and per-user storage."
+              },
+              {
+                "path": "release/main/BUILDING.md",
+                "detail": "The build guide provides Linux package commands for Ubuntu, Debian, Fedora, and Arch, the gcc-release preset, executable location, and launch methods. It also covers Windows and Emscripten."
+              },
+              {
+                "path": "build/linux-build-001/review-revision/export-scan.log",
+                "detail": "The revised export scan passed all 224 files, including both workflows, the three public guides, and both package readmes."
+              },
+              {
+                "path": "build/agent-runs/20261121T102857-14440-b4257d13/verification.log",
+                "detail": "The supervisor built smoke_tests, passed all 95 main smoke tests including the level-sweep chunks and report, and passed all 84 recovery tests."
+              },
+              {
+                "path": "build/linux-build-001/workflows.log",
+                "detail": "The local workflow check exercised the Windows archive, the Linux tar and checksum commands with a fixture, and the mocked release invocation with all four attachments."
+              },
+              {
+                "path": "docs/scratch/linux-build-001.md",
+                "detail": "The final note names Just Climb and gives the Linux actions and expected results for mixed-case loose boxes, save persistence after restart, and uppercase ISO import and cache reuse."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T10:37:11.390757+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T102857-14440-b4257d13\\verification.log",
+        "verified_content": "14a7393a57ed84071a7826ad8ead358b57b182723f254c7ef4e8229501f8076a"
+      }
     }
   ]
 }

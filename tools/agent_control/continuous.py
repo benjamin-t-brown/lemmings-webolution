@@ -158,6 +158,10 @@ def validate_queue(queue):
             raise ValueError('stop_after_review must be boolean')
         if type(task.get('requires_original_execution')) is not bool:
             raise ValueError('Task must explicitly declare its execution boundary')
+        if task['status'] not in ('done', 'blocked') and any(
+                '"' in c or '\n' in c for c in task.get('acceptance', [])):
+            # Criteria become string literals in the strict review schema, which rejects both.
+            raise ValueError(f'{task_id}: acceptance criteria cannot contain double quotes or newlines')
         for dependency in task.get('depends_on', []):
             visit(dependency)
         visiting.remove(task_id)

@@ -13,6 +13,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - hatch-rate-hold-001: **ready** — Hatch release-rate clicks and holds survive a lemming passing under the cursor (playtest 25 Q1)
 - windows-release-001: **ready** — Windows release zip on GitHub releases, with a clear missing-game-data message (playtest 25 Q3)
 - app-icon-001: **ready** — Site favicon and Windows executable icon from the user-supplied yay icon (clone addition)
+- web-mobile-warning-001: **ready** — Web: warn mobile players before they start (clone addition)
 
 ## Recently completed queue entries
 

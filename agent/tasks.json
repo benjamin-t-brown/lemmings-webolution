@@ -32423,6 +32423,25 @@
         "A static PE resource read of the built Windows webolution.exe shows an RT_GROUP_ICON with these sizes, test and tool executables are unaffected, and the SDL window uses the same icon.",
         "The Emscripten build output and the Pages workflow stage favicon.png, the page links it relatively, the export scan passes with only these icon files allowed by path and hash, the smoke profile passes, and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "web-mobile-warning-001",
+      "title": "Web: warn mobile players before they start (clone addition)",
+      "status": "ready",
+      "depends_on": [
+        "app-icon-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User request (2026-11-21): on the web build, show mobile players this warning, worded exactly: \"This game does not play well on mobile. Play at your own discretion.\" Clone addition; label it so. Show it on the page before the game starts (above the game-data setup and the Start game button in src/web/webolution.html, in the existing dark style, readable at phone width), with a dismiss button; it never blocks setup, Start game or play. Detect mobile conservatively so desktop players never see it: a primary coarse pointer without any fine pointer (matchMedia('(pointer: coarse)') and not matchMedia('(any-pointer: fine)')), or navigator.userAgentData.mobile where available; a touchscreen laptop with a mouse or trackpad does not count. Remember a dismissal per browser in localStorage, wrapped in try/catch so the page works when storage is unavailable (then the warning simply shows again next visit). Keep the detection in a small function the existing Node web test can call with stubbed matchMedia and navigator. Evidence: a Node check covering phone (coarse only), desktop (fine), touch laptop (coarse plus fine) and the userAgentData path, plus dismissal with working and throwing storage; the Emscripten build output and the export carry the change; the export scan passes. Difficulty: routine. Recommended model: Sonnet. Reason: a small page notice with feature detection. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "src/web/webolution.html shows the exact text \"This game does not play well on mobile. Play at your own discretion.\" with a dismiss control only when the detection reports a mobile device, and never blocks setup or Start game.",
+        "A Node check shows the detection is true for a coarse-only pointer and for navigator.userAgentData.mobile, false for a fine pointer and for coarse plus fine, and that dismissal is remembered with working storage and tolerated with throwing storage.",
+        "The Emscripten build output and the main export include the change, the export scan passes, the smoke profile passes, and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

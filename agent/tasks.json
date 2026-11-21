@@ -33652,6 +33652,25 @@
         "During the examine pause a clone framebuffer under build/ of a level with a lever or switch shows the switch hover highlight on the switch and its receivers with the pointer over the switch.",
         "The promoted replays reproduce, the smoke profile passes, the controls are documented in the release README files, and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "exit-hover-count-001",
+      "title": "Hovering an exit balloon shows the number of lemmings needed to win (playtest 25 Q13, clone addition)",
+      "status": "ready",
+      "depends_on": [
+        "examine-pause-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 25 Q13 (docs/playtest/2026-11-21-playtest-25.md), user request 2026-11-21: hovering over an exit balloon shows the required lemming count for victory. Clone addition; label it so. Model it on the accepted hatch hover (docs/scratch/hover-feedback-001.md, hatch-click-rate-001.md): BackdropScene::hatchHoverTargets gives displayed hatch geometry in framebuffer pixels, main.cpp materialize fills HatchHoverTarget::remaining and drawHatchHover (src/app/HoverFeedback.h) draws the number with the HUD font. Add the same for exits: displayed hover geometry of each exit, from the visible exit models (Models\\exit\\balloon_* and the rest of the exit decoration as the clone draws it, bobbing and sway included so the target follows the drawn balloon), and on hover a number drawn in the hatch hover style giving World::setup().saveTarget, the lemmings needed to win the level (the same value World::won compares against). Every exit of a multi-exit level shows the same level target. It works in normal play, under the original P pause and under examine-pause-001, uses the same canHover conditions as the switch hover (focused, no menu, no drag in progress, pointer not over the skill panel), and does not change picking: lemming, hatch and switch precedence stay as they are and an exit hover never blocks a skill assignment or a hatch press. Presentation only: the simulation, input commands and replays are unchanged. Evidence: clone framebuffers under build/ of a level with one exit and a multi-exit level if one is installed, with the pointer over the balloon showing the number and away from it showing none, a paused case, and the level save target for each from the installed level data; a fast legacy test of the exit hover target lookup only if it runs without a window. Difficulty: routine. Recommended model: Sonnet. Reason: it repeats the hatch hover pattern for one more object type. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the production call path (exit hover geometry, materialize, the draw), labels the feature a clone addition, and states the precedence with lemming, hatch and switch hover.",
+        "Clone framebuffers under build/ show the needed-to-win number beside an exit balloon under the pointer, none with the pointer elsewhere, the same during a pause, and the number equals the installed level save target.",
+        "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

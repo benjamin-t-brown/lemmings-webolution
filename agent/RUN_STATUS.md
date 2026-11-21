@@ -10,41 +10,37 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- web-mobile-warning-001: **needs_review** — Web: warn mobile players before they start (clone addition)
-- water-motion-001: **ready** — Animated water on Just Climb: the pool and the pipe stream (playtest 25 Q5)
-- windmill-motion-001: **ready** — Turning windmill blades on Escape to victory (playtest 25 Q6)
-- disc-volume-warning-001: **ready** — CD image: a file shorter than its declared volume is a warning when both boxes are intact
+- builder-brick-rotate-001: **ready** — Carried builder plank rotates into place as it grows (playtest 25 Q11)
 
 ## Recently completed queue entries
 
-- main-export-001: Clean source export for the public main branch, with a GitHub Pages build (release)
-  Accepted: 2026-11-21T03:53:13.543989+00:00
-  Verification evidence: `build/agent-runs/20261121T034237-10280-b3b49126/verification.log`
-  Verification evidence: `build\agent-runs\20261121T034237-10280-b3b49126\verification.log`
-- hatch-rate-hold-001: Hatch release-rate clicks and holds survive a lemming passing under the cursor (playtest 25 Q1)
-  Accepted: 2026-11-21T09:18:18.959012+00:00
-  Verification evidence: `build/agent-runs/20261121T090624-14440-8cbc547a/verification.log`
-  Verification evidence: `build\agent-runs\20261121T090624-14440-8cbc547a\verification.log`
-- windows-release-001: Windows release zip on GitHub releases: boxes or a CD image beside the exe, with a clear missing-game-data message (playtest 25 Q3)
-  Accepted: 2026-11-21T10:02:28.130576+00:00
-  Verification evidence: `build/agent-runs/20261121T095547-14440-7d3c0d79/verification.log`
-  Verification evidence: `build\agent-runs\20261121T095547-14440-7d3c0d79\verification.log`
-- app-icon-001: Site favicon and Windows executable icon from the user-supplied yay icon (clone addition)
-  Accepted: 2026-11-21T11:04:15.582429+00:00
-  Verification evidence: `build/agent-runs/20261121T105115-14440-0637bbaa/verification.log`
-  Verification evidence: `build\agent-runs\20261121T105115-14440-0637bbaa\verification.log`
+- web-mobile-warning-001: Web: warn mobile players before they start (clone addition)
+  Accepted: 2026-11-21T18:57:33.301881+00:00
+  Verification evidence: `build/agent-runs/loop-7483343a5c7546eca39021a0fd17045e/0001-verify-c00509/verification.log`
+- water-motion-001: Animated water on Just Climb: the pool and the pipe stream (playtest 25 Q5)
+  Accepted: 2026-11-21T19:17:22.114331+00:00
+  Verification evidence: `build/agent-runs/20261121T185733-5064-87ed9aff/verification.log`
+  Verification evidence: `build\agent-runs\20261121T185733-5064-87ed9aff\verification.log`
+- windmill-motion-001: Turning windmill blades on Escape to victory (playtest 25 Q6)
+  Accepted: 2026-11-21T19:58:14.662690+00:00
+  Verification evidence: `build/agent-runs/20261121T194430-5064-28acbe4e/verification.log`
+  Verification evidence: `build\agent-runs\20261121T194430-5064-28acbe4e\verification.log`
 - linux-build-001: Linux build and release archive, built and checked on GitHub Actions (clone addition)
   Accepted: 2026-11-21T10:37:11.390757+00:00
   Verification evidence: `build/agent-runs/20261121T102857-14440-b4257d13/verification.log`
   Verification evidence: `build\agent-runs\20261121T102857-14440-b4257d13\verification.log`
+- disc-volume-warning-001: CD image: a file shorter than its declared volume is a warning when both boxes are intact
+  Accepted: 2026-11-21T20:05:22.017521+00:00
+  Verification evidence: `build/agent-runs/20261121T195814-5064-1dabea55/verification.log`
+  Verification evidence: `build\agent-runs\20261121T195814-5064-1dabea55\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-f54931a07f1c4e5dbf9b25bd1873545c/result.json`
+- Result: `build/agent-runs/loop-7483343a5c7546eca39021a0fd17045e/result.json`
 - Status: **blocked**
-- Duration: 2h 03m 25s
-- Completed in this invocation: hatch-rate-hold-001, windows-release-001, linux-build-001, app-icon-001
-- Reason: review failed; inspect the saved logs
+- Duration: 1h 12m 21s
+- Completed in this invocation: web-mobile-warning-001, water-motion-001, windmill-motion-001, disc-volume-warning-001
+- Reason: No new production task is supported by the current playtest ledger. Playtest 25's gameplay defects Q1, Q5 and Q6 have accepted fixes awaiting human confirmation. The next unverified level is Penelope Lem Stop (M04_KF_1, node 34). Its deathroller is implemented, and the ledger records no human attempt or failing action to fix. The next human playtest can advance playable v1 by recording a win or identifying a reproducible defect. The residual Now You're Stalking seam remains parked until the play
 
 ## Documentation handoff
 

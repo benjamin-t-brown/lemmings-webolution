@@ -32936,7 +32936,7 @@
     {
       "id": "web-mobile-warning-001",
       "title": "Web: warn mobile players before they start (clone addition)",
-      "status": "needs_review",
+      "status": "done",
       "depends_on": [
         "app-icon-001"
       ],
@@ -32955,10 +32955,80 @@
       "run_id": "20261121T110415-14440-15e74274",
       "started": "2026-11-21T11:04:16.074321+00:00",
       "finished": "2026-11-21T11:09:45.250958+00:00",
-      "last_run": "build/agent-runs/20261121T110415-14440-15e74274"
+      "last_run": "build/agent-runs/20261121T110415-14440-15e74274",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported by the reviewed source, build and export artifacts, and retained verification logs. Phone layout and interaction remain for the human playtest.",
+        "checks": [
+          {
+            "criterion": "src/web/webolution.html shows the exact warning text given in the scope (This game does not play well on mobile. Play at your own discretion.) with a dismiss control only when the detection reports a mobile device, and never blocks setup or Start game.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/web/webolution.html",
+                "detail": "The initially hidden aside is labeled in source as a clone addition. It contains the exact warning and a Dismiss button above setup and Start game. Its dark panel is sized to the viewport and allows text to wrap. The script reveals it only for detected mobile visitors without a stored dismissal. Setup and Start game proceed independently of dismissal, and Start game hides the aside before showing the canvas and calling the game entry point."
+              }
+            ]
+          },
+          {
+            "criterion": "A Node check shows the detection is true for a coarse-only pointer and for navigator.userAgentData.mobile, false for a fine pointer and for coarse plus fine, and that dismissal is remembered with working storage and tolerated with throwing storage.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_web_game_data.mjs",
+                "detail": "The check runs the production inline script with stubbed browser APIs and asserts all four detection outcomes. It verifies that dismissal hides the warning immediately, persists on a simulated return visit with working storage, and allows the warning to return when storage methods or the localStorage getter throw."
+              },
+              {
+                "path": "build/web-mobile-warning-001/node-source.log",
+                "detail": "The source-shell Node run records passes for all four detection cases and all three storage cases."
+              },
+              {
+                "path": "build/web-mobile-warning-001/node-built.log",
+                "detail": "The Node run against the emitted Emscripten shell records the same detection and dismissal passes."
+              }
+            ]
+          },
+          {
+            "criterion": "The Emscripten build output and the main export include the change, the export scan passes, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/web-mobile-warning-001/emscripten-build-sdk-python.log",
+                "detail": "The retained Emscripten release build log reaches the link step for webolution.js."
+              },
+              {
+                "path": "build/cmake/emscripten-release/webolution.html",
+                "detail": "The emitted shell matches the reviewed source and contains the warning, dismiss control, and startup wiring."
+              },
+              {
+                "path": "build/web-mobile-warning-001/main-export/src/web/webolution.html",
+                "detail": "The main export contains the same warning markup and startup logic as the reviewed source."
+              },
+              {
+                "path": "build/web-mobile-warning-001/export-scan.log",
+                "detail": "The scan lists the exported shell and reports that all 231 files passed."
+              },
+              {
+                "path": "build/agent-runs/loop-7483343a5c7546eca39021a0fd17045e/0001-verify-c00509/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 of 95 main smoke tests passing, including the level-sweep chunks and report, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/web-mobile-warning-001.md",
+                "detail": "After the two-line handoff, the report ends with a what-to-check note naming Just Climb (MM_CLIMB_002) and the expected behavior on phone startup, dismissal, reload, and desktop or touchscreen-laptop visits."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T18:57:33.301881+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-7483343a5c7546eca39021a0fd17045e/0001-verify-c00509/verification.log",
+        "verified_content": "53ef02faf13f85c97e727fb3f137e5a8ff343e0a00117aa45a9e5a72cd243de4"
+      }
     },
     {
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
@@ -32974,10 +33044,84 @@
         "The report names the clone objects that draw the Just Climb pool and pipe stream, the original's animation mechanism for each with static addresses (or the provisional choice and why), and the production call path changed.",
         "Clone framebuffers under build/ of MM_CLIMB_002 at two or more times show both the pool and the pipe stream moving, and the level sweep frames of levels without these materials are unchanged.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T185733-5064-87ed9aff",
+      "started": "2026-11-21T18:57:33.815973+00:00",
+      "finished": "2026-11-21T19:14:57.574329+00:00",
+      "last_run": "build/agent-runs/20261121T185733-5064-87ed9aff",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The Just Climb pool and pipe stream visibly animate, the 42 unaffected sweep frames match byte for byte, and all 24 promoted replays on affected levels reproduced their wins. The supervisor smoke profile passed. Human playtest acceptance remains pending.",
+        "checks": [
+          {
+            "criterion": "The report names the clone objects that draw the Just Climb pool and pipe stream, the original's animation mechanism for each with static addresses (or the provisional choice and why), and the production call path changed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/water-motion-001.md",
+                "detail": "Identifies Playtest 25 Q5 and the secondary kind-7 meshes trans_moatwater1 and trans_hosewater. Both use material slot zero and separate authored V-offset tracks in the same clip. The report traces binding, playback, and vertex packing and records the scope as 1,744 nodes across 81 levels."
+              },
+              {
+                "path": "build/water-motion-001/static/trace.md",
+                "detail": "Separates instructions, pseudocode, and installed data for the registered executable. The clip reader at 0x476277 loads the UV array at 0x4762C9. The update at 0x437BDE wraps clip zero and samples it at 0x437D3C. Instructions at 0x476982\u20130x476993 store the material offsets, and 0x46D596\u20130x46D5BC add them to vertex UVs."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The production build binds the secondary clip by preorder node index and material slot. The existing advanceScenery call supplies the capped, pause-aware delta to advanceWaterUv, and renderStage forwards the sampled offset through the mesh adapter into vertex packing."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffers under build/ of MM_CLIMB_002 at two or more times show both the pool and the pipe stream moving, and the level sweep frames of levels without these materials are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/water-motion-001/just-climb-scene-100ms.png",
+                "detail": "The fixed-yaw framebuffer shows the pool around the tower base and the stream at the left pipe mouth at 100 ms."
+              },
+              {
+                "path": "build/water-motion-001/just-climb-scene-400ms.png",
+                "detail": "At the same yaw, the texture patterns in both water regions have visibly shifted by 400 ms."
+              },
+              {
+                "path": "build/water-motion-001/frame-probe.log",
+                "detail": "Attributes 12,946 changed pixels to trans_moatwater1 and 1,206 to trans_hosewater with matching depth and pixel ownership. The paused sample retained the 100 ms phase."
+              },
+              {
+                "path": "build/water-motion-001/unaffected-sweep/comparison.tsv",
+                "detail": "Lists settled and final frames for all 21 levels with zero water-animation bindings. I recalculated the SHA-256 hashes of both files in every pair and confirmed all 42 matches."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/water-motion-001/replays/results.tsv",
+                "detail": "Covers all 24 current promoted recordings on affected levels. The per-recording logs agree with the table, with every route reporting PASS, won=1, and completed=1. Just Climb saved 10 with 1 required at step 1252."
+              },
+              {
+                "path": "build/agent-runs/20261121T185733-5064-87ed9aff/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the level sweep and its report, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/water-motion-001.md",
+                "detail": "The final note directs the playtester to let Just Climb's entry camera settle, watch the tower-base pool and left pipe stream, and check that both textures move, freeze on pause, and resume from the same phase."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T19:17:22.114331+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T185733-5064-87ed9aff\\verification.log",
+        "verified_content": "c1c6ce6ef15233bbe943a982c39d4e39d32883a6c3e931a5ce6da3e5926de046"
+      }
     },
     {
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
@@ -32993,7 +33137,166 @@
         "The report names the scene data that drives the windmill blades, its reader and per-frame update with static addresses (or the provisional choice and why), the rotation axis, pivot and rate, and every other node animated through the same path.",
         "Clone framebuffers under build/ of E11_KF_1 at two or more times show the blades at different angles about a fixed hub, and the level sweep frames of levels without animated nodes are unchanged.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261121T194430-5064-28acbe4e",
+      "started": "2026-11-21T19:44:30.983618+00:00",
+      "finished": "2026-11-21T19:56:15.200462+00:00",
+      "last_run": "build/agent-runs/20261121T194430-5064-28acbe4e",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The retained frames show the windmill turning about a fixed hub. All four affected promoted replays and the supervisor smoke profile passed. For the 84 levels without windmill tracks, 140 of 168 sweep frame pairs differ. The sprite masks locate the differences but leave the full-frame criterion unmet. Provide matching sweep frames with the same scenery seed and frame inputs, while preserving production timing and the smoke gate.",
+        "checks": [
+          {
+            "criterion": "The report names the scene data that drives the windmill blades, its reader and per-frame update with static addresses (or the provisional choice and why), the rotation axis, pivot and rate, and every other node animated through the same path.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/windmill-motion-001.md",
+                "detail": "Identifies Playtest 25 Q6 and the E11_KF_1 secondary Spooky_Forest clip myanim at LVL offset 0xC030A. Its spin record at 0xC5156 targets windmill_roll_0.2_trans at preorder index 6. It gives the local Z axis, the stored hub translation, the rate of 0.2 turns per second, and all 18 affected levels."
+              },
+              {
+                "path": "build/windmill-motion-001/static/trace.md",
+                "detail": "Separates installed records, instructions, and pseudocode for the registered executable. The reader chain is 0x476277 \u2192 0x477510 \u2192 0x47CDE7. The update at 0x437BDE wraps clip zero and calls 0x4764C4, which passes absolute phase to 0x476EE0 at 0x476A6D."
+              },
+              {
+                "path": "build/windmill-motion-001/static/ins-0x481F3C.json",
+                "detail": "The selector-2 routine writes the Z rotation basis and leaves the translation doubles intact, supporting the fixed pivot reported for the blade mesh."
+              },
+              {
+                "path": "build/windmill-motion-001/production-census.tsv",
+                "detail": "Lists all 102 installed levels. Each of the 18 affected levels has one spin targeting the same blade node at preorder index 6 with selector 2 and a rate of 0.2 turns per second."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The production build binds serialized spin targets by preorder index. The existing pause-aware advanceScenery call samples the clip phase and updates the node matrix that renderStage reads."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffers under build/ of E11_KF_1 at two or more times show the blades at different angles about a fixed hub, and the level sweep frames of levels without animated nodes are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/windmill-motion-001/E11_KF_1-scene-250ms.png",
+                "detail": "The fixed-yaw clone framebuffer shows the blades at the 18-degree clip phase with the hub visible left of the tower."
+              },
+              {
+                "path": "build/windmill-motion-001/E11_KF_1-scene-900ms.png",
+                "detail": "At the same yaw, the blades are visibly rotated at the 64.8-degree clip phase while the hub and windmill body stay in place."
+              },
+              {
+                "path": "build/windmill-motion-001/probe.log",
+                "detail": "Records the fixed projected hub at approximately (76.864, 114.902), 2,572 changed pixels around the blades, and the pause, phase-zero, cap, and clip-wrap checks."
+              },
+              {
+                "path": "build/windmill-motion-001/sweep-comparison.tsv",
+                "detail": "I independently hashed both retained PNGs in each of the 168 settled and final frame pairs. All hashes agree with the table. Only 28 pairs match, and 140 differ."
+              },
+              {
+                "path": "build/windmill-motion-001/sweep-sprite-mask-comparison.log",
+                "detail": "Reports 31,460 differing pixels, all inside recorded sprite stores, and 420 matching gameplay and frame-state records. This localizes the differences while leaving full-frame equality unverified."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windmill-motion-001/replays/results.tsv",
+                "detail": "Covers every current promoted recording on the affected levels. MM_BLOCK_BOMB_A passed at step 1546, E22_KF_1 at 24402, E11_KF_1 at 28060, and M11_KF_1 at 40836. All four exited successfully with won=1 and completed=1."
+              },
+              {
+                "path": "build/agent-runs/20261121T191722-5064-edf3eb96/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the 102-level sweep and its report, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/windmill-motion-001.md",
+                "detail": "The final What to check note directs the player to open Escape to victory at node 28, turn toward the windmill, pause, and resume. It gives the expected fixed hub, held blade angle, and resumed rotation."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The retained frames show the windmill turning about a fixed hub. All four affected promoted replays and the supervisor smoke profile passed. For the 84 levels without windmill tracks, 140 of 168 sweep frame pairs differ. The sprite masks locate the differences but leave the full-frame criterion unmet. Provide matching sweep frames with the same scenery seed and frame inputs, while preserving production timing and the smoke gate.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves the prior sweep mismatch. I independently verified that all 168 retained framebuffer pairs match across the 84 levels without windmill tracks. The E11_KF_1 frames show rotation around a fixed hub, all four affected promoted replays reproduced, and the supervisor smoke profile passed. This review used retained evidence and read-only inspection. Human acceptance remains the next Q6 playtest.",
+        "checks": [
+          {
+            "criterion": "The report names the scene data that drives the windmill blades, its reader and per-frame update with static addresses (or the provisional choice and why), the rotation axis, pivot and rate, and every other node animated through the same path.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/windmill-motion-001.md",
+                "detail": "Identifies Playtest 25 Q6 and the secondary Spooky_Forest clip myanim in E11_KF_1, with the clip at LVL offset 0xC030A and the spin record at 0xC5156. It specifies local Z rotation around the stored hub translation (0.000871, 2.329317, -0.874407), at 0.2 turns per second."
+              },
+              {
+                "path": "build/windmill-motion-001/static/trace.md",
+                "detail": "Documents the registered executable identity and distinguishes installed data, instructions, and Ghidra pseudocode. The reader runs through 0x476277, 0x477510, and 0x47CDE7. The update at 0x437BDE wraps clip zero, then 0x4764C4 passes absolute phase to 0x476EE0 at 0x476A6D. The retained instructions corroborate the phase load and rate multiplication, and the setter at 0x481F3C replaces the Z basis while preserving translation."
+              },
+              {
+                "path": "build/windmill-motion-001/production-census.tsv",
+                "detail": "Covers all 102 installed levels and identifies each of the 18 affected nodes. Each affected level contains one spin targeting windmill_roll_0.2_trans at preorder index 6, with selector 2 and a rate of 0.2 turns per second."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Binds the serialized spin by preorder index in the secondary scene, samples absolute clip phase through the existing pause-aware scenery advance, and updates the local matrix consumed by the mesh rendering path."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffers under build/ of E11_KF_1 at two or more times show the blades at different angles about a fixed hub, and the level sweep frames of levels without animated nodes are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windmill-motion-001/E11_KF_1-scene-250ms.png",
+                "detail": "Direct inspection shows the blades at the 18-degree phase in the fixed-yaw view, with the hub visible to the left of the tower."
+              },
+              {
+                "path": "build/windmill-motion-001/E11_KF_1-scene-900ms.png",
+                "detail": "At the same yaw, the blades have rotated to the 64.8-degree phase while the visible hub and body stay fixed."
+              },
+              {
+                "path": "build/windmill-motion-001/probe.log",
+                "detail": "Records the projected hub at approximately (76.864, 114.902), 2,572 changed pixels around the blades, and checks for phase zero, pause, the 100 ms cap, and clip wrap."
+              },
+              {
+                "path": "build/windmill-motion-001/seeded/sweep-comparison.tsv",
+                "detail": "I independently recomputed both PNG hashes in all 168 settled and final pairs. Every pair matches, the incoming paths and hashes agree with the earlier comparison, and the level set exactly matches the 84 zero-spin levels in the census."
+              },
+              {
+                "path": "build/windmill-motion-001/seeded/seeds.tsv",
+                "detail": "Records matching frame inputs and settled and final indices. I cross-checked the first-draw logs for all 84 levels. The old and new draws observed the same seed in 74 levels, and neither run made a scenery sprite draw in the other ten."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/windmill-motion-001/seeded/replays/results.tsv",
+                "detail": "All four current promoted recordings on affected levels exited successfully with won=1 and completed=1. MM_BLOCK_BOMB_A passed at step 1546, E22_KF_1 at 24402, E11_KF_1 at 28060, and M11_KF_1 at 40836."
+              },
+              {
+                "path": "build/agent-runs/20261121T194430-5064-28acbe4e/verification.log",
+                "detail": "The revision's supervisor run passed all 95 main smoke tests, including the level-sweep chunks and report, and all 84 recovery tests. The implementation and review source snapshots differ only in controller bookkeeping."
+              },
+              {
+                "path": "docs/scratch/windmill-motion-001.md",
+                "detail": "Ends with a What to check note that names Escape to victory at node 28 and directs the player to turn toward the windmill, pause, and resume. It specifies rotation around a fixed hub, a held angle during pause, and resumed motion from that angle."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T19:58:14.662690+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T194430-5064-28acbe4e\\verification.log",
+        "verified_content": "1e0abb580bf39e3bb9fce0c25f54dbc8bec095222a5aab7b0e3b19f6249d5bdc"
+      }
     },
     {
       "id": "linux-build-001",
@@ -33244,7 +33547,7 @@
     {
       "id": "disc-volume-warning-001",
       "title": "CD image: a file shorter than its declared volume is a warning when both boxes are intact",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "windmill-motion-001"
       ],
@@ -33257,6 +33560,77 @@
       "acceptance": [
         "A synthetic image shorter than its declared volume but containing every needed extent extracts both boxes with a stderr warning, while images cut inside a needed extent are still rejected without partial output.",
         "The legacy disc test passes including the archive.org image hashes when present, the smoke profile passes, and the report ends with a what-to-check note."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T195814-5064-1dabea55",
+      "started": "2026-11-21T19:58:15.200463+00:00",
+      "finished": "2026-11-21T20:04:19.473521+00:00",
+      "last_run": "build/agent-runs/20261121T195814-5064-1dabea55",
+      "review": {
+        "decision": "accept",
+        "reason": "The importer warns after both boxes pass validation and the cache is ready. Required-sector checks still reject truncated files and directories, and failed imports leave no partial output. The retained legacy and supervisor smoke results pass. Startup from a physically trimmed retail rip remains for human playtest.",
+        "checks": [
+          {
+            "criterion": "A synthetic image shorter than its declared volume but containing every needed extent extracts both boxes with a stderr warning, while images cut inside a needed extent are still rejected without partial output.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/assets/DiscGameData.cpp",
+                "detail": "The volume parser records a short-volume flag. Directory reads and file copies still require complete physical sectors. Staging cleanup removes temporary files on failure, and the importer emits the warning to stderr after validation and cache publication."
+              },
+              {
+                "path": "src/__test__/test_disc_game_data.cpp",
+                "detail": "The 2048-byte, raw Mode 1, and raw Mode 2 Joliet fixtures each extract byte-identical boxes after one trailing sector is removed. Cuts through the base box and primary root directory fail with the expected diagnostics. Those failures and an invalid patch on a trimmed image leave only the input image."
+              },
+              {
+                "path": "cmake/disc_game_data_test.cmake",
+                "detail": "The test wrapper captures stderr and requires exactly three short-volume warnings across the fixture run."
+              }
+            ]
+          },
+          {
+            "criterion": "The legacy disc test passes including the archive.org image hashes when present, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/disc-volume-warning-001/disc-ctest.log",
+                "detail": "The legacy disc test passed with the archive.org fixture present. The log records three synthetic volume warnings and matching SHA-256 digests for both extracted boxes."
+              },
+              {
+                "path": "build/agent-runs/20261121T195814-5064-1dabea55/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 smoke tests, including the level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/disc-volume-warning-001.md",
+                "detail": "The report ends with a two-line handoff and a what-to-check note. It specifies a fresh cache, startup from a trimmed image, opening Just Climb (MM_CLIMB_002), and the expected warning and complete cache. It also specifies the expected setup error and absence of a published cache after a cut through a required extent."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-21T20:05:22.017521+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T195814-5064-1dabea55\\verification.log",
+        "verified_content": "cfe90c9fea3fd2b00fbeebb1e8cd6c48ee98e3cd1aac926117322d4d0fa08b07"
+      }
+    },
+    {
+      "id": "builder-brick-rotate-001",
+      "title": "Carried builder plank rotates into place as it grows (playtest 25 Q11)",
+      "status": "ready",
+      "depends_on": [
+        "disc-volume-warning-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 25 Q11 (docs/playtest/2026-11-21-playtest-25.md), user report 2026-11-21: in the original, when a builder pulls the plank from the sack it rotates into place as well as scaling; the clone only scales and translates it. Seen on any Builder level, for example Just Build (MM_BUILD, node 4). Accepted builder-brick-anim-001 (docs/scratch/builder-brick-anim-001.md, static evidence under build/builder-brick-anim-001/static/) traced the carried model at 410302..4105B0: offset helper 4104B6 and 4104E8..41057A move it forward and down, and 4105B0 blends radial position toward 0.5, composes two rotations (facing and gravity dependent) and installs the transform. That task kept a simplified forward/down travel instead of the full rotation chain and labelled it provisional (src/app/BuilderBrick.h builderBrickShape; src/app/TubeScene.cpp drawBuilderBrick). Recover the two rotations statically (REA static profile: the angles, their axes, the parameter each is driven by over the 0.12..0.78 s carry and how facing and gravity direction enter), keeping static instructions, pseudocode and inference distinct, then apply them to the carried mesh so the plank starts at the sack in its pulled-out orientation and turns as it grows until it lies exactly in the placed orientation and footprint at the moment the terrain cells appear (no pop at handoff). Mirror correctly for left and right facing and for inverted gravity (inverted-builder-001). Where an angle or axis cannot be established, choose the simplest rotation that looks right, label it provisional and say why. While there, recover the folded 12-vertex small shape (410E78, 4115D9..4115E6) only if it is needed for the rotation to read correctly; otherwise leave the cuboid. Presentation only: World::stepBuilder, terrain writes, brick timing, sounds and replays are unchanged; the existing phase from builderPresentationPhase, occlusion and pause behaviour stay. Evidence: clone framebuffers under build/ of a builder on MM_BUILD at four or more carry phases for each facing, and one with inverted gravity if an installed level has an inverted builder, showing the turn and a final frame matching the placed brick; a fast legacy test of the shape and rotation function at phase start, middle and end only if it runs without a window. Difficulty: routine. Recommended model: Sonnet. Reason: the call sites are traced already; it extends one transform with static constants. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names both rotations with static addresses (axis, angle range and driving parameter), how facing and gravity enter, any provisional choice with its reason, and the production call path changed.",
+        "Clone framebuffers under build/ of a builder on MM_BUILD at four or more carry phases for left and right facing show the plank turning while it grows and matching the placed brick orientation and footprint at handoff.",
+        "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
       ]
     }
   ]

@@ -10,6 +10,8 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
+- disc-unrar-001: **ready** — RAR 2.0 extractor for the disc patch, and 1.0 patch.box support (web release, clone addition)
+- web-game-data-001: **ready** — Web release: game data setup (installed files, CD image, archive.org download) (clone addition)
 
 ## Recently completed queue entries
 

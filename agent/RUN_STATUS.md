@@ -13,6 +13,8 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - metal-wall-occlusion-001: **ready** — Lemmings crossing the metal wall are invisible on How do we get up there! (playtest 27 S1)
 - particle-tuning-001: **ready** — Fewer brown explosion particles and longer dig and mine debris throws (playtest 27 S3, S4)
 - load-missing-keys-001: **ready** — Load-time cell mesh creates missing key vertices on every level, as 0x43A31D does (playtest 27 S2 follow-up)
+- level-music-start-001: **ready** — Level music starts at once on Try again; the original waits for the title cue (playtest 28 T1)
+- rate-hold-speed-001: **ready** — Holding a hatch changes the release rate far slower than the original (playtest 28 T2)
 
 ## Recently completed queue entries
 

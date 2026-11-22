@@ -79,7 +79,9 @@ def main():
             # Optimized with assertions kept (no NDEBUG): the software renderer is several
             # times slower unoptimized, which put levelreturn within 3% of its timeout
             # under four test jobs. Measured in build/test-parallel-benchmark-001/.
-            configure += ['-DCMAKE_CXX_FLAGS_DEBUG=-O2 -g']
+            # -g1 keeps line tables only: full -g made each test exe about 85 MB and the
+            # tree 21 GB, and nothing in the loop runs a debugger (lead, 2026-11-22).
+            configure += ['-DCMAKE_CXX_FLAGS_DEBUG=-O2 -g1']
             configure += [f'-DWEBOLUTION_GAME_DIR={repository_path(registry["assets"]["directory"]).as_posix()}']
         else:
             configure += ['-DLEMMINGS_REFERENCE_EXE=',

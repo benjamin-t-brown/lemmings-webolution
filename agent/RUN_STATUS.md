@@ -15,6 +15,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - load-missing-keys-001: **ready** — Load-time cell mesh creates missing key vertices on every level, as 0x43A31D does (playtest 27 S2 follow-up)
 - level-music-start-001: **ready** — Level music starts at once on Try again; the original waits for the title cue (playtest 28 T1)
 - rate-hold-speed-001: **ready** — Holding a hatch changes the release rate far slower than the original (playtest 28 T2)
+- release-exe-name-001: **ready** — Release downloads ship the game as lemmings_webolution(.exe)
 
 ## Recently completed queue entries
 

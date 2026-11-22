@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 35 of 102.
+under docs/playtest/replays/. Won so far: 36 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -47,7 +47,7 @@ under docs/playtest/replays/. Won so far: 35 of 102.
 | 33 | M11_KF_1 | Designed with love | ok | playtest 25 | retired (builder-wall-pass-001) |  |
 | 34 | M04_KF_1 | Penelope Lem Stop | ok | playtest 26 | retired (R3 fix) |  |
 | 35 | H02_JC_1 | How do we get up there! | ok |  |  | playtest 26 R1, R2; playtest 27 S1 |
-| 36 | E07_JC_1 | There`s only one way down! | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |
+| 36 | E07_JC_1 | There`s only one way down! | ok | playtest 27 | pass |  |
 | 37 | M02_MG_1 | What a Fantastic Pair of Birds | ok |  |  | implemented 2026-11-16, not yet seen by a person: robin |
 | 38 | MM_TELE_003 | The Lone Ranger | ok |  |  |  |
 | 39 | M03_mg_1 | Swarthy Seadogs! | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab, deathroller |

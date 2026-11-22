@@ -66,7 +66,7 @@ class ReplayRecorder {
  public:
   static std::expected<ReplayRecorder, std::string> create(
       const std::filesystem::path& directory, std::string level, bool connected,
-      int initialTicks, int initialRate, bool logPath = true) {
+      int initialTicks, const sim::World& world, bool logPath = true) {
     std::error_code ec;
     std::filesystem::create_directories(directory, ec);
     if (ec) return std::unexpected("cannot create replay directory: " + ec.message());
@@ -84,7 +84,8 @@ class ReplayRecorder {
         << std::quoted(replayBuildIdentity()) << ' ' << connected << ' ' << initialTicks << '\n';
     recorder.output_.flush();
     if (!recorder.output_) return std::unexpected("cannot write replay header");
-    recorder.rate_ = initialRate;
+    for (const auto& hatch : world.setup().entrances)
+      recorder.rates_.push_back(hatch.releaseRate);
     if (logPath) std::cerr << "record: " << recorder.path_.string() << '\n';
     return recorder;
   }
@@ -99,18 +100,20 @@ class ReplayRecorder {
   // Observe effective simulation commands after each input event and held-rate
   // repeat. No timestamp, SDL event, cursor pixel or camera is serialized.
   void commands(const sim::World& world, const RuntimeSimState& runtime,
-                const RuntimeSkillSelection& selection, int rate, std::size_t rateHatch = 0) {
+                const RuntimeSkillSelection& selection) {
     if (selected_ != selection.selectedIndex()) {
       selected_ = selection.selectedIndex(); append('s', {selected_});
     }
     if (paused_ != runtime.paused()) { paused_ = runtime.paused(); append('p', {paused_}); }
     if (fast_ != runtime.fastForward()) { fast_ = runtime.fastForward(); append('f', {fast_}); }
     if (nuked_ != world.nukeRequested()) { nuked_ = world.nukeRequested(); append('n', {}); }
-    if (rate_ != rate) {
-      rate_ = rate;
+    for (std::size_t i = 0; i < rates_.size(); ++i) {
+      const auto& hatch = world.setup().entrances[i];
+      if (rates_[i] == hatch.releaseRate) continue;
+      rates_[i] = hatch.releaseRate;
       // Version 1's third value is the hatch index. Zero selects the primary hatch.
-      auto& row = append('r', {rate, world.setup().releaseIntervalTicks, static_cast<int>(rateHatch)});
-      row.seconds = world.setup().releaseIntervalSeconds;
+      auto& row = append('r', {hatch.releaseRate, hatch.releaseIntervalTicks, static_cast<int>(i)});
+      row.seconds = hatch.releaseIntervalSeconds;
     }
   }
 
@@ -155,7 +158,8 @@ class ReplayRecorder {
   // Small blocks avoid copying the whole recording during a render frame.
   std::deque<ReplayRecord> records_;
   std::uint64_t step_ = 0;
-  int selected_ = 0, rate_ = 0;
+  int selected_ = 0;
+  std::vector<int> rates_;
   bool paused_ = false, fast_ = false, nuked_ = false;
 };
 
@@ -239,7 +243,7 @@ inline int replayLevel(const AssetLibrary& library, const std::filesystem::path&
             v[0] < rate->minimum(v[2]) || v[0] > rate->maximum(v[2]) ||
             row.seconds != rates->secondsPerLemming(v[0]) ||
             v[1] != rates->intervalTicks(v[0], world.rules().ticksPerSecond)) return fail("release-rate input changed");
-        world.setReleaseInterval(row.seconds, v[1]); break;
+        world.setHatchReleaseRate(v[2], v[0], row.seconds, v[1]); break;
       case 'a': {
         if (v[0] < 0 || static_cast<std::size_t>(v[0]) >= world.lemmings().size() ||
             v[1] != selected || (v[2] != 0 && v[2] != 1))

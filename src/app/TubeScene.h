@@ -286,8 +286,8 @@ class TubeScene {
   // The per-cell mesh derived from the collision grid (src/assets/CellMesh).
   CellMeshes cellMesh_;
 
-  // Allocate meshed solidity and editable keys on the first terrain change.
-  // Append new pool vertices to mesh_.surface.
+  // Synthesized static terrain vertices share the editable key table and surface pool.
+  bool ensureTerrainVertex(int x, int y, int layer);
   bool terrainSeen_ = false;
   bool terrainFailed_ = false;
   std::uint64_t terrainVersion_ = 0;

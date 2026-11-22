@@ -86,13 +86,61 @@ void checkBuilderHeadroom(int facing) {
   assert(walked.x == finished.terrain().wrapX(builder.x + 2 * facing) && walked.y == builder.y - 1);
 }
 
+void checkWalkerStairClearance(int facing, int gravity) {
+  using namespace sim;
+  Lemming walker;
+  walker.x = facing > 0 ? 15 : 0;
+  walker.y = 16;
+  walker.facing = facing > 0 ? Facing::Right : Facing::Left;
+  walker.verticalDir = gravity;
+  walker.state = State::Walker;
+
+  const int ahead = walker.x + facing;
+  const int behind = walker.x - facing;
+  LevelSetup setup;
+  setup.terrain = Terrain(16, 32);
+  setup.terrain.set(walker.x, walker.y + gravity, Material::Built);
+  setup.terrain.set(behind, walker.y + 2 * gravity, Material::Built);
+  setup.terrain.set(ahead, walker.y - 2 * gravity, Material::Steel);
+  setup.terrain.set(ahead, walker.y + gravity, Material::Built);
+
+  World twoRows(setup);
+  twoRows.place(walker);
+  twoRows.tick();
+  assert(twoRows.lemmings()[0].x == setup.terrain.wrapX(ahead));
+  assert(twoRows.lemmings()[0].y == walker.y);
+  assert(twoRows.lemmings()[0].facing == walker.facing);
+
+  setup.terrain.set(ahead, walker.y - gravity, Material::Steel);
+  World oneRow(setup);
+  oneRow.place(walker);
+  oneRow.tick();
+  assert(oneRow.lemmings()[0].x == walker.x && oneRow.lemmings()[0].y == walker.y);
+  assert(oneRow.lemmings()[0].facing != walker.facing);
+  oneRow.tick();
+  assert(oneRow.lemmings()[0].x == behind && oneRow.lemmings()[0].y == walker.y + gravity);
+  assert(oneRow.lemmings()[0].state == State::Walker);
+
+  setup.terrain.set(ahead, walker.y + gravity, Material::Empty);
+  setup.terrain.set(ahead, walker.y + 2 * gravity, Material::Earth);
+  World stepDown(setup);
+  stepDown.place(walker);
+  stepDown.tick();
+  assert(stepDown.lemmings()[0].x == setup.terrain.wrapX(ahead));
+  assert(stepDown.lemmings()[0].y == walker.y + gravity);
+  assert(stepDown.lemmings()[0].facing == walker.facing);
+}
+
 int main(int argc, char** argv) {
   assert(builderBrickShape(-1).scale == 0 && builderBrickShape(0.9).scale == 0);
   assert(builderBrickShape(2.0/16).scale > 0);
   assert(builderBrickShape(13.0/16).scale == 0);
   assert(builderBrickShape(0.7).scale > builderBrickShape(0.3).scale);
   for (int facing : {-1, 1}) {
-    for (int gravity : {-1, 1}) checkCarriedRotation(facing, gravity);
+    for (int gravity : {-1, 1}) {
+      checkCarriedRotation(facing, gravity);
+      checkWalkerStairClearance(facing, gravity);
+    }
     checkBuilderHeadroom(facing);
     sim::LevelSetup setup;
     setup.terrain = sim::Terrain(256, 96);

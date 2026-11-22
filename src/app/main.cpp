@@ -1197,13 +1197,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   std::optional<app::ReplayRecorder> recorder;
   if (!args.recordDir.empty() && world && releaseControl) {
     auto made = app::ReplayRecorder::create(args.recordDir, args.level, persistentFrontend != nullptr,
-                                           args.simTicks, releaseControl->current(), logLevelDetails);
+                                           args.simTicks, *world, logLevelDetails);
     if (made) recorder.emplace(std::move(*made));
     else std::fprintf(stderr, "record: %s; playing without recording\n", made.error().c_str());
   }
   const auto recordCommands = [&] {
-    if (recorder) recorder->commands(*world, runtimeSim, skillSelection,
-                                    releaseControl->current(), releaseControl->rateHatch());
+    if (recorder) recorder->commands(*world, runtimeSim, skillSelection);
   };
   std::optional<Image> finalWindowFrame;
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
@@ -1260,10 +1259,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     return true;
   };
   const auto advanceReleaseHold = [&](double elapsed) {
-    if (!releaseControl || !releaseControl->holding()) return;
+    if (!releaseControl || !releaseControl->holding()) return false;
     ensureDisplayedScene();
     const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
-    releaseControl->advance(elapsed, targets, pointerX, pointerY, *world);
+    return releaseControl->advance(elapsed, targets, pointerX, pointerY, *world);
   };
   const auto cancelGameplayHolds = [&] {
     nukeInput.reset();
@@ -1573,11 +1572,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                                  skillSelection.selectedIndex(), hover);
     }
     if (releaseControl && releaseControl->holding() && focused && !menuOpen()) {
-      const int previousRate = releaseControl->current();
-      advanceReleaseHold(elapsed);
       // One request per rendered frame, even if a long frame catches up several
       // repeats. SkipPlaying discards overlap; nothing accumulates while held.
-      if (releaseControl->current() != previousRate) uiClick();
+      if (advanceReleaseHold(elapsed)) uiClick();
     }
     recordCommands();
     fixedClock.advance(elapsed);
@@ -1725,8 +1722,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
               view.markedActor = hover;
           }
           if (hatchHover) {
-            const auto adjustingRate = heldHatch ? std::optional{releaseControl->current()} : std::nullopt;
-            app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover], adjustingRate);
+            const auto& target = hatches[*hatchHover];
+            const auto adjustingRate = heldHatch
+                ? std::optional{world->setup().entrances[target.index].releaseRate} : std::nullopt;
+            app::drawHatchHover(image, *runtimeFont, target, adjustingRate);
           } else if (canHover && pointerInWindow && backdrop && !hover && !switchHover) {
             if (const auto exit = backdrop->exitHoverTarget(displayedCamera, windowRaster, pointerX, pointerY))
               app::drawExitHover(image, *runtimeFont, *exit, world->setup().saveTarget);

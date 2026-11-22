@@ -65,6 +65,7 @@ World::World(LevelSetup setup) : World(std::move(setup), Rules{}) {}
 World::World(LevelSetup setup, Rules rules) : setup_(std::move(setup)), rules_(rules) {
   lemmings_.reserve(static_cast<std::size_t>(std::max(0, setup_.totalLemmings)));
   spawnedByEntrance_.resize(setup_.entrances.size(), 0);
+  releaseCountdowns_.resize(setup_.entrances.size(), setup_.releaseFirstCountdownSeconds);
   int unassigned = setup_.totalLemmings;
   int unspecified = 0;
   for (const auto& e : setup_.entrances) {
@@ -105,8 +106,7 @@ void World::place(Lemming lemming) {
 }
 
 void World::spawn(double budgetSeconds) {
-  // One shared release tick and first-fall budget serve every nonempty hatch.
-  // Provisional: stream order breaks simultaneous actor-index ties.
+  // Hand-built tick setups release a batch.
   for (std::size_t i = 0; i < setup_.entrances.size(); ++i) {
     if (remainingFromEntrance(i) > 0)
       spawnFromEntrance(i, budgetSeconds);
@@ -827,13 +827,29 @@ void World::stepWalker(Lemming& l) {
       return;
     }
 
+    const int nextY = l.y - rise * v;
+    // Provisional clone rule for stairs ending below a ledge: a walker needs
+    // a clear row immediately above its feet. Retail 0x41BFFC probes upward
+    // for step-up only when the destination feet cell is solid.
+    if (solidAt(nx, nextY - v) &&
+        (setup_.terrain.at(l.x, l.y + v) == Material::Built ||
+         setup_.terrain.at(nx, nextY + v) == Material::Built)) {
+      // A one-cell descent puts the already-clear nextY above the feet.
+      const bool stepsDown =
+          rise == 0 && !groundAt(nx, nextY + v, v) && groundAt(nx, nextY + 2 * v, v);
+      if (!stepsDown) {
+        turn(l);
+        return;
+      }
+    }
+
     if (rise > 0) {
 
 
 
 
       l.x = setup_.terrain.wrapX(nx);
-      l.y -= rise * v;
+      l.y = nextY;
       if (attachFluidHazard(l))
         return;
       if (flipIfAntiGrav())
@@ -1339,38 +1355,46 @@ void World::step(Lemming& l) {
   ++l.frame;
 }
 
+void World::setHatchReleaseRate(std::size_t hatch, int rate, double seconds, int ticks) {
+  auto& entrance = setup_.entrances.at(hatch);
+  entrance.releaseRate = rate;
+  entrance.releaseIntervalSeconds = seconds;
+  entrance.releaseIntervalTicks = ticks;
+  if (hatch == 0) {
+    setup_.releaseIntervalSeconds = seconds;
+    setup_.releaseIntervalTicks = ticks;
+  }
+}
+
 void World::stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout) {
-  if (nukeRequested_) return;
-
-  // A positive releaseIntervalSeconds selects elapsed release timing. Other
-  // setups count ticks. Both release and motion use the same update dt.
-
-  if (!timedOut() || continueHatchesAfterTimeout) {
-    if (setup_.releaseIntervalSeconds > 0.0) {
-      releaseElapsedSeconds_ += dt;
-      if (!releaseArmed_ && releaseElapsedSeconds_ >= setup_.releaseArmSeconds) {
-        // Seed the countdown on arming. Start decrementing next update.
-        releaseArmed_ = true;
-        releaseCountdown_ = setup_.releaseFirstCountdownSeconds;
-      } else if (releaseArmed_) {
-        // A release at countdownBefore seconds into the update leaves only
-        // dt - countdownBefore seconds for its first fall.
-        const double countdownBefore = releaseCountdown_;
-        releaseCountdown_ -= dt;
-        if (releaseCountdown_ <= 0.0) {
-          const double spawnBudget = continuousMotion()
-                                          ? std::max(0.0, dt - countdownBefore)
-                                          : -1.0;
-          spawn(spawnBudget);
-          // Add the recurring interval to carry the countdown overshoot.
-          releaseCountdown_ += setup_.releaseIntervalSeconds;
-        }
-      }
-    } else if (tickBoundary && ++sinceSpawn_ >= setup_.releaseIntervalTicks) {
-      // The integer-tick release model counts whole level-clock ticks, never raw updates.
+  if (nukeRequested_ || (timedOut() && !continueHatchesAfterTimeout)) return;
+  if (setup_.releaseIntervalSeconds <= 0.0) {
+    // Count whole level-clock ticks, never raw updates.
+    if (tickBoundary && ++sinceSpawn_ >= setup_.releaseIntervalTicks) {
       sinceSpawn_ = 0;
       spawn();
     }
+    return;
+  }
+  if (!releaseArmed_) {
+    // Start decrementing the pre-seeded countdowns on the update after arming.
+    releaseElapsedSeconds_ += dt;
+    releaseArmed_ = releaseElapsedSeconds_ >= setup_.releaseArmSeconds;
+    return;
+  }
+
+  // Each hatch receives the same dt and can release once per update (425B84..425D4B).
+  // Provisional: stream order breaks simultaneous actor-index ties.
+  for (std::size_t hatch = 0; hatch < setup_.entrances.size() && spawned_ < setup_.totalLemmings; ++hatch) {
+    if (remainingFromEntrance(hatch) <= 0) continue;
+    double& countdown = releaseCountdowns_[hatch];
+    const double countdownBefore = countdown;
+    countdown -= dt;
+    if (countdown > 0.0) continue;
+    const double spawnBudget = continuousMotion() ? std::max(0.0, dt - countdownBefore) : -1.0;
+    spawnFromEntrance(hatch, spawnBudget);
+    const double interval = setup_.entrances[hatch].releaseIntervalSeconds;
+    countdown += interval > 0.0 ? interval : setup_.releaseIntervalSeconds;
   }
 }
 

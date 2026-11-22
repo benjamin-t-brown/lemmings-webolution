@@ -1,5 +1,4 @@
 // Scheduler invariants, not a scripted play route or fidelity comparison.
-#include "app/RuntimeSkillPanel.h"
 #include "assets/Box.h"
 #include "assets/GameData.h"
 #include "sim/RetailLevel.h"
@@ -74,6 +73,32 @@ void scheduler() {
   World capped(fallback);
   capped.tick(); capped.tick();
   check(capped.spawned() == 2, "LevelInfo total caps inconsistent entrance quotas");
+
+  LevelSetup independent;
+  independent.terrain = Terrain(100, 100);
+  independent.totalLemmings = 6;
+  independent.entrances = {{10, 60}, {60, 60}};
+  independent.releaseFirstCountdownSeconds = 0.125;
+  independent.releaseIntervalSeconds = 0.5;
+  independent.entrances[0].releaseIntervalSeconds = 0.5;
+  independent.entrances[1].releaseIntervalSeconds = 0.25;
+  World elapsed(independent);
+  elapsed.advanceElapsedMs(125); // Arm.
+  elapsed.advanceElapsedMs(125); // Both release.
+  check(elapsed.spawnedFromEntrance(0) == 1 && elapsed.spawnedFromEntrance(1) == 1,
+        "different intervals share the first-release seed");
+  elapsed.setHatchReleaseRate(1, 42, 0.125, 1);
+  elapsed.advanceElapsedMs(125);
+  check(elapsed.spawned() == 2, "changing the interval keeps the pending countdown");
+  elapsed.advanceElapsedMs(125);
+  check(elapsed.spawnedFromEntrance(0) == 1 && elapsed.spawnedFromEntrance(1) == 2,
+        "the faster hatch releases independently");
+  elapsed.advanceElapsedMs(125);
+  check(elapsed.spawnedFromEntrance(0) == 1 && elapsed.spawnedFromEntrance(1) == 3,
+        "the next release uses the changed interval");
+  elapsed.advanceElapsedMs(125);
+  check(elapsed.spawnedFromEntrance(0) == 2 && elapsed.spawnedFromEntrance(1) == 3,
+        "the other hatch retains its original interval");
 }
 
 void census(const AssetLibrary& lib) {
@@ -81,20 +106,22 @@ void census(const AssetLibrary& lib) {
   check(bool(infos), "installed map loads");
   if (!infos) return;
   int multis = 0, adjusted = 0;
-  std::cout << "level,partition_ms,released,total,complete_ms,limit_s,initial_rate,hatch_counts,first_batch_ms\n";
+  std::cout << "level,partition_ms,released,total,complete_ms,limit_s,initial_rates,hatch_counts,first_batch_ms\n";
   for (const auto& info : *infos) {
     if (info.isBlank()) continue;
     auto report = loadRetailLevelReport(lib, info.id);
     check(bool(report), info.id + " loads");
     if (!report || report->hatches.size() < 2) continue;
     ++multis;
-    adjusted += report->initialSharedRate != report->hatches.front().clampedRate;
-    auto control = app::RuntimeReleaseRateControl::create(lib, info.id);
-    check(control && control->current() == report->initialSharedRate, info.id + " input/hover rate agrees with loader");
     int quotaSum = 0;
     for (std::size_t h = 0; h < report->hatches.size(); ++h) {
       check(report->setup.entrances[h].releaseCount == report->hatches[h].count,
             info.id + " installed quota reaches entrance");
+      check(report->setup.entrances[h].releaseRate == report->hatches[h].initialRate &&
+            report->hatches[h].initialRate >= report->hatches[h].clampedRate &&
+            report->hatches[h].initialRate <= report->hatches[h].rateMax,
+            info.id + " effective hatch rate reaches entrance within its bounds");
+      adjusted += report->hatches[h].initialRate != report->hatches[h].clampedRate;
       quotaSum += report->hatches[h].count;
     }
     check(quotaSum == report->setup.totalLemmings, info.id + " installed quotas sum to LevelInfo total");
@@ -106,21 +133,15 @@ void census(const AssetLibrary& lib) {
       if (partition == 20) w.advanceElapsedMsWithReleaseGate(5000, false, false);
       std::uint64_t firstBatchMs = 0;
       while (!w.timedOut() && w.spawned() < quotaSum) {
-        const int before = w.spawned();
-        std::vector<int> remaining;
-        for (std::size_t h = 0; h < report->hatches.size(); ++h) remaining.push_back(w.remainingFromEntrance(h));
         if (partition < 0) w.tick(); else w.advanceElapsedMs(partition);
-        if (w.spawned() != before) {
-          if (before == 0) firstBatchMs = w.levelClockMs();
-          for (std::size_t h = 0; h < remaining.size(); ++h)
-            check(w.remainingFromEntrance(h) == remaining[h] - (remaining[h] > 0),
-                  info.id + " every nonempty hatch participates in shared tick");
-        }
+        if (!firstBatchMs && w.spawned()) firstBatchMs = w.levelClockMs();
       }
       check(w.spawned() == quotaSum && w.levelClockMs() < std::uint64_t(info.timeLimitSeconds) * 1000,
             info.id + " full total before time limit");
       std::cout << info.id << ',' << partition << ',' << w.spawned() << ',' << quotaSum << ','
-                << w.levelClockMs() << ',' << info.timeLimitSeconds << ',' << report->initialSharedRate << ',';
+                << w.levelClockMs() << ',' << info.timeLimitSeconds << ',';
+      for (const auto& hatch : report->hatches) std::cout << hatch.initialRate << ';';
+      std::cout << ',';
       for (std::size_t h = 0; h < report->hatches.size(); ++h) {
         check(w.spawnedFromEntrance(h) == report->hatches[h].count, info.id + " full stored per-hatch total");
         std::cout << w.spawnedFromEntrance(h) << ';';

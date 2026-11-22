@@ -164,6 +164,33 @@ int main(int argc, char** argv) {
       const auto revision = scene->counterGateRevision();
       scene->syncCounterGates(open); assert(scene->counterGateRevision() == revision);
     }
+    if (node == 35) {
+      const auto resolved = resolveRetailLevel(*lib, *id); assert(resolved);
+      const auto bytes = lib->read(resolved->file); assert(bytes);
+      const auto mesh = findCylinderMesh(*bytes); const auto index = indexLevel(*bytes);
+      assert(mesh && index);
+      auto scene = app::TubeScene::build(*lib, *mesh, *bytes, index->grid0); assert(scene);
+      assert(scene->cellMeshes().unresolved == 0);
+      // The static strip above gate 10 starts at y=89, between stored height keys.
+      // Its generated outer corners must stay put when the gate closes.
+      const auto* cell = scene->cellMeshes().at(16, 5); assert(cell);
+      const auto& surface = scene->terrainMesh().surface;
+      const auto strip = std::find_if(cell->mesh0.begin(), cell->mesh0.end(), [&](const auto& quad) {
+        return !quad.gate && quad.coord == 128 && surface[quad.index[0]].y == 89.0 &&
+            surface[quad.index[1]].y == 96.0;
+      });
+      assert(strip != cell->mesh0.end());
+      const auto corner = strip->index[0];
+      assert(corner >= mesh->surface.size());
+      const auto position = surface[corner];
+      auto closed = gates;
+      for (auto& item : closed)
+        if (item.id == 10) item.progress = item.target = 1.0;
+      scene->syncCounterGates(gates);
+      scene->syncCounterGates(closed);
+      assert(surface[corner].x == position.x && surface[corner].y == position.y &&
+             surface[corner].z == position.z);
+    }
     if (node == 43) {
       assert(std::any_of(gates.begin(), gates.end(),
           [](const auto& item) { return item.quota == 10 && item.mode == 2; }));

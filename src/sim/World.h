@@ -170,6 +170,10 @@ struct Entrance {
   // Stored hatch +0x98, decremented per birth (0x425B72..0x425BCB).
   // -1 lets hand-built setups divide the level total evenly in stream order.
   int releaseCount = -1;
+  // Retail RELEASERATE.PC row. Hand-built entrances can use the level interval.
+  int releaseRate = 0;
+  double releaseIntervalSeconds = 0.0;
+  int releaseIntervalTicks = 0;
 };
 // Exit AABB at +0x48..+0x70. 0x00430BA1 tests raw (X,Y,Z) with closed
 // edges. MM_CLIMB_002 and MM_FLOAT use 2x3 boxes with Z in [0,1].
@@ -510,15 +514,15 @@ struct LevelSetup {
   LeverDispatchStats leverStats;
   int totalLemmings = 10;
   int saveTarget = 1;
-  int releaseIntervalTicks = 20;  // ticks between spawns
-  // Positive releaseIntervalSeconds selects the shared elapsed scheduler.
+  int releaseIntervalTicks = 20;  // Primary hatch or hand-built tick cadence.
+  // Positive releaseIntervalSeconds selects the elapsed scheduler.
   // It waits releaseArmSeconds, seeds once from the original's 1.3 seconds
   // (0x004B0F48), then decrements per update. At zero it releases and adds
   // the RELEASERATE.PC interval to the accumulator. The original keeps a
   // per-hatch double at hatch+0xC0. Zero interval selects the tick scheduler.
   double releaseArmSeconds = 0.0;             // Provisional for all installed levels (MM_CLIMB_002 basis).
   double releaseFirstCountdownSeconds = 0.0;  // One-time seed in seconds.
-  double releaseIntervalSeconds = 0.0;        // Recurring RELEASERATE.PC interval, in seconds.
+  double releaseIntervalSeconds = 0.0;        // Primary hatch or hand-built fallback interval.
 
   // Enable elapsed fall/walk budgets on the tick entry, independently of
   // hatch timing. A stepper spends whole cells and can hand off leftover
@@ -823,14 +827,8 @@ public:
   const LevelSetup& setup() const { return setup_; }
   const Rules& rules() const { return rules_; }
 
-  // Player rate control changes the recurring interval and preserves
-  // the countdown, seed, arm phase and tick carry.
-  void setReleaseInterval(double seconds, int ticks) {
-    if (std::isfinite(seconds) && seconds > 0.0 && ticks > 0) {
-      setup_.releaseIntervalSeconds = seconds;
-      setup_.releaseIntervalTicks = ticks;
-    }
-  }
+  // The selected hatch keeps its in-flight countdown when its interval changes.
+  void setHatchReleaseRate(std::size_t hatch, int rate, double seconds, int ticks);
 
   int spawned() const { return spawned_; }
   int spawnedFromEntrance(std::size_t index) const { return spawnedByEntrance_.at(index); }
@@ -990,9 +988,9 @@ private:
   std::size_t nukeCursor_ = 0;
   int sinceSpawn_ = 0;
   // Elapsed release clock state for setups with releaseIntervalSeconds > 0.
-  double releaseElapsedSeconds_ = 0.0;  // real seconds since construction
+  double releaseElapsedSeconds_ = 0.0;  // Seconds advanced with release enabled.
   bool releaseArmed_ = false;
-  double releaseCountdown_ = 0.0;
+  std::vector<double> releaseCountdowns_;
   std::vector<int> spawnedByEntrance_;
   std::vector<SoundEvent> cues_;
   DeathObserver deathObserver_;

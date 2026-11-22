@@ -70,6 +70,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
 
   TubeScene scene;
   scene.mesh_ = mesh;
+  bool hasCounterGates = false;
   if (auto grid = findCollisionGrid(levelBytes)) {
     scene.collision_ = std::move(*grid);
     scene.haveCollision_ = true;
@@ -89,6 +90,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     }
     for (const auto& t : level.world.integer_triples)
       scene.counterGateCoordinates_.push_back({static_cast<int>(t[0]), static_cast<int>(t[1]), static_cast<int>(t[2])});
+    hasCounterGates = !level.gadgets.entities_424187.empty();
     const auto points = [](int first, int last, int stride) {
       std::vector<int> out{first};
       for (int p = (first / stride + 1) * stride; p < last; p += stride) out.push_back(p);
@@ -163,9 +165,22 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
   loadBlock(mesh.tileTextures, true, scene.outer_, scene.outerTileCount_);
   loadBlock(mesh.innerTileTextures, false, scene.inner_, scene.innerTileCount_);
 
-  // Build the load-time cell mesh when stored keys support it.
+  // Build the load-time cell mesh from the stored topology and gate stamps.
   if (scene.haveCollision_ && !grid0.empty()) {
-    if (auto built = buildCellMeshes(grid0, scene.counterGateCoordinates_, scene.collision_, scene.mesh_.surface.size())) {
+    std::vector<std::array<int, 3>> missingKeys;
+    const auto build = [&](std::span<const std::uint32_t> keys, std::vector<std::array<int, 3>>* missing) {
+      return buildCellMeshes(keys, scene.counterGateCoordinates_, scene.collision_, scene.mesh_.surface.size(), missing);
+    };
+    auto built = build(grid0, hasCounterGates ? &missingKeys : nullptr);
+    if (built && !missingKeys.empty()) {
+      // Stamping the gate rectangle can split nearby static faces at edges absent
+      // from the stored key table. Supply both layers as 0x43A31D would at mesh build.
+      scene.editKeys_.assign(grid0.begin(), grid0.end());
+      for (const auto& [x, y, layer] : missingKeys)
+        scene.ensureTerrainVertex(x, y, layer);
+      built = build(scene.editKeys_, nullptr);
+    }
+    if (built) {
       scene.cellMesh_ = std::move(*built);
     } else {
       scene.missing_.push_back(std::format("cell mesh: {}", built.error()));
@@ -1828,6 +1843,19 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
 }
 
 // Missing keys use bilinear cylinder vertices (0x43A31D, 0x43D2B8).
+bool TubeScene::ensureTerrainVertex(int x, int y, int layer) {
+  const std::size_t key = static_cast<std::size_t>(layer) + (x + y * 0x101) * 2;
+  if (key >= editKeys_.size() || editKeys_[key] != 0xFFFFFFFFu)
+    return false;
+  // 0x43D2B8 uses the template height stored as faceCount (112 in retail).
+  const auto vertex = cylinderTemplateVertex(mesh_, x, y, layer, static_cast<int>(mesh_.faceCount));
+  if (!vertex)
+    return false;
+  editKeys_[key] = static_cast<std::uint32_t>(mesh_.surface.size());
+  mesh_.surface.push_back(*vertex);
+  return true;
+}
+
 // The native per-block scan (0x4615E9) tests kCellFlag0x400, the gate and door stamp bit.
 // FUN_0043f510 clears cells; its mesh handoff is unresolved.
 // Provisional clone skill edits rebuild touched blocks with a one-cell
@@ -1890,18 +1918,8 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain, std::span<const sim::Co
     const int y0 = band * kRowsPerBlock;
     for (int layer = 0; layer < 2; ++layer)
       for (int y = std::max(0, y0 - 2); y <= std::min(h, y0 + kRowsPerBlock + 2); ++y)
-        for (int x = std::max(0, x0 - 2); x <= std::min(w, x0 + kColumnsPerBlock + 2); ++x) {
-          const std::size_t key = static_cast<std::size_t>(layer) + (x + y * 0x101) * 2;
-          if (key >= editKeys_.size() || editKeys_[key] != 0xFFFFFFFFu)
-            continue;
-          // 43D2B8 clamps with coordinate height world+28 (112, 43D2F9/43D334).
-          const auto v = cylinderTemplateVertex(mesh_, x, y, layer, static_cast<int>(mesh_.faceCount));
-          if (!v)
-            continue;
-          editKeys_[key] = static_cast<std::uint32_t>(mesh_.surface.size());
-          mesh_.surface.push_back(*v);
-          ++terrainVerticesAdded_;
-        }
+        for (int x = std::max(0, x0 - 2); x <= std::min(w, x0 + kColumnsPerBlock + 2); ++x)
+          if (ensureTerrainVertex(x, y, layer)) ++terrainVerticesAdded_;
   }
 
   const std::vector<std::pair<int, int>> blocks(dirty.begin(), dirty.end());

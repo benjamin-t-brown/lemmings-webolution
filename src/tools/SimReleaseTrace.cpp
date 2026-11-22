@@ -3,8 +3,8 @@
 //     [totalLemmings] [--real-seconds <armSeconds> <firstCountdownSeconds> <intervalSeconds>]
 // Supply the release interval in 200 ms ticks. LevelInfo does not select a RELEASERATE.PC row.
 // totalLemmings overrides the hatch count at hatch+0x98.
-// --real-seconds sets LevelSetup::releaseArmSeconds, releaseFirstCountdownSeconds and
-// releaseIntervalSeconds. Both modes require the positional releaseIntervalTicks.
+// --real-seconds sets the arm delay and first countdown. A positive interval overrides
+// the recurring cadence on single-hatch levels. Both modes require releaseIntervalTicks.
 // --continuous-stepper-clock sets LevelSetup::continuousStepperClock independently of hatch timing.
 // World::tick() releases State::Faller actors via World::spawn() using the hatch's facing.
 // Output CSV: tick,lemming_index,x,y,facing,state,spawned,saved,dead. spawned is the RELEASED count.
@@ -90,8 +90,8 @@ int main(int argc, char** argv) {
   }
   if (report->hatches.size() > 1) {
     std::cerr << "warning: " << levelName << ": " << report->hatches.size()
-              << " hatch records; the loader used the first for release timing"
-                 " (this tool traces one hatch's spawns; see RetailLevel.h)\n";
+              << " hatch records; elapsed timing uses each hatch's loaded interval."
+                 " The default trace population comes from the first hatch.\n";
   }
   const auto& h = report->hatches.front();
 
@@ -105,6 +105,9 @@ int main(int argc, char** argv) {
     setup.releaseArmSeconds = realSecondsArm;
     setup.releaseFirstCountdownSeconds = realSecondsFirst;
     setup.releaseIntervalSeconds = realSecondsInterval;
+    if (setup.entrances.size() == 1) {
+      setup.entrances.front().releaseIntervalSeconds = realSecondsInterval;
+    }
   }
   setup.continuousStepperClock = useContinuousStepperClock;
 

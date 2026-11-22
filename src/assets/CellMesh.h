@@ -14,7 +14,7 @@
 // quad at entry+8, gated by entry+0xF8, with open-top UVs and colour 255.
 // Cylinder chunk LevelIndex::grid0 is the 49,858-word u32[N] at world+0x42C (FUN_0043C930).
 // It maps (x, y, layer) to a surface index or 0xFFFFFFFF. MM_CLIMB_002 has 897 populated slots.
-// The R x 12 companion at world+0x43C (FUN_0043A1C6) is empty in retail levels.
+// The R x 12 companion at world+0x43C (FUN_0043A1C6) holds movable gate vertices.
 
 #pragma once
 
@@ -88,12 +88,14 @@ struct CellMeshes {
   }
 };
 
-// keyTable is LevelIndex::grid0. doorRecords is the FUN_0043A1C6 R x 12 (x, y, index) list,
-// empty in retail. surfaceVertexCount bounds the indices into CylinderMesh::surface.
+// keyTable is LevelIndex::grid0. doorRecords is the separate (x, y, index) list.
+// A caller with a writable vertex pool can collect missing (x, y, layer) keys
+// to supply on a second build, as the original creates them at 0x43A31D.
 std::expected<CellMeshes, std::string> buildCellMeshes(
     std::span<const std::uint32_t> keyTable,
     std::span<const std::array<std::int32_t, 3>> doorRecords,
-    const CollisionGrid& grid, std::size_t surfaceVertexCount);
+    const CollisionGrid& grid, std::size_t surfaceVertexCount,
+    std::vector<std::array<int, 3>>* missingKeys = nullptr);
 
 // Regenerate selected (bucket, band) cells with the per-cell rule in buildCellMeshes and recount quads.
 // Doors and gates invoke the original scan at 0x4615E9 via 0x462264.

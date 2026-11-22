@@ -1,5 +1,6 @@
 #include "app/FrameProfile.h"
 #include "app/SceneRaster.h"
+#include "app/ActorDepth.h"
 #include "app/RasterRows.h"
 
 #include <algorithm>
@@ -158,6 +159,7 @@ std::expected<void, std::string> rasterizeSceneTriangle(
       const double z = w0*a.screenZ + w1*b.screenZ + w2*c.screenZ;
       const std::size_t pos = static_cast<std::size_t>(y) * target.width + x;
       if (!depthPass(o.depthFunction, z, depth[pos])) continue;
+      if (o.actorDepth && !(z < o.actorDepth->depthAt(pos))) continue;
       const double u = (w0*a.u*a.rhw + w1*b.u*b.rhw + w2*c.u*c.rhw) / q;
       const double v = (w0*a.v*a.rhw + w1*b.v*b.rhw + w2*c.v*c.rhw) / q;
       if (!std::isfinite(u) || !std::isfinite(v) || std::abs(u) > 1.0e6 || std::abs(v) > 1.0e6)

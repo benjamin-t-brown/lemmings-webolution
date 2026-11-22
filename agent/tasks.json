@@ -35351,7 +35351,7 @@
     {
       "id": "teleport-occlusion-001",
       "title": "Teleport portal model and teleport effect draw with occlusion errors (playtest 29 U1)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "release-exe-name-001"
       ],
@@ -35365,12 +35365,183 @@
         "The report names the occlusion failure found on The Lone Ranger for the portal model and for the teleport effect, with before frames under build/, and cites the static evidence or labels the rule as provisional.",
         "After frames from the same views show the portal and the teleport effect drawn correctly against terrain, scenery and lemmings, with other gadgets and the opaque tube cache unchanged.",
         "Simulation is unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261122T195326-44268-3e28422a",
+      "started": "2026-11-22T19:53:26.717996+00:00",
+      "finished": "2026-11-22T20:06:14.052052+00:00",
+      "last_run": "build/agent-runs/20261122T195326-44268-3e28422a",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The matched frames verify the portal and shaft fixes against terrain and lemmings. The scenery audit found no overlap with primary or secondary props, and the fluid occlusion view has no matching before frame. Add a matched view that demonstrates scenery occlusion on the installed level. The affected replay reproduced and the supervisor smoke profile passed.",
+        "checks": [
+          {
+            "criterion": "The report names the occlusion failure found on The Lone Ranger for the portal model and for the teleport effect, with before frames under build/, and cites the static evidence or labels the rule as provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/teleport-occlusion-001.md",
+                "detail": "Identifies Playtest 29 U1 on The Lone Ranger, traces the rendering path, cites the original blend requests, and labels the clone depth rule provisional."
+              },
+              {
+                "path": "build/teleport-occlusion-001/before/s4450-y64-z0.png",
+                "detail": "The idle swirl replaces the background with black between its bright rings."
+              },
+              {
+                "path": "build/teleport-occlusion-001/before/s8770-y223-z1.png",
+                "detail": "The active shaft replaces the wall and obscures most of a lemming with an opaque blue rectangle."
+              },
+              {
+                "path": "build/teleport-occlusion-001/rea.json",
+                "detail": "Retained pseudocode and instructions for the registered reference agree on the base call at 0x00434ABB, the gated effect call at 0x00434B06, and the selector dispatch at 0x0043BDDD. The calls at 0x00414DD4 and 0x00414DEA request ONE/ONE for selector 2. The calls at 0x00414E02 and 0x00414E1E request SRCALPHA/ONE for selector 3."
+              }
+            ]
+          },
+          {
+            "criterion": "After frames from the same views show the portal and the teleport effect drawn correctly against terrain, scenery and lemmings, with other gadgets and the opaque tube cache unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/teleport-occlusion-001/after/s4450-y64-z0.png",
+                "detail": "At the same step, yaw and zoom, the background is visible between the portal rings."
+              },
+              {
+                "path": "build/teleport-occlusion-001/after/s8770-y223-z1.png",
+                "detail": "The matched close-up shows the wall through the shaft and the previously obscured lemming visibly tinted by the light."
+              },
+              {
+                "path": "build/teleport-occlusion-001/after/occlusion.tsv",
+                "detail": "At step 4610 and yaw 96, terrain blocks light at 282 pixels and foreground actors block light at 94 pixels. Nearer light tints eight actor pixels. Both depth layers are preserved across all 16 matched views."
+              },
+              {
+                "path": "build/teleport-occlusion-001/scenery-audit/occlusion.tsv",
+                "detail": "All 32 scanned yaws record zero occlusion by primary or secondary scenery. The yaw 184 fluid-stage result is a separate after-only comparison against a depth-bypassed control."
+              },
+              {
+                "path": "build/teleport-occlusion-001/production.diff",
+                "detail": "The new additive pass is restricted to teleport roots. The other legacy gadget dispatch and opaque tube cache build, invalidation and compositing code are unchanged."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation is unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-occlusion-001/production.diff",
+                "detail": "The patch changes renderer dispatch and raster options only. Simulation, gadget triggers and replay handling are untouched."
+              },
+              {
+                "path": "build/teleport-occlusion-001/MM_TELE_003-1795374979657686700-1.log",
+                "detail": "The only active promoted recording in the affected level set passed at step 12893 with its recorded result of 0/90 saved, won=0 and completed=0."
+              },
+              {
+                "path": "build/agent-runs/20261122T193555-44268-5f2fcc9e/verification.log",
+                "detail": "The supervisor passed 95 of 95 main smoke tests, including the installed-level sweep, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/teleport-occlusion-001.md",
+                "detail": "The report ends with a what-to-check note naming The Lone Ranger, the rotation and zoom actions during departure and arrival, and the expected occlusion."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The matched frames verify the portal and shaft fixes against terrain and lemmings. The scenery audit found no overlap with primary or secondary props, and the fluid occlusion view has no matching before frame. Add a matched view that demonstrates scenery occlusion on the installed level. The affected replay reproduced and the supervisor smoke profile passed.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revised evidence covers the missing scenery interaction on The Lone Ranger. Matched views show teleport light blending over the rock and reflection, and depth controls show the foreground fluid and tube wall covering far-side light. The promoted replay reproduced and the current supervisor smoke profile passed. The clone depth rule remains provisional.",
+        "checks": [
+          {
+            "criterion": "The report names the occlusion failure found on The Lone Ranger for the portal model and for the teleport effect, with before frames under build/, and cites the static evidence or labels the rule as provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/teleport-occlusion-001.md",
+                "detail": "Identifies Playtest 29 U1 on MM_TELE_003, node 38, traces both effects to the opaque legacy draw, and labels the clone depth rule provisional."
+              },
+              {
+                "path": "build/teleport-occlusion-001/before/s4450-y64-z0.png",
+                "detail": "The idle portal swirl replaces the background with black between its bright rings."
+              },
+              {
+                "path": "build/teleport-occlusion-001/before/s8770-y223-z1.png",
+                "detail": "The active shaft replaces the wall and obscures most of a lemming with an opaque blue rectangle."
+              },
+              {
+                "path": "build/teleport-occlusion-001/rea.json",
+                "detail": "Retained pseudocode and instructions agree on the base call at 0x00434ABB, gated FX call at 0x00434B06, and selector dispatch at 0x0043BDDD. The calls at 0x00414DD4 and 0x00414DEA request ONE/ONE for selector 2. The calls at 0x00414E02 and 0x00414E1E request SRCALPHA/ONE for selector 3."
+              }
+            ]
+          },
+          {
+            "criterion": "After frames from the same views show the portal and the teleport effect drawn correctly against terrain, scenery and lemmings, with other gadgets and the opaque tube cache unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-occlusion-001/after/s4450-y64-z0.png",
+                "detail": "The matched idle view shows the background between the portal rings."
+              },
+              {
+                "path": "build/teleport-occlusion-001/after/s8770-y223-z1.png",
+                "detail": "The matched departure close-up shows the wall through the shaft and the previously obscured lemming visibly tinted by the light."
+              },
+              {
+                "path": "build/teleport-occlusion-001/after/occlusion.tsv",
+                "detail": "At step 4610 and yaw 96, terrain blocks light at 282 pixels and foreground lemmings block it at 94 pixels. Nearer light tints eight actor pixels. Both depth layers are preserved across all 16 retained views."
+              },
+              {
+                "path": "build/teleport-occlusion-001/matched-scenery/samples.tsv",
+                "detail": "The matched step 8910 frames at yaw 168 and yaw 32 show the shaft tinting the primary Rock01 mesh and the secondary WaterRef01 reflection behind it. The pixel audit records the before, after, and unlit RGB for both surfaces. The paired scenery observed in overlap was behind the light."
+              },
+              {
+                "path": "build/teleport-occlusion-001/matched-scenery/fluid-depth.tsv",
+                "detail": "The matched step 8770, yaw 184 frames include the installed green foreground fluid. Depth-only controls show that either the fluid or tube wall independently hides the far-side shaft at 1,163 pixels. The step 8910, yaw 168 controls show the same relationship for the portal swirl."
+              },
+              {
+                "path": "build/teleport-occlusion-001/scenery_probe.cpp",
+                "detail": "The evidence probe renders the same replay step and camera for each pair. It reconstructs the old opaque material policy through the legacy dispatcher and uses the production teleport pass for the after frames. It draws the tube directly."
+              },
+              {
+                "path": "build/teleport-occlusion-001/production.diff",
+                "detail": "The additive pass is restricted to teleport roots. Other legacy gadgets keep their dispatch, solid portal bases keep their legacy draw, and the opaque tube cache retains its build, invalidation, and compositing paths."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation is unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-occlusion-001/production.diff",
+                "detail": "Changes are confined to renderer dispatch and raster options. The simulation, teleport triggers, and replay code are unchanged."
+              },
+              {
+                "path": "build/teleport-occlusion-001/review-MM_TELE_003-1795374979657686700-1.log",
+                "detail": "The stock clone CLI passed the only active promoted recording in the affected level set at step 12893, reproducing 0/90 saved, won=0, and completed=0."
+              },
+              {
+                "path": "build/agent-runs/20261122T195326-44268-3e28422a/verification.log",
+                "detail": "The current supervisor run built smoke_tests and passed 95 of 95 main smoke tests, including the installed-level sweep, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/teleport-occlusion-001.md",
+                "detail": "The final what-to-check note names The Lone Ranger and asks the player to rotate or zoom during departure and arrival to check the fluid bay, ledges, lemmings, and light tint."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T20:08:20.179775+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T195326-44268-3e28422a\\verification.log",
+        "verified_content": "b2574f6c6427522fcdc9b13a0c1f6fed30b30c01520a377028ee8a0301b884d9"
+      }
     },
     {
       "id": "teleport-hover-partner-001",
       "title": "Hovering a teleport highlights it and its sister portal (playtest 29 U2)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "teleport-occlusion-001"
       ],
@@ -35384,7 +35555,182 @@
         "Hovering a teleport portal brightens that portal and its linked partner and nothing else, shown by hover and away frame pairs on The Lone Ranger under build/, and moving off restores the unmarked frame.",
         "Lever, pressure pad, laser and sensor hover behave as before, a portal without a partner highlights only itself, and the report states the two-way pair and teleport effect choices.",
         "Simulation is unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261122T202408-44268-a5900692",
+      "started": "2026-11-22T20:24:08.917262+00:00",
+      "finished": "2026-11-22T20:30:23.220907+00:00",
+      "last_run": "build/agent-runs/20261122T202408-44268-a5900692",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The Lone Ranger frames show the requested highlight and clearing behavior. On installed level VH12_KF1, the retained probe found five visible portal samples where a switch's bounding box takes priority and prevents the portal from being picked. Give a visible portal fragment priority over a bounds-only switch hit, preserve the existing switch behavior elsewhere, and verify the overlap.",
+        "checks": [
+          {
+            "criterion": "Hovering a teleport portal brightens that portal and its linked partner and nothing else, shown by hover and away frame pairs on The Lone Ranger under build/, and moving off restores the unmarked frame.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/teleport-hover-partner-001/frames/MM_TELE_003-yaw-32-away.png",
+                "detail": "The unmarked frame shows both portals at opposite edges of the tube."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/frames/MM_TELE_003-yaw-32-portal-1-hover.png",
+                "detail": "The matching hover frame shows both exposed portal rings brightening."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/app_probe.log",
+                "detail": "The paused application probe recorded brightening near the partner from either direction and zero scene differences after moving away, with cursor and animated HUD regions masked."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/hover_probe.log",
+                "detail": "The per-pixel audit passed in both directions at yaw 30 and yaw 32 on The Lone Ranger. At yaw 64 on VH12_KF1, five sampled portal pixels hit existing switch bounds before the probe found a point that selected the portal."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/hover_probe.cpp",
+                "detail": "The probe draws its candidates from portal-owned pixels and skips each candidate that selects a switch with portal bindings omitted. The successful VH12_KF1 sample therefore excludes the overlap cases."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The lever and pad bounds checks can set the hover source before the portal code inspects the visible fragment under the pointer. That ordering explains why an overlapping switch rectangle masks a visible portal."
+              }
+            ]
+          },
+          {
+            "criterion": "Lever, pressure pad, laser and sensor hover behave as before, a portal without a partner highlights only itself, and the report states the two-way pair and teleport effect choices.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-hover-partner-001/switch_probe.log",
+                "detail": "The retained lever, pad and laser-switch views reproduce the earlier additive pixel counts."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The existing receiver lookup and occupancy-sensor callback remain in the switch path. A portal with a negative partner index adds only its own base to the selected roots."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/hover_probe.log",
+                "detail": "The synthetic unlinked Lone Ranger portal brightened 263 source pixels. The active-effect control preserved the RGB of all 239 visible shaft-owned pixels."
+              },
+              {
+                "path": "docs/scratch/teleport-hover-partner-001.md",
+                "detail": "The report explains that either end of a reciprocal pair brightens both bases and that the separate transient departure and arrival shafts keep their regular brightness."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/rea-static.json",
+                "detail": "Retained Ghidra output for the registered EXE shows the link field loaded at 0x00434BDC, looked up at 0x00434BE8 and stored at 0x00434BF3. The base draw at 0x00434ABB and the conditional FX submission at 0x00434B06 support the model distinction. These findings establish link and draw roles."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation is unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261122T200820-44268-a0f863ad/after-diff.txt",
+                "detail": "Compared with the task-entry diff, the added production changes are confined to presentation bindings, raster ownership tracking and image composition. The simulation and input assignment paths retain their existing calls."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/MM_TELE_003-1795374979657686700-1.log",
+                "detail": "The only active promoted recording among the 18 teleport levels passed at step 12893 with the recorded 0/90 saved, won=0 and completed=0."
+              },
+              {
+                "path": "build/agent-runs/20261122T200820-44268-a0f863ad/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/teleport-hover-partner-001.md",
+                "detail": "The final note names The Lone Ranger, asks the playtester to hover each exposed portal and move away, and gives the expected brightening and clearing behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The Lone Ranger frames show the requested highlight and clearing behavior. On installed level VH12_KF1, the retained probe found five visible portal samples where a switch's bounding box takes priority and prevents the portal from being picked. Give a visible portal fragment priority over a bounds-only switch hit, preserve the existing switch behavior elsewhere, and verify the overlap.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision fixes all five reproduced portal and switch overlap points on Green with Envy while preserving the visible pad highlight. The Lone Ranger frames confirm that either portal brightens the pair and that moving away clears the highlight. The affected promoted replay reproduced, and the supervisor smoke profile passed.",
+        "checks": [
+          {
+            "criterion": "Hovering a teleport portal brightens that portal and its linked partner and nothing else, shown by hover and away frame pairs on The Lone Ranger under build/, and moving off restores the unmarked frame.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-hover-partner-001/priority/frames/MM_TELE_003-yaw-32-away.png",
+                "detail": "The yaw 32 baseline shows the exposed rings of both linked portals at opposite edges of the tube."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/priority/frames/MM_TELE_003-yaw-32-portal-1-hover.png",
+                "detail": "Hovering portal 1 brightens both exposed rings relative to the matching away frame."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/priority/frames/MM_TELE_003-yaw-32-portal-3-hover.png",
+                "detail": "Hovering portal 3 produces the same pair highlight from the other end."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/priority/hover_priority_probe.log",
+                "detail": "The RGB audit verified both hover directions at yaw 30 and 32, with changes confined to the two portal owners. At all five Green with Envy overlap points, the visible portal takes priority over the switch bounds and brightens only its own 125 pixels and its one-way destination's 380 pixels."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/priority/app_probe.log",
+                "detail": "In the paused application, moving away after hovering both portals restored the baseline with zero differences outside the masked cursor and animated HUD regions. The Out icon and skill plate controls also cleared the portal highlight."
+              }
+            ]
+          },
+          {
+            "criterion": "Lever, pressure pad, laser and sensor hover behave as before, a portal without a partner highlights only itself, and the report states the two-way pair and teleport effect choices.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "A visible portal fragment wins over switch bounds. Elsewhere the function keeps lever-first and pad-second selection, the laser switch's pad binding, receiver lookup, and the occupancy-sensor callback. An unlinked portal adds only its own root to the highlight targets."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/priority/switch_probe.log",
+                "detail": "The lever, pad and laser-switch controls reproduced their retained highlight pixel counts, including changes on visible gate and counter-gate receivers."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/priority/hover_priority_probe.log",
+                "detail": "The visible pad on Green with Envy produced identical highlights with and without portal bindings. The synthetic unlinked Lone Ranger portal brightened only its own 263 pixels. All 239 visible shaft-owned pixels kept their RGB during portal hover."
+              },
+              {
+                "path": "docs/scratch/teleport-hover-partner-001.md",
+                "detail": "The report states that either end of a reciprocal pair lights both bases, including their idle rings. A one-way link follows its immediate destination. The transient departure and arrival shafts retain their regular brightness as a provisional clone choice."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/rea-static.json",
+                "detail": "Retained instructions for the registered EXE show the link field load at 0x00434BDC, lookup at 0x00434BE8 and store at 0x00434BF3. The base draw call at 0x00434ABB and conditional FX submission at 0x00434B06 support the model distinction. The findings establish link and draw roles."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation is unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261122T202408-44268-a5900692/after-diff.txt",
+                "detail": "Compared with the task-entry diff, the task changes are confined to presentation bindings, raster ownership tracking and frame composition. The simulation and skill-assignment call paths are unchanged."
+              },
+              {
+                "path": "build/teleport-hover-partner-001/priority/MM_TELE_003-1795374979657686700-1.log",
+                "detail": "The stock clone CLI reported PASS and exit 0 for the sole active promoted recording on the 18 teleport levels. The recording reproduced its endpoint at step 12893 with 0/90 saved, won=0 and completed=0."
+              },
+              {
+                "path": "build/agent-runs/20261122T202408-44268-a5900692/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests for this revision."
+              },
+              {
+                "path": "docs/scratch/teleport-hover-partner-001.md",
+                "detail": "The report ends with the handoff and a what-to-check note. It gives the levels, views, pointer actions, and expected brightening and clearing for The Lone Ranger and the switch overlap on Green with Envy."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T20:32:19.858401+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T202408-44268-a5900692\\verification.log",
+        "verified_content": "350e79c2d73fdbc52e5cf4676e49644460593c09f0643462d8ca10849b0df40b"
+      }
     }
   ]
 }

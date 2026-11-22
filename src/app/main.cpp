@@ -770,9 +770,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         a.height == b.height && a.cx == b.cx && a.cy == b.cy && a.selectorTurns == b.selectorTurns;
   };
   const bool darkBlueSky = backdrop && resolvedLevel->id == "MM_ALL_8_001";
-  const bool trackSwitchHover = args.sim &&
+  using TeleportHoverBindings = std::span<const app::GadgetPresentation::TeleportHoverBinding>;
+  const auto teleportHover = gadgetPresentation ? TeleportHoverBindings{gadgetPresentation->teleportHover} :
+                                                  TeleportHoverBindings{};
+  const bool trackSceneHover = args.sim &&
       ((leverPresentation && !leverPresentation->bindings.empty()) ||
-       (pressurePadPresentation && !pressurePadPresentation->bindings.empty()));
+       (pressurePadPresentation && !pressurePadPresentation->bindings.empty()) || !teleportHover.empty());
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target, bool scenePrepared = false) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
     const auto frameCamera = app::buildCamera(frameParams);
@@ -824,7 +827,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             }
           },
          [&] {
-           target.trackSceneHighlights(trackSwitchHover);
+           target.trackSceneHighlights(trackSceneHover);
            if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
                app::BackdropScene::Stage::LegacyUnattributed);
          },
@@ -849,7 +852,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
              if (!tubeCache || tubeCache->framebuffer().width != frameCamera.width ||
                  tubeCache->framebuffer().height != frameCamera.height) {
                tubeCache.emplace(frameCamera.width, frameCamera.height);
-               tubeCache->trackSceneHighlights(trackSwitchHover);
+               tubeCache->trackSceneHighlights(trackSceneHover);
              }
              tubeCache->clear(0, 0, 0);
              tubeCache->resetDrawCounts();
@@ -919,6 +922,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (options.drawCellRoute && !options.composeActorsBeforeRoute)
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
     scene->drawDeathParticles(target, frameCamera, *library, options.pipeSceneDepth);
+    if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
+        app::BackdropScene::Stage::TeleportEffect);
 #ifndef __EMSCRIPTEN__
     if (logLevelDetails && !args.sceneOff) {
       std::fprintf(stderr, "backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu "
@@ -1701,10 +1706,22 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           image = toImage(windowRaster.framebuffer());
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
           const bool canHover = focused && !menuOpen() && !dragButton && panelIndex < 0;
+          const auto hudCells = shell::fontCells();
+          const auto hudLines = shell::layoutHud(app::runtimeHudValues(*world), {}, hudCells);
+          const bool pointerOnHud = !teleportHover.empty() && canHover && pointerInWindow &&
+              (std::ranges::any_of(hudIcons, [&](const auto& icon) {
+                const auto& rect = icon.placement;
+                return app::pointerOverSceneBounds(pointerX, pointerY, rect.destX, rect.destY,
+                    rect.destX + rect.width, rect.destY + rect.height);
+              }) || std::ranges::any_of(hudLines, [&](const auto& line) {
+                const auto box = shell::lineBox(line, hudCells);
+                return app::pointerOverSceneBounds(pointerX, pointerY, box.x0, box.y0, box.x1, box.y1);
+              }));
           const bool switchHover = canHover && pointerInWindow && backdrop &&
             backdrop->drawSwitchHover(image, displayedCamera, windowRaster, world->setup(),
                 leverPresentation ? &*leverPresentation : nullptr,
-                pressurePadPresentation ? &*pressurePadPresentation : nullptr, pointerX, pointerY,
+                pressurePadPresentation ? &*pressurePadPresentation : nullptr,
+                pointerOnHud ? TeleportHoverBindings{} : teleportHover, pointerX, pointerY,
                 [&](const sim::OccupancySensor& sensor) {
                   scene->drawHoveredSensor(image, displayedCamera, windowRaster, sensor);
                 });
@@ -1749,7 +1766,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                                      &*panelIconAnimation);
           for (std::size_t i = 0; i < hudIcons.size(); ++i)
             app::compositeIconRegion(image, runtimeHudIcons[i], hudIcons[i].placement);
-          app::drawRuntimeHud(image, *runtimeFont, *world, false);
+          shell::drawHud(image, *runtimeFont, hudLines, hudCells);
           app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
           // Draw a countdown over each lemming with a lit fuse.
           if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),

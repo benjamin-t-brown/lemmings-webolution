@@ -10,19 +10,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- teleport-occlusion-001: **ready** — Teleport portal model and teleport effect draw with occlusion errors (playtest 29 U1)
-- teleport-hover-partner-001: **ready** — Hovering a teleport highlights it and its sister portal (playtest 29 U2)
 
 ## Recently completed queue entries
 
-- particle-tuning-001: Fewer brown explosion particles and longer dig and mine debris throws (playtest 27 S3, S4)
-  Accepted: 2026-11-22T09:20:55.250696+00:00
-  Verification evidence: `build/agent-runs/20261122T090708-14116-034aec37/verification.log`
-  Verification evidence: `build\agent-runs\20261122T090708-14116-034aec37\verification.log`
-- load-missing-keys-001: Load-time cell mesh creates missing key vertices on every level, as 0x43A31D does (playtest 27 S2 follow-up)
-  Accepted: 2026-11-22T17:05:22.111893+00:00
-  Verification evidence: `build/agent-runs/20261122T092055-14116-b5dfb4f8/verification.log`
-  Verification evidence: `build\agent-runs\20261122T092055-14116-b5dfb4f8\verification.log`
 - level-music-start-001: Level music starts at once on Try again; the original waits for the title cue (playtest 28 T1)
   Accepted: 2026-11-22T17:22:21.793823+00:00
   Verification evidence: `build/agent-runs/20261122T170522-46400-840a02ad/verification.log`
@@ -35,14 +25,22 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-22T17:50:52.249810+00:00
   Verification evidence: `build/agent-runs/20261122T174609-46400-a3e654c4/verification.log`
   Verification evidence: `build\agent-runs\20261122T174609-46400-a3e654c4\verification.log`
+- teleport-occlusion-001: Teleport portal model and teleport effect draw with occlusion errors (playtest 29 U1)
+  Accepted: 2026-11-22T20:08:20.179775+00:00
+  Verification evidence: `build/agent-runs/20261122T195326-44268-3e28422a/verification.log`
+  Verification evidence: `build\agent-runs\20261122T195326-44268-3e28422a\verification.log`
+- teleport-hover-partner-001: Hovering a teleport highlights it and its sister portal (playtest 29 U2)
+  Accepted: 2026-11-22T20:32:19.858401+00:00
+  Verification evidence: `build/agent-runs/20261122T202408-44268-a5900692/verification.log`
+  Verification evidence: `build\agent-runs\20261122T202408-44268-a5900692\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-3e04d2db3b4c4bee82cc01a22f993f60/result.json`
+- Result: `build/agent-runs/loop-61557c473400430eae54881cef831563/result.json`
 - Status: **blocked**
-- Duration: 0h 50m 07s
-- Completed in this invocation: load-missing-keys-001, level-music-start-001, rate-hold-speed-001, release-exe-name-001
-- Reason: The queue has 210 done tasks, four blocked records, and no planning-required placeholder. Both Playtest 28 defects have accepted fixes, and the recorded Playtest 26 and 27 fixes on How do we get up there! await human confirmation. The next playable-v1 dependency is a human playtest of that level from the ordinary map, through the lower striped gate to results and, after a win, a restart to confirm that the map retains completion. The retained gate evidence establishes restored actor visibility, 
+- Duration: 0h 57m 41s
+- Completed in this invocation: teleport-occlusion-001, teleport-hover-partner-001
+- Reason: The latest playtest items, U1 and U2 on The Lone Ranger, both have accepted production fixes. Its promoted recording ended at 0/90 before those fixes and identifies no separate gameplay defect. The next dependency is human play on the corrected build to confirm both fixes and continue the level. The queue has no planning-required placeholder, and the ledgers provide no new unparked production defect to schedule. Playable v1 stands at 37 of 102 human wins. Full completion still requires the final
 
 ## Documentation handoff
 

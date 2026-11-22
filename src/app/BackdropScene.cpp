@@ -590,8 +590,10 @@ std::expected<GadgetPresentation,std::string> BackdropScene::gadgetPresentation(
        const auto& e=level.gadgets.entities_4347ec.at(owned.source.entityIndex);
        b.simIndex=teleIndices.at(owned.source.entityIndex);
        b.samples={e.names[2],e.names[3]};
-       if(owned.source.owner=="teleport-base")model=&*e.model;
-       else {
+       if(owned.source.owner=="teleport-base"){
+         model=&*e.model;
+         result.teleportHover.push_back({i,partners.at(owned.source.entityIndex)});
+       }else {
          b.fxSide=owned.source.owner=="teleport-fx-0"?0:1;
          model=&e.models_1c8_1cc[b.fxSide];
          // 43540C/435467 move FX to the owning entity and set heading
@@ -1117,12 +1119,16 @@ std::optional<PickBox> BackdropScene::exitHoverTarget(
 
 bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
     const sim::LevelSetup& level, const LeverPresentation* levers,
-    const PressurePadPresentation* pads, int pointerX, int pointerY,
+    const PressurePadPresentation* pads,
+    std::span<const GadgetPresentation::TeleportHoverBinding> teleports, int pointerX, int pointerY,
     const std::function<void(const sim::OccupancySensor&)>& drawSensor) const {
   const auto pixels = raster.highlightPixels();
   if (pixels.empty() || pixels.size() != image.rgba.size() / 4 ||
       image.width != camera.width || image.height != camera.height) return false;
-  if ((!levers || levers->bindings.empty()) && (!pads || pads->bindings.empty())) return false;
+  if ((!levers || levers->bindings.empty()) && (!pads || pads->bindings.empty()) &&
+      teleports.empty()) return false;
+  if (!pointerOverSceneBounds(pointerX, pointerY, 0, 0, camera.width, camera.height))
+    return false;
   const auto context = predicateContext(camera);
   const auto pick = [&](std::size_t root) {
     const auto bounds = visibleMeshBounds(roots_[root].node, camera, raster.depthBuffer(), context);
@@ -1130,11 +1136,21 @@ bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, con
                                             bounds->right, bounds->bottom);
   };
 
+  std::optional<std::size_t> hovered;
+  auto portal = teleports.end();
+  if (!teleports.empty()) {
+    // A visible portal fragment takes priority over switch bounds, including
+    // idle ring fragments that do not write scene depth.
+    const auto owner = pixels[std::size_t(pointerY) * camera.width + pointerX].owner;
+    if (owner.kind == SceneHighlightKind::BackdropRoot)
+      portal = std::ranges::find(teleports, owner.index, &GadgetPresentation::TeleportHoverBinding::root);
+    if (portal != teleports.end()) hovered = portal->root;
+  }
+
   // Clone addition. Read both lever lists so the control can be identified
   // in either position. A laser switch shares the one-shot pad binding.
-  std::optional<std::size_t> hovered;
   std::span<const sim::LeverMessage> first, second;
-  if (levers) for (const auto& binding : levers->bindings) {
+  if (!hovered && levers) for (const auto& binding : levers->bindings) {
     if (!pick(binding.root)) continue;
     hovered = binding.root;
     const auto lever = std::ranges::find_if(level.levers, [&](const auto& entry) {
@@ -1152,6 +1168,12 @@ bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, con
     const auto pad = std::ranges::find(level.pressurePads, binding.id, &sim::PressurePad::id);
     if (pad != level.pressurePads.end()) first = pad->messages;
     break;
+  }
+  if (!hovered) {
+    portal = std::ranges::find_if(teleports, [&](const auto& binding) {
+      return roots_[binding.root].visible && pick(binding.root);
+    });
+    if (portal != teleports.end()) hovered = portal->root;
   }
   if (!hovered) return false;
 
@@ -1171,6 +1193,10 @@ bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, con
         targets.push_back({SceneHighlightKind::BackdropRoot, i});
     }
   };
+  // Follow one outgoing link. Departure and arrival shafts are transient
+  // effects with their own roots; the hover identifies the portal bases.
+  if (portal != teleports.end() && portal->partnerEntityIndex >= 0)
+    model("entities_4347ec", portal->partnerEntityIndex);
   std::vector<std::uint32_t> sensors;
   const auto addReceiver = [&](const sim::ObjectRef& ref) {
     const auto index = static_cast<std::uint32_t>(ref.index);
@@ -1224,6 +1250,7 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
   renderStage(target,camera,lib,stats,Stage::FluidPipe);
   renderStage(target,camera,lib,stats,Stage::FluidGate);
   renderStage(target,camera,lib,stats,Stage::Secondary);
+  renderStage(target,camera,lib,stats,Stage::TeleportEffect);
 }
 // Update the parsed base model copy with 0x0042B24D's animation and
 // 0x0042C5C9's normal sign. The 0x428848 table supplies constants and
@@ -1338,9 +1365,11 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
 void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer,std::vector<double>* depthOutput) const {
  if(stage==Stage::FluidGate){renderFluid(target,camera,stats,observer);return;}
  const bool gadgetEffectPass = stage == Stage::GadgetEffect;
+ const bool teleportEffectPass = stage == Stage::TeleportEffect;
  const auto includesRoot = [&](const OwnedRoot& root) {
    if (gadgetEffectPass)
      return root.source.owner == "tagged-gravity" || root.source.owner == "tagged-pressure-pad";
+   if (teleportEffectPass) return root.visible && root.source.owner.starts_with("teleport-");
    return root.source.stage == stage;
  };
  if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(), includesRoot)) return;
@@ -1363,7 +1392,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    };own(own,root.node);
  }
  const auto highlightOwner = [&](std::size_t node) -> SceneHighlightId {
-   if (fb.highlights.empty() || (stage != Stage::LegacyUnattributed && !gadgetEffectPass)) return {};
+   if (fb.highlights.empty() || (stage != Stage::LegacyUnattributed && !gadgetEffectPass && !teleportEffectPass)) return {};
    return {SceneHighlightKind::BackdropRoot,
            static_cast<std::uint32_t>(nodeOwners.at(node) - roots_.data())};
  };
@@ -1379,7 +1408,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    if(name.empty()) return nullptr;
    auto it=textures.find(name);if(it!=textures.end())return &it->second;
    auto img=loadTexture(lib,"TEXTURES\\"+name+".BMP");if(!img){++stats.missingTextures;diagnose(describe(node,source)+"missing texture "+name+": "+img.error());return nullptr;}
-   if (gadgetEffectPass && name == gravityShaftMaterial) {
+   if ((gadgetEffectPass && name == gravityShaftMaterial) ||
+       (teleportEffectPass && textureNameFlags(name) == 4)) {
      // The flag-4 alpha surface upload (0x473A8D) sets alpha on nonzero
      // words. Give the black rows zero alpha before bilinear filtering.
      for (std::size_t p = 0; p < img->rgba.size(); p += 4) {
@@ -1401,6 +1431,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     const auto& root = owned.node;
     const bool gravityRoot = owned.source.owner == "tagged-gravity";
     const bool pressurePadRoot = owned.source.owner == "tagged-pressure-pad";
+    const bool teleportRoot = owned.source.owner.starts_with("teleport-");
     if (stage == Stage::Primary) ++stats.roots;
     // The primary pass counts all owned roots. Later passes visit only their own.
     // Local facing depends on ancestors within the owned root.
@@ -1433,6 +1464,10 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
             : rec.blendSelector == 2 && flags == 0 && !rec.materialName.empty();
         if (additiveEffect != gadgetEffectPass) continue;
       }
+      if (teleportRoot) {
+        const bool additiveEffect = rec.blendSelector == 2 || rec.blendSelector == 3;
+        if (additiveEffect != teleportEffectPass) continue;
+      }
       if (stage == Stage::Secondary) secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));
       else if (stage == Stage::Primary) primaryMeshes.push_back(std::move(rec));
       else legacyMeshes.push_back(std::move(rec));
@@ -1450,6 +1485,14 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
       // mask other glow or actors. Native device depth state is inherited.
       if (gravityEffect) state.depthWrite = false;
       if (textureNameFlags(rec.materialName) == 0) state.alphaOperation = SceneAlphaOperation::SelectTexture;
+    } else if (teleportEffectPass) {
+      const auto flags = textureNameFlags(rec.materialName);
+      state = blendOptions((flags & 3) != 0, rec.blendSelector);
+      if ((flags & (4 | 16)) == 0) state.alphaOperation = SceneAlphaOperation::SelectTexture;
+      // Provisional clone occlusion for additive light. Solids and actor
+      // silhouettes can hide it, and the light leaves both depths intact.
+      state.depthWrite = false;
+      state.actorDepth = &target.actorDepth();
     } else if (rec.materialName.starts_with(mineBackdropMaterials)) {
       const auto flags = textureNameFlags(rec.materialName);
       state = blendOptions((flags & 3) != 0, rec.blendSelector);

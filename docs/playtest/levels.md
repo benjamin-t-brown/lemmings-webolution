@@ -49,7 +49,7 @@ under docs/playtest/replays/. Won so far: 37 of 102.
 | 35 | H02_JC_1 | How do we get up there! | ok |  |  | playtest 26 R1, R2; playtest 27 S1 |
 | 36 | E07_JC_1 | There`s only one way down! | ok | playtest 27 | pass |  |
 | 37 | M02_MG_1 | What a Fantastic Pair of Birds | ok | playtest 28 | pass |  |
-| 38 | MM_TELE_003 | The Lone Ranger | ok |  |  |  |
+| 38 | MM_TELE_003 | The Lone Ranger | ok |  |  | playtest 29 U1, U2 |
 | 39 | M03_mg_1 | Swarthy Seadogs! | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab, deathroller |
 | 40 | E17_KF_1 | Build 'em up ....then bring em down | ok |  |  |  |
 | 41 | M01_KF_1 | Love train boogie | ok |  |  |  |

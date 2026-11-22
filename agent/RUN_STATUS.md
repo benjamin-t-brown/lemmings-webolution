@@ -10,6 +10,8 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
+- teleport-occlusion-001: **ready** — Teleport portal model and teleport effect draw with occlusion errors (playtest 29 U1)
+- teleport-hover-partner-001: **ready** — Hovering a teleport highlights it and its sister portal (playtest 29 U2)
 
 ## Recently completed queue entries
 

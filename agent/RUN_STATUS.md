@@ -12,6 +12,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
 - metal-wall-occlusion-001: **ready** — Lemmings crossing the metal wall are invisible on How do we get up there! (playtest 27 S1)
 - particle-tuning-001: **ready** — Fewer brown explosion particles and longer dig and mine debris throws (playtest 27 S3, S4)
+- load-missing-keys-001: **ready** — Load-time cell mesh creates missing key vertices on every level, as 0x43A31D does (playtest 27 S2 follow-up)
 
 ## Recently completed queue entries
 

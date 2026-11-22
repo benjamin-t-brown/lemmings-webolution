@@ -34601,6 +34601,25 @@
         "Before and after clone framebuffer sequences under build/ show a Bomber explosion with far fewer, brown particles and its body pieces and crater chunks kept, and Digger and Miner debris flying visibly further, for the same views and times.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "load-missing-keys-001",
+      "title": "Load-time cell mesh creates missing key vertices on every level, as 0x43A31D does (playtest 27 S2 follow-up)",
+      "status": "ready",
+      "depends_on": [
+        "particle-tuning-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 27 S2 follow-up (docs/playtest/2026-11-21-playtest-27.md): the user asked for an edited test level to compare the original and the clone. The lead edited Just Dig (MM_DIG_000) by adding earth cells to the collision grid (build/lead/ceiling-test/make_test_level.py, which writes a patch.box with an edited COMPILED/MM_DIG_000.LVL from an installed game directory). The clone treats the new cells as solid but draws nothing for them: TubeScene::build (src/app/TubeScene.cpp, the load-time cell mesh block) passes the missing-key list to buildCellMeshes only when the level has counter gates (hasCounterGates, added by gate-top-glitch-001), so cells whose corner keys are absent from the stored grid0 key table get no faces. The original creates a missing vertex on demand while it builds the mesh (0x43A31D get or create by layer and (x + y*0x101)*2; src/assets/CellMesh.h). A lead-only build with the condition removed draws the slabs (build/lead/ceiling-test/build_clone_test.py). Make the load-time missing-key pass apply to every level, following 0x43A31D, and check the static evidence for any condition the original applies (cite addresses; REA static profile). Count the missing keys per installed level before and after (a census under build/); on installed levels without counter gates it is expected to be zero, in which case their frames are unchanged; explain any installed level where it is not. Presentation only: collision, simulation and replays are unchanged. Evidence: the census, clone framebuffers under build/ of the edited Just Dig (generate the patch.box under build/<task-id>/ with make_test_level.py from the registered installation; never write the installation) showing the added slabs drawn after and absent before, and the level sweep frames of installed levels unchanged. Difficulty: routine. Recommended model: Sonnet. Reason: a one-condition change on an accepted load path with a census. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the production call path changed and the 0x43A31D evidence, and gives a census under build/ of missing load-time keys per installed level before and after with any nonzero installed level explained.",
+        "Clone framebuffers under build/ of the edited Just Dig show the added earth slabs drawn after the change and absent before, and the level sweep frames of installed levels are unchanged or each difference is explained.",
+        "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

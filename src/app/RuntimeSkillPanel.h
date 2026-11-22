@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/HoverFeedback.h"
 #include "app/SkillPanel.h"
 #include "assets/GameData.h"
 #include "sim/World.h"
@@ -10,19 +11,22 @@
 
 namespace webo::app {
 
-// Provisional clone input uses the clicked hatch's limits on the shared rate.
 class RuntimeReleaseRateControl {
  public:
   static std::expected<RuntimeReleaseRateControl, std::string> create(
       const AssetLibrary& library, std::string_view levelId);
   // SDL button numbers: conventional button 0/1 native state maps to left/right.
+  // The target queries return positions in the displayed target span.
+  static std::optional<std::size_t> pressTarget(std::span<const HatchHoverTarget> targets,
+      int x, int y, int button, bool actorCanReceiveSkill);
+  std::optional<std::size_t> heldTarget(std::span<const HatchHoverTarget> targets,
+                                       int x, int y) const;
   bool press(std::optional<std::size_t> hatch, int button, sim::World& world);
   void release(int button) { if (button == heldButton_) reset(); }
   void reset() { heldButton_ = 0; heldHatch_.reset(); repeatSeconds_ = 0; }
-  void advance(double seconds, std::optional<std::size_t> hatch, sim::World& world);
+  bool advance(double seconds, std::span<const HatchHoverTarget> targets,
+               int x, int y, sim::World& world);
   bool holding() const { return heldButton_ != 0; }
-  int current() const { return current_; }
-  std::size_t rateHatch() const { return rateHatch_; }
   std::size_t hatchCount() const { return limits_.size(); }
   int minimum(std::size_t hatch = 0) const { return limits_.at(hatch)[0]; }
   int maximum(std::size_t hatch = 0) const { return limits_.at(hatch)[1]; }
@@ -31,8 +35,7 @@ class RuntimeReleaseRateControl {
   ReleaseRates rates_;
   std::vector<std::array<int, 2>> limits_;
   std::optional<std::size_t> heldHatch_;
-  std::size_t rateHatch_ = 0;
-  int current_ = 1, heldButton_ = 0;
+  int heldButton_ = 0;
   double repeatSeconds_ = 0;
 };
 

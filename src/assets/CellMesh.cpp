@@ -58,8 +58,8 @@ struct Gap {
 class Builder {
  public:
   Builder(std::span<const std::uint32_t> table, const CollisionGrid& grid,
-          bool preserveSteel = false)
-      : table_(table), grid_(grid), preserveSteel_(preserveSteel) {
+          bool preserveSteel = false, std::vector<std::array<int, 3>>* missingKeys = nullptr)
+      : table_(table), grid_(grid), preserveSteel_(preserveSteel), missingKeys_(missingKeys) {
     touched_.assign(table.size(), 0);
     for (std::size_t i = 0; i < table.size(); ++i)
       if (table[i] != 0xFFFFFFFFu)
@@ -92,11 +92,13 @@ class Builder {
       touched_[key] = 1;
     if (key < table_.size() && table_[key] != 0xFFFFFFFFu)
       return table_[key];
+    if (missingKeys_ && key < table_.size())
+      missingKeys_->push_back({x, y, layer});
     ++unresolved_;
     return 0;
   }
 
-  // FUN_0043A1C6: the (x, y) record list at world+0x43C. Empty in retail.
+  // FUN_0043A1C6: the movable (x, y) record list at world+0x43C.
   std::uint32_t vertexDoor(int x, int y) {
     for (const auto& rec : records_)
       if (rec[0] == x && rec[1] == y)
@@ -503,6 +505,7 @@ class Builder {
   std::span<const std::uint32_t> table_;
   const CollisionGrid& grid_;
   bool preserveSteel_ = false;
+  std::vector<std::array<int, 3>>* missingKeys_;
   std::vector<char> touched_;
   std::size_t keySlots_ = 0;
   std::size_t unresolved_ = 0;
@@ -552,7 +555,8 @@ std::expected<CellMeshCell, std::string> buildOneCell(Builder& builder, int buck
 std::expected<CellMeshes, std::string> buildCellMeshes(
     std::span<const std::uint32_t> keyTable,
     std::span<const std::array<std::int32_t, 3>> doorRecords,
-    const CollisionGrid& grid, std::size_t surfaceVertexCount) {
+    const CollisionGrid& grid, std::size_t surfaceVertexCount,
+    std::vector<std::array<int, 3>>* missingKeys) {
   if (keyTable.empty())
     return std::unexpected("cell mesh: the level has no (x, y, layer) key table");
   if (grid.height <= 0 || grid.cells.empty())
@@ -562,7 +566,7 @@ std::expected<CellMeshes, std::string> buildCellMeshes(
         std::format("cell mesh: grid height {} is not a multiple of {}",
                     grid.height, kRowsPerBand));
 
-  Builder builder(keyTable, grid);
+  Builder builder(keyTable, grid, false, missingKeys);
   builder.setRecords(doorRecords);
   CellMeshes out;
   const int bands = grid.height / kRowsPerBand;

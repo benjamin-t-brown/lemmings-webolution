@@ -23,6 +23,7 @@ SceneRasterVertex billboardRasterVertex(const BillboardVertex& slot,
 std::expected<SceneRasterVertex, std::string> adaptPackedSceneMeshVertex(
     double screenX, double screenY, double physicalViewZ,
     double projectionScale, double sourceBias,
-    std::array<double, 4> diffuse, double u, double v);
+    std::array<double, 4> diffuse, double u, double v,
+    std::array<double, 2> materialUvOffset = {});
 
 }  // namespace webo::app

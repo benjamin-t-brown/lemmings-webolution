@@ -57,6 +57,9 @@ bool pathIsInside(const std::filesystem::path& candidate, const std::filesystem:
 
 // <localAppData>/LemmingsWebolution/SavedGame.dat
 std::filesystem::path cloneSavePathUnder(const std::filesystem::path& localAppData);
+// XDG base directory selection with environment values supplied by the caller.
+std::expected<std::filesystem::path, std::string> xdgDataDirectory(
+    const std::filesystem::path& xdgDataHome, const std::filesystem::path& home);
 // %LOCALAPPDATA% on Windows (XDG_DATA_HOME or ~/.local/share elsewhere).
 std::expected<std::filesystem::path, std::string> localAppDataDirectory();
 // Use the clone's per-user path and reject paths inside the installation.

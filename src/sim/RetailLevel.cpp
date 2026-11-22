@@ -385,21 +385,16 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     return std::unexpected(file + ": rat records: " + e.what());
   }
 
-  // Provisional shared cadence: every nonempty hatch releases on the same tick,
-  // with its own stored population.
   const int kTicksPerSecond = World::Rules{}.ticksPerSecond;  // 5 Hz clone clock.
+  s.releaseFirstCountdownSeconds = 1.3; // 0x004B0F48.
+  s.releaseArmSeconds = 0.723061695938398;  // Provisional for all installed levels (MM_CLIMB_002 basis).
+  // Provisional capacity floor: reserve ordinary entry time and two updates
+  // for arming and final release. Player adjustments still use stored bounds.
+  const double startup = std::max(5.0, s.releaseArmSeconds) + s.releaseFirstCountdownSeconds +
+                         2.0 / kTicksPerSecond;
   for (const auto& h : objs->hatches) {
-    const auto [cx, cy] = webo::hatchSpawnCell(h, grid->width, grid->height);
-    Entrance e;
-    e.x = cx;
-    e.y = cy;
-    e.source = Entrance::Source::HatchWords;
-    e.sheetType = h.type;
-    e.releaseCount = h.count;
-    e.direction = h.direction;
-    e.alternateDirection = h.alternateDirection;
-    s.entrances.push_back(e);
-
+    if (h.rateMin < 1 || h.rateMax > static_cast<int>(rateTable->size()) || h.rateMin > h.rateMax)
+      return std::unexpected(file + ": invalid stored hatch rate limits");
     RetailHatchSummary hs;
     hs.count = h.count;
     hs.x = h.x;
@@ -411,40 +406,37 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     hs.clampedRate = std::clamp(h.rate, h.rateMin, h.rateMax);
     hs.rateOutsideClamp = h.rate < h.rateMin || h.rate > h.rateMax;
     hs.intervalSeconds = rateTable->secondsPerLemming(hs.clampedRate);
+    hs.initialRate = hs.clampedRate;
+    if (objs->hatches.size() > 1 && info->timeLimitSeconds > 0 && h.count > 1) {
+      while (hs.initialRate < h.rateMax &&
+             startup + (h.count - 1) * rateTable->secondsPerLemming(hs.initialRate) >=
+                 info->timeLimitSeconds)
+        ++hs.initialRate;
+    }
     report.hatches.push_back(hs);
+
+    const auto [cx, cy] = webo::hatchSpawnCell(h, grid->width, grid->height);
+    Entrance e;
+    e.x = cx;
+    e.y = cy;
+    e.source = Entrance::Source::HatchWords;
+    e.sheetType = h.type;
+    e.releaseCount = h.count;
+    e.direction = h.direction;
+    e.alternateDirection = h.alternateDirection;
+    e.releaseRate = hs.initialRate;
+    e.releaseIntervalSeconds = rateTable->secondsPerLemming(e.releaseRate);
+    e.releaseIntervalTicks = rateTable->intervalTicks(e.releaseRate, kTicksPerSecond);
+    s.entrances.push_back(e);
   }
 
-  const RetailHatchSummary& primary = report.hatches.front();
-  // The first hatch supplies the shared RELEASERATE.PC row. The one-time
-  // seed is 1.3 seconds (0x004B0F48).
-  s.releaseFirstCountdownSeconds = 1.3;
-  s.releaseArmSeconds = 0.723061695938398;  // Provisional for all installed levels (MM_CLIMB_002 basis).
-  s.releaseIntervalSeconds = primary.intervalSeconds;
-  s.releaseIntervalTicks =
-      rateTable->intervalTicks(primary.clampedRate, kTicksPerSecond);
+  s.releaseIntervalSeconds = s.entrances.front().releaseIntervalSeconds;
+  s.releaseIntervalTicks = s.entrances.front().releaseIntervalTicks;
 
   // Read the rescue total, save target and time limit from LEVELMAP.DAT.
   s.totalLemmings = static_cast<int>(info->totalLemmings);
   s.saveTarget = static_cast<int>(info->saveTarget);
   s.timeLimitTicks = static_cast<int>(info->timeLimitSeconds) * kTicksPerSecond;
-
-  report.initialSharedRate = primary.clampedRate;
-  if (s.entrances.size() > 1 && info->timeLimitSeconds > 0) {
-    int largestQuota = 0;
-    for (const auto& e : s.entrances) largestQuota = std::max(largestQuota, e.releaseCount);
-    // Provisional release-rate floor: choose the slowest allowed shared rate that
-    // fits the largest quota. VH21_JC's 49-actor hatch cannot empty at rate 1
-    // in 210 seconds. Reserve five seconds for entry and two 5 Hz updates for
-    // arming and final release. Preserve the player's rate bounds.
-    const double startup = std::max(5.0, s.releaseArmSeconds) + s.releaseFirstCountdownSeconds +
-                           2.0 / kTicksPerSecond;
-    while (report.initialSharedRate < primary.rateMax && largestQuota > 1 &&
-           startup + (largestQuota - 1) * rateTable->secondsPerLemming(report.initialSharedRate) >=
-               info->timeLimitSeconds)
-      ++report.initialSharedRate;
-    s.releaseIntervalSeconds = rateTable->secondsPerLemming(report.initialSharedRate);
-    s.releaseIntervalTicks = rateTable->intervalTicks(report.initialSharedRate, kTicksPerSecond);
-  }
 
   // 0x426C6B reads tribe from exit +0x98 after the spatial base. Type 4 accepts
   // every tribe. Correlate triggers with records in stream order.

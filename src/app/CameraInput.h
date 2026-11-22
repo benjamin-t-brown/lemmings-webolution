@@ -27,8 +27,9 @@ class PendingCameraEvents {
     zoomPose_ = pose;
   }
   void flip() { flip_ = true; }
+  void clearMouse() { dx_ = dy_ = 0.0; }
   void clear() {
-    dx_ = dy_ = 0.0;
+    clearMouse();
     zoom_ = flip_ = false;
     zoomPose_.reset();
   }

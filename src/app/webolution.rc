@@ -1,0 +1,4 @@
+#include "AppIconResource.h"
+
+// Clone application icon.
+WEBOLUTION_APP_ICON_ID ICON "app/icon/webolution.ico"

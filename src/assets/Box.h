@@ -22,6 +22,10 @@ namespace webo {
 // Stored names use uppercase and backslashes. Lookups accept either case or separator.
 std::string normaliseAssetName(std::string_view name);
 
+// Resolve the filename against regular files in its parent directory, ignoring ASCII case.
+// An exact match takes priority. Return the input path if no matching file is found.
+std::filesystem::path resolveGameDataFile(const std::filesystem::path& path);
+
 class Box {
 public:
   struct Entry {
@@ -75,6 +79,9 @@ public:
   static std::expected<AssetLibrary, std::string> open(
       const std::filesystem::path& base,
       const std::filesystem::path& patch = {});
+  // The player-facing setup requires both archives and checks the payload layout.
+  static std::expected<AssetLibrary, std::string> openRequired(
+      const std::filesystem::path& base, const std::filesystem::path& patch);
 
   std::expected<std::vector<std::byte>, std::string> read(std::string_view name) const;
   bool contains(std::string_view name) const;

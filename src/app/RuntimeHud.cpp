@@ -17,24 +17,24 @@ int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index)
   return static_cast<int>(std::max(0LL, quota(std::max(0, total)) - quota(std::clamp(spawned, 0, std::max(0, total)))));
 }
 
-std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> targets, int x, int y) {
-  for (std::size_t i = 0; i < targets.size(); ++i) {
-    const auto& h = targets[i];
-    if (pointerOverSceneBounds(x, y, h.left, h.top, h.right, h.bottom)) return i;
-  }
-  return std::nullopt;
+namespace {
+shell::HudLine hoverCountLine(const Image& image, std::span<const shell::GlyphCell> cells,
+                             int count, int left, int right, int y) {
+  shell::HudLine line{shell::counterText(count), 0, 0, {255,255,255}};
+  const int width = shell::textWidth(line.text, cells);
+  line.x = std::clamp((left+right-width)/2, 0, std::max(0, image.width-width));
+  line.y = std::clamp(y, 0, std::max(0, image.height-shell::kLineHeight));
+  return line;
 }
+}  // namespace
 
 void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
                     std::optional<int> adjustingRate) {
   const auto cells = shell::fontCells();
   // The clone displays remaining population. Native 0x454B95 passes release rate.
-  shell::HudLine line{shell::counterText(h.remaining), 0, 0, {255,255,255}};
-  const int width = shell::textWidth(line.text, cells);
   // 454C34..454C64 centres text on projected hatch Y - (44 << mode).
   // Provisional 640x480 display uses ^Font, mesh centre and viewport clamping.
-  line.x = std::clamp((h.left+h.right-width)/2, 0, std::max(0, image.width-width));
-  line.y = std::clamp((h.top+h.bottom)/2 - 44, 0, std::max(0, image.height-shell::kLineHeight));
+  auto line = hoverCountLine(image, cells, h.remaining, h.left, h.right, (h.top+h.bottom)/2 - 44);
   shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
   // Keep the rate visible while the player holds a hatch button to adjust it.
   if (adjustingRate) {
@@ -47,6 +47,15 @@ void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
     line.colour = {255,232,96};
     shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
   }
+}
+
+void drawExitHover(Image& image, const Image& font, const PickBox& box, int saveTarget) {
+  const auto cells = shell::fontCells();
+  // Clone addition. Put the level's save target just above the visible model.
+  const int above = box.top - shell::kLineHeight - 4;
+  const auto line = hoverCountLine(image, cells, saveTarget, box.left, box.right,
+                                   above >= 0 ? above : box.bottom + 4);
+  shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
 }
 
 void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world, bool armed) {
@@ -84,17 +93,22 @@ void drawRuntimeHud(webo::Image& frame, const webo::Image& font,
 }
 
 void RuntimeSimState::togglePause() {
-  paused_ = !paused_;
+  setPause(paused() ? Pause::Playing : Pause::Standard);
+}
+
+void RuntimeSimState::toggleExaminePause() {
+  setPause(examining() ? Pause::Playing : Pause::Examine);
+}
+
+void RuntimeSimState::setPause(Pause pause) {
+  if (pause_ == pause) return;
+  pause_ = pause;
   clock_ = SimClock{};
   carryMs_ = 0.0;
 }
 
 void RuntimeSimState::resume() {
-  if (paused_) {
-    paused_ = false;
-    clock_ = SimClock{};
-    carryMs_ = 0.0;
-  }
+  setPause(Pause::Playing);
 }
 
 bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion,
@@ -104,7 +118,7 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
 
 bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion,
                                      const std::function<void()>& afterTick, int stallCapMs, bool releaseEnabled) {
-  if (paused_) return false;
+  if (paused()) return false;
   if (trackCompletion && end_.phase() == LevelEndPhase::Results) return false;
   // Integer milliseconds with the sub-ms fraction carried (the epsilon absorbs the binary
   // representation of values such as 0.016 s).
@@ -150,7 +164,7 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
 
 bool RuntimeSimState::advance(sim::World& world, double elapsedSeconds, bool trackCompletion,
                               const std::function<void()>& afterTick) {
-  if (paused_) return false;
+  if (paused()) return false;
   // 0x45DB0E-0x45DD5C selects 1 or the pass count at 0x4B15F8 (7).
   // Each pass gives the full frame delta to SimClock, with its own tick cap.
   const int passes = fastForward_ ? kFastForwardPasses : 1;

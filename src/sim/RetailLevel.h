@@ -1,8 +1,7 @@
 // Load a LevelSetup from the original .LVL, LEVELMAP.DAT and RELEASERATE.PC.
 // Missing hatch records or Exit*.a3d placements are load errors.
-// Provisional scheduler: each shared tick serves every nonempty hatch.
-// Preserve per-hatch quotas and use LevelInfo.totalLemmings for the level total.
-// The first hatch supplies the rate and bounds. The time limit can raise the initial rate.
+// Keep each hatch's quota, rate and bounds. The time limit can raise the
+// initial rate of a hatch on multi-hatch levels.
 
 #pragma once
 
@@ -31,13 +30,13 @@ struct RetailHatchSummary {
   int clampedRate = 0;            // rate clamped into [rateMin, rateMax]
   bool rateOutsideClamp = false;  // the stored rate itself, before clamping
   double intervalSeconds = 0.0;   // ReleaseRates::secondsPerLemming(clampedRate)
+  int initialRate = 0;            // Effective rate, including the provisional capacity floor.
 };
 
 // Level data and loader diagnostics.
 struct RetailLevelReport {
   LevelSetup setup;
-  int initialSharedRate = 1; // Effective shared rate, including the provisional capacity floor.
-  // Hatches in stream order. The first supplies the shared rate and bounds.
+  // Hatches in stream order, parallel to setup.entrances.
   std::vector<RetailHatchSummary> hatches;
   // Tagged type-1 levers pair with placements by pose. The diagnostic
   // records why serialized gadget links could not be applied.

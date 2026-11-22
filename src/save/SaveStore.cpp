@@ -26,15 +26,17 @@ namespace {
 
 constexpr std::uintmax_t kMaxReadableSize = 1u << 20;
 
-std::wstring comparisonKey(const fs::path& path) {
+fs::path::string_type comparisonKey(const fs::path& path) {
   std::error_code ec;
   fs::path resolved = fs::weakly_canonical(path, ec);
   if (ec) resolved = fs::absolute(path, ec).lexically_normal();
-  std::wstring key = resolved.generic_wstring();
-  while (key.size() > 1 && key.back() == L'/') key.pop_back();
 #ifdef _WIN32
+  auto key = resolved.generic_wstring();
   for (auto& ch : key) ch = static_cast<wchar_t>(std::towlower(static_cast<wint_t>(ch)));
+#else
+  auto key = resolved.generic_string();
 #endif
+  while (key.size() > 1 && key.back() == '/') key.pop_back();
   return key;
 }
 
@@ -59,8 +61,9 @@ std::expected<void, std::string> replaceFile(const fs::path& from, const fs::pat
 bool pathIsInside(const fs::path& candidate, const fs::path& directory) {
   if (directory.empty()) return false;
   const auto c = comparisonKey(candidate), d = comparisonKey(directory);
+  if (d.empty()) return false;
   if (c == d) return true;
-  return c.size() > d.size() && c.compare(0, d.size(), d) == 0 && (d.back() == L'/' || c[d.size()] == L'/');
+  return c.size() > d.size() && c.compare(0, d.size(), d) == 0 && (d.back() == '/' || c[d.size()] == '/');
 }
 
 FileSaveSink::FileSaveSink(fs::path target, fs::path installedGameDir)
@@ -140,6 +143,12 @@ fs::path cloneSavePathUnder(const fs::path& localAppData) {
   return localAppData / "LemmingsWebolution" / "SavedGame.dat";
 }
 
+std::expected<fs::path, std::string> xdgDataDirectory(const fs::path& xdgDataHome, const fs::path& home) {
+  if (xdgDataHome.is_absolute()) return xdgDataHome;
+  if (home.is_absolute()) return home / ".local" / "share";
+  return std::unexpected("neither XDG_DATA_HOME nor HOME is set to an absolute path");
+}
+
 std::expected<fs::path, std::string> localAppDataDirectory() {
 #ifdef _WIN32
   const DWORD needed = GetEnvironmentVariableW(L"LOCALAPPDATA", nullptr, 0);
@@ -150,9 +159,9 @@ std::expected<fs::path, std::string> localAppDataDirectory() {
   value.resize(copied);
   return fs::path(value);
 #else
-  if (const char* xdg = std::getenv("XDG_DATA_HOME"); xdg && *xdg) return fs::path(xdg);
-  if (const char* home = std::getenv("HOME"); home && *home) return fs::path(home) / ".local" / "share";
-  return std::unexpected("neither XDG_DATA_HOME nor HOME is set");
+  const char* xdg = std::getenv("XDG_DATA_HOME");
+  const char* home = std::getenv("HOME");
+  return xdgDataDirectory(xdg ? xdg : "", home ? home : "");
 #endif
 }
 

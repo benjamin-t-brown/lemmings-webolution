@@ -65,4 +65,7 @@ HudLine captionLine(const CaptionParams& p = {});
 void drawCaption(webo::Image& target, const webo::Image& sheet, std::span<const GlyphCell> cells,
                  const CaptionParams& p = {});
 
+// Clone addition. Centre both lines in the logical viewport before window scaling.
+void drawExamineCaption(webo::Image& target, const webo::Image& sheet, std::span<const GlyphCell> cells);
+
 }  // namespace webo::shell

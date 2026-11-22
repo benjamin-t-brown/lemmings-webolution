@@ -5,6 +5,12 @@ project(webolution
   DESCRIPTION "Open reimplementation of Lemmings Revolution"
   LANGUAGES CXX)
 
+set(WEBOLUTION_VERSION "${PROJECT_VERSION}-dev" CACHE STRING "Build version shown to players")
+if(NOT WEBOLUTION_VERSION MATCHES "^[0-9A-Za-z][0-9A-Za-z.+-]*$")
+  message(FATAL_ERROR "WEBOLUTION_VERSION must contain only version characters")
+endif()
+add_compile_definitions(WEBOLUTION_VERSION_STRING="${WEBOLUTION_VERSION}")
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -45,29 +51,34 @@ target_link_libraries(webolution_objects PUBLIC
 target_compile_options(webolution_objects PUBLIC
   $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
 
-# GCC's std::print/println live in libstdc++exp until it migrates to the main
-# library. Harmless to link when unused; required the moment anyone uses them.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_link_libraries(webolution_objects PUBLIC stdc++exp)
+# The native rasterizer uses std::thread and condition variables.
+if(NOT EMSCRIPTEN)
+  set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+  find_package(Threads REQUIRED)
+  target_link_libraries(webolution_objects PUBLIC Threads::Threads)
 endif()
 
 # ---- SDL2 -----------------------------------------------------------------
 # Emscripten supplies its own SDL2 via -sUSE_SDL=2, so it is not searched for.
 
 if(NOT EMSCRIPTEN)
-  find_package(SDL2 QUIET)
-  if(NOT SDL2_FOUND)
+  # SDL_RenderGetWindow and SDL_HINT_VIDEODRIVER first appeared in SDL 2.0.22.
+  set(WEBOLUTION_MIN_SDL2_VERSION 2.0.22)
+  find_package(SDL2 ${WEBOLUTION_MIN_SDL2_VERSION} QUIET CONFIG)
+  if(NOT TARGET SDL2::SDL2)
     find_package(PkgConfig QUIET)
     if(PkgConfig_FOUND)
-      pkg_check_modules(SDL2 IMPORTED_TARGET sdl2)
+      pkg_check_modules(SDL2 IMPORTED_TARGET "sdl2>=${WEBOLUTION_MIN_SDL2_VERSION}")
     endif()
   endif()
 endif()
 
 set(WEBOLUTION_HAVE_SDL2 FALSE)
-if(EMSCRIPTEN OR SDL2_FOUND)
+if(EMSCRIPTEN OR TARGET SDL2::SDL2 OR TARGET PkgConfig::SDL2)
   set(WEBOLUTION_HAVE_SDL2 TRUE)
 endif()
+set_source_files_properties(src/app/GameDataLocation.cpp PROPERTIES
+  COMPILE_DEFINITIONS WEBOLUTION_HAVE_SDL2=$<BOOL:${WEBOLUTION_HAVE_SDL2}>)
 
 # Production audio: the mixer and the cue adapter are compiled into the shared
 # object library, so SDL2 reaches every executable that links it. Emscripten
@@ -93,6 +104,7 @@ include(cmake/webolution_app.cmake)
 add_executable(webolution src/app/main.cpp)
 target_link_libraries(webolution PRIVATE webolution_app)
 target_link_libraries(webolution PRIVATE webolution_objects)
+set(webolution_icon_png "${CMAKE_CURRENT_SOURCE_DIR}/src/app/icon/webolution.png")
 
 if(WEBOLUTION_HAVE_SDL2)
   target_compile_definitions(webolution PRIVATE WEBOLUTION_HAVE_SDL2=1)
@@ -103,6 +115,65 @@ if(WEBOLUTION_HAVE_SDL2)
   endif()
 else()
   target_compile_definitions(webolution PRIVATE WEBOLUTION_HAVE_SDL2=0)
+endif()
+
+if(NOT EMSCRIPTEN AND (WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/release/main/LICENSE")
+    set(release_docs "${CMAKE_CURRENT_SOURCE_DIR}/release/main")
+  else()
+    set(release_docs "${CMAKE_CURRENT_SOURCE_DIR}")
+  endif()
+  install(TARGETS webolution RUNTIME DESTINATION .)
+endif()
+
+if(WIN32 AND NOT EMSCRIPTEN)
+  enable_language(RC)
+  set(file_version "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0")
+  if(WEBOLUTION_VERSION MATCHES "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)([-+]|$)")
+    set(version_components "${CMAKE_MATCH_1};${CMAKE_MATCH_2};${CMAKE_MATCH_3}")
+    set(fits_file_version TRUE)
+    foreach(component IN LISTS version_components)
+      if(component GREATER 65535)
+        set(fits_file_version FALSE)
+      endif()
+    endforeach()
+    if(fits_file_version)
+      list(JOIN version_components "," file_version)
+      string(APPEND file_version ",0")
+    endif()
+  endif()
+  configure_file(src/app/Version.rc.in webolution-version.rc @ONLY)
+  target_sources(webolution PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/webolution-version.rc" src/app/webolution.rc)
+  set_source_files_properties(src/app/webolution.rc PROPERTIES
+    OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/app/AppIconResource.h;${CMAKE_CURRENT_SOURCE_DIR}/src/app/icon/webolution.ico")
+  if(WEBOLUTION_HAVE_SDL2)
+    target_sources(webolution PRIVATE src/app/WindowsWindowIcon.cpp)
+    target_compile_definitions(webolution PRIVATE WEBOLUTION_WINDOWS_ICON=1)
+  endif()
+
+  get_filename_component(toolchain_bin "${CMAKE_CXX_COMPILER}" DIRECTORY)
+  string(CONFIGURE [=[
+    if(POLICY CMP0207)
+      cmake_policy(SET CMP0207 NEW)
+    endif()
+    set(CMAKE_GET_RUNTIME_DEPENDENCIES_TOOL "objdump")
+    set(CMAKE_GET_RUNTIME_DEPENDENCIES_COMMAND "@CMAKE_OBJDUMP@")
+    file(GET_RUNTIME_DEPENDENCIES
+      EXECUTABLES "$<TARGET_FILE:webolution>"
+      DIRECTORIES "@toolchain_bin@"
+      RESOLVED_DEPENDENCIES_VAR runtime_dlls
+      PRE_EXCLUDE_REGEXES "^api-ms-" "^ext-ms-"
+      POST_EXCLUDE_REGEXES "[/\\\\][Ss][Yy][Ss][Tt][Ee][Mm]32[/\\\\]")
+    if(runtime_dlls)
+      file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}" TYPE FILE FILES ${runtime_dlls})
+    endif()
+  ]=] runtime_install_code @ONLY)
+  install(CODE "${runtime_install_code}")
+  install(FILES "${release_docs}/packaging/windows/README.txt" "${release_docs}/LICENSE"
+    DESTINATION .)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  install(FILES "${release_docs}/packaging/linux/README.txt" "${release_docs}/LICENSE"
+    DESTINATION .)
 endif()
 
 if(EMSCRIPTEN)
@@ -123,11 +194,13 @@ if(EMSCRIPTEN)
     "--js-library=${web_dir}/web-audio.js")
   set(web_files "${web_dir}/webolution.html" "${web_dir}/web-game-data.mjs" "${web_dir}/isolate.js")
   set_property(TARGET webolution APPEND PROPERTY LINK_DEPENDS
-    "${web_dir}/node-mount.js" "${web_dir}/web-audio.js" ${web_files})
+    "${web_dir}/node-mount.js" "${web_dir}/web-audio.js" ${web_files} "${webolution_icon_png}")
   add_custom_command(TARGET webolution POST_BUILD
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/webolution.wasm" "${CMAKE_CURRENT_BINARY_DIR}/webolution.html"
       "${CMAKE_CURRENT_BINARY_DIR}/web-game-data.mjs" "${CMAKE_CURRENT_BINARY_DIR}/isolate.js"
+      "${CMAKE_CURRENT_BINARY_DIR}/favicon.png"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${web_files} "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${webolution_icon_png}" "${CMAKE_CURRENT_BINARY_DIR}/favicon.png"
     VERBATIM)
 endif()
 

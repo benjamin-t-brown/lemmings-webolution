@@ -16,26 +16,33 @@ std::expected<RuntimeReleaseRateControl, std::string> RuntimeReleaseRateControl:
   const auto& hatches = report->hatches;
   if (hatches.empty()) return std::unexpected("release control: no hatch record");
   RuntimeReleaseRateControl control;
-  for (const auto& hatch : hatches) {
-    if (hatch.rateMin < 1 || hatch.rateMax > static_cast<int>(rates->size()) || hatch.rateMin > hatch.rateMax)
-      return std::unexpected("release control: invalid stored rate limits");
+  for (const auto& hatch : hatches)
     control.limits_.push_back({hatch.rateMin, hatch.rateMax});
-  }
   control.rates_ = std::move(*rates);
-  // Display the loader's effective value, including the provisional multi-hatch rate floor.
-  control.current_ = report->initialSharedRate;
   return control;
 }
 
 void RuntimeReleaseRateControl::change(std::size_t hatch, int delta, sim::World& world) {
-  const int rate = std::clamp(current_ + delta, minimum(hatch), maximum(hatch));
-  if (rate == current_) return;
-  current_ = rate;
-  rateHatch_ = hatch;
-  // Provisional clone scheduling shares one rate across hatches and applies the
-  // clicked hatch's limits. 425DE3 changes +A0 and interval +B8 without resetting +C0.
-  world.setReleaseInterval(rates_.secondsPerLemming(rate),
-                           rates_.intervalTicks(rate, world.rules().ticksPerSecond));
+  const int current = world.setup().entrances.at(hatch).releaseRate;
+  const int rate = std::clamp(current + delta, minimum(hatch), maximum(hatch));
+  // 453A42..453AAF passes the selected hatch to 425DE3, which leaves +C0 alone.
+  if (rate != current)
+    world.setHatchReleaseRate(hatch, rate, rates_.secondsPerLemming(rate),
+                             rates_.intervalTicks(rate, world.rules().ticksPerSecond));
+}
+
+std::optional<std::size_t> RuntimeReleaseRateControl::pressTarget(
+    std::span<const HatchHoverTarget> targets, int x, int y, int button, bool actorCanReceiveSkill) {
+  // Provisional clone precedence: a valid left-click assignment takes priority.
+  // The right button can adjust a hatch even when an actor is eligible.
+  if (button != 3 && (button != 1 || actorCanReceiveSkill)) return std::nullopt;
+  return hoveredHatch(targets, x, y);
+}
+
+std::optional<std::size_t> RuntimeReleaseRateControl::heldTarget(
+    std::span<const HatchHoverTarget> targets, int x, int y) const {
+  if (!heldHatch_) return std::nullopt;
+  return hoveredHatch(targets, x, y, heldHatch_);
 }
 
 bool RuntimeReleaseRateControl::press(std::optional<std::size_t> hatch, int button, sim::World& world) {
@@ -49,10 +56,13 @@ bool RuntimeReleaseRateControl::press(std::optional<std::size_t> hatch, int butt
   return true;
 }
 
-void RuntimeReleaseRateControl::advance(double seconds, std::optional<std::size_t> hatch, sim::World& world) {
-  if (!heldButton_) return;
-  if (hatch != heldHatch_) { reset(); return; }
-  if (!std::isfinite(seconds) || seconds <= 0) return;
+bool RuntimeReleaseRateControl::advance(double seconds, std::span<const HatchHoverTarget> targets,
+                                        int x, int y, sim::World& world) {
+  if (!heldButton_) return false;
+  if (!heldTarget(targets, x, y)) { reset(); return false; }
+  if (!std::isfinite(seconds) || seconds <= 0) return false;
+  const auto& hatch = world.setup().entrances.at(*heldHatch_);
+  const int previous = hatch.releaseRate;
   // Provisional clone repeat steps immediately, waits 0.4 s, then repeats
   // every 0.1 s in real time. Native repeats on input updates.
   repeatSeconds_ += std::min(10.0, seconds);
@@ -60,6 +70,7 @@ void RuntimeReleaseRateControl::advance(double seconds, std::optional<std::size_
     change(*heldHatch_, heldButton_ == 1 ? -1 : 1, world);
     repeatSeconds_ -= 0.1;
   }
+  return hatch.releaseRate != previous;
 }
 
 

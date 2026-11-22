@@ -70,6 +70,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
 
   TubeScene scene;
   scene.mesh_ = mesh;
+  bool hasCounterGates = false;
   if (auto grid = findCollisionGrid(levelBytes)) {
     scene.collision_ = std::move(*grid);
     scene.haveCollision_ = true;
@@ -89,6 +90,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     }
     for (const auto& t : level.world.integer_triples)
       scene.counterGateCoordinates_.push_back({static_cast<int>(t[0]), static_cast<int>(t[1]), static_cast<int>(t[2])});
+    hasCounterGates = !level.gadgets.entities_424187.empty();
     const auto points = [](int first, int last, int stride) {
       std::vector<int> out{first};
       for (int p = (first / stride + 1) * stride; p < last; p += stride) out.push_back(p);
@@ -163,9 +165,22 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
   loadBlock(mesh.tileTextures, true, scene.outer_, scene.outerTileCount_);
   loadBlock(mesh.innerTileTextures, false, scene.inner_, scene.innerTileCount_);
 
-  // Build the load-time cell mesh when stored keys support it.
+  // Build the load-time cell mesh from the stored topology and gate stamps.
   if (scene.haveCollision_ && !grid0.empty()) {
-    if (auto built = buildCellMeshes(grid0, scene.counterGateCoordinates_, scene.collision_, scene.mesh_.surface.size())) {
+    std::vector<std::array<int, 3>> missingKeys;
+    const auto build = [&](std::span<const std::uint32_t> keys, std::vector<std::array<int, 3>>* missing) {
+      return buildCellMeshes(keys, scene.counterGateCoordinates_, scene.collision_, scene.mesh_.surface.size(), missing);
+    };
+    auto built = build(grid0, hasCounterGates ? &missingKeys : nullptr);
+    if (built && !missingKeys.empty()) {
+      // Stamping the gate rectangle can split nearby static faces at edges absent
+      // from the stored key table. Supply both layers as 0x43A31D would at mesh build.
+      scene.editKeys_.assign(grid0.begin(), grid0.end());
+      for (const auto& [x, y, layer] : missingKeys)
+        scene.ensureTerrainVertex(x, y, layer);
+      built = build(scene.editKeys_, nullptr);
+    }
+    if (built) {
       scene.cellMesh_ = std::move(*built);
     } else {
       scene.missing_.push_back(std::format("cell mesh: {}", built.error()));
@@ -416,7 +431,7 @@ std::array<double, 2> builderPackAnchor(const SpriteFrame& frame, const Image& s
 
 // Rasterize the brick before the body so the hands cover it. Native
 // 410C0E/410E78 build a terrain-textured mesh. The provisional clone cuboid
-// grows at the pack and moves to the target cells in a scratch raster.
+// grows at the pack and turns into the target cells in a scratch raster.
 void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
     const ActorPoseLevel& level, const CameraBasis& camera,
     const SceneOptions::InjectedNativeWalker& w, const Texture& texture,
@@ -425,25 +440,38 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
   profile::Scope profileBrick(profile::BuilderBrick);
   const auto shape = builderBrickShape(w.builderPhase);
   if (shape.scale <= 0.0 || w.builderLength <= 0) return;
-  const double x0 = w.builderX + (w.facing > 0 ? 1 : -w.builderLength);
+  const int x0 = w.builderX + (w.facing > 0 ? 1 : -w.builderLength);
   const double targetX = x0 + w.builderLength * 0.5;
   const double targetY = w.builderY + 0.5;
-  const double centreX = std::lerp(w.plus8X, targetX, shape.travel);
+  constexpr double cylinderColumns = 256.0;
+  const double centreX = w.plus8X + std::remainder(targetX - w.plus8X, cylinderColumns) * shape.travel;
   const double centreY = std::lerp(targetY, w.plus8Y + 5.0 * w.verticalDir, shape.lift);
   const double centreZ = std::lerp(w.plus8Z, 0.5, shape.travel);
+  const auto modelPosition = [&](double x, double y, double z) {
+    x -= std::floor(x / cylinderColumns) * cylinderColumns;
+    const auto p = actorPoseFromCylinderSample(level, {x, y, z}, w.facing).modelPosition;
+    return Vec3{p[0], p[1], p[2]};
+  };
+  const auto centre = modelPosition(centreX, centreY, centreZ);
+  const double radius = std::hypot(centre.x, centre.z);
+  if (radius <= 0.0) return;
+  const Vec3 inward{-centre.x / radius, 0, -centre.z / radius};
+  const auto rotation = builderBrickRotation(shape.travel, w.facing, w.verticalDir);
   std::array<std::array<double, 4>, 8> vertices;
   for (int i = 0; i < 8; ++i) {
-    const ActorTerrainSample sample{
-        centreX + ((i & 1) ? 0.5 : -0.5) * w.builderLength * shape.scale,
-        centreY + ((i & 2) ? 0.5 : -0.5) * shape.scale,
-        centreZ + ((i & 4) ? 0.5 : -0.5) * shape.scale};
-    const auto p = actorPoseFromCylinderSample(level, sample, w.facing).modelPosition;
-    if (!project(camera, {p[0], p[1], p[2]}, vertices[i])) return;
+    const auto corner = modelPosition(centreX + ((i & 1) ? 0.5 : -0.5) * w.builderLength,
+                                      centreY + ((i & 2) ? 0.5 : -0.5),
+                                      centreZ + ((i & 4) ? 0.5 : -0.5));
+    // Rotate in model units: a full slab is much thicker than one grid row.
+    const auto offset = rotation.apply({(corner.x - centre.x) * shape.scale,
+                                        (corner.y - centre.y) * shape.scale,
+                                        (corner.z - centre.z) * shape.scale}, inward);
+    if (!project(camera, {centre.x + offset.x, centre.y + offset.y, centre.z + offset.z},
+                 vertices[i])) return;
   }
-  const auto packWorld = actorPoseFromCylinderSample(level,
-      {w.plus8X, w.plus8Y + 5.0 * w.verticalDir, w.plus8Z}, w.facing).modelPosition;
+  const auto packWorld = modelPosition(w.plus8X, w.plus8Y + 5.0 * w.verticalDir, w.plus8Z);
   std::array<double, 4> projectedPack;
-  if (!project(camera, {packWorld[0],packWorld[1],packWorld[2]}, projectedPack)) return;
+  if (!project(camera, packWorld, projectedPack)) return;
   double minY = vertices[0][1], maxY = minY;
   for (const auto& v : vertices) { minY = std::min(minY,v[1]); maxY = std::max(maxY,v[1]); }
   // Keep the emerging brick against the pack rather than floating above it.
@@ -451,21 +479,42 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
   const double dx = (pack[0] - projectedPack[0]) * (1.0 - shape.travel);
   const double dy = (pack[1] - w.verticalDir * (maxY-minY) * 0.4 - projectedPack[1]) * shape.lift;
   for (auto& v : vertices) { v[0] += dx; v[1] += dy; }
-  // Use the same tile-local UV footprint as the forthcoming two terrain cells.
-  const double u0 = (static_cast<int>(x0) & 31) / 32.0;
+  // Match CellMesh's outer face, side gaps and top gap when the plank lands.
+  // Inner and underside faces complete the carried cuboid.
+  const double u0 = (x0 & 31) / 32.0;
   const double u1 = u0 + w.builderLength / 32.0;
   const double v0 = 1.0 - (w.builderY & 31) / 32.0, v1 = v0 - 1.0 / 32.0;
-  const std::array<std::array<double, 2>, 4> uv{{{u0,v0},{u0,v1},{u1,v1},{u1,v0}}};
+  constexpr double nudge = 1.0 / 512.0;
+  const double topV = v0 - 1.0 / 128.0 - nudge;
+  using QuadUv = std::array<std::array<double, 2>, 4>;
+  const QuadUv wall{{{u0,v0},{u0,v1},{u1,v1},{u1,v0}}};
+  const auto ribbon = [](double a, double b, double v) -> QuadUv {
+    return {{{a,v},{a,v},{b,v},{b,v}}};
+  };
+  const auto edge = [&](double u) -> QuadUv {
+    return {{{u,v0-nudge},{u,v1+nudge},{u,v1+nudge},{u,v0-nudge}}};
+  };
+  const std::array<QuadUv, 6> uvs{
+      wall, wall, ribbon(u0,u1,v0), ribbon(u0+nudge,u1-nudge,topV),
+      edge(u0+nudge), edge(u1-nudge)};
+  constexpr std::array<double, 6> terrainShade{1, 1, 1, 1, 0.85, 0.65};
   constexpr int faces[6][4]{{0,2,3,1},{4,6,7,5},{0,4,5,1},
                            {2,6,7,3},{0,2,6,4},{1,3,7,5}};
   Raster brick(image.width, image.height);
-  for (const auto& face : faces)
+  for (int face = 0; face < 6; ++face) {
+    std::array<double, 3> light;
+    for (int channel = 0; channel < 3; ++channel)
+      light[channel] = std::lerp(tint[channel] / 255.0, terrainShade[face], shape.travel);
     for (const auto& tri : {std::array{0,1,2}, std::array{0,2,3}}) {
       std::array<std::array<double,4>,3> p;
       std::array<std::array<double,2>,3> t;
-      for (int i = 0; i < 3; ++i) { p[i] = vertices[face[tri[i]]]; t[i] = uv[tri[i]]; }
-      brick.triangle(p, t, texture, {tint[0]/255.0,tint[1]/255.0,tint[2]/255.0});
+      for (int i = 0; i < 3; ++i) {
+        p[i] = vertices[faces[face][tri[i]]];
+        t[i] = uvs[face][tri[i]];
+      }
+      brick.triangle(p, t, texture, light);
     }
+  }
   for (const auto& v : vertices) {
     bounds.left = std::min(bounds.left, std::floor(v[0]));
     bounds.right = std::max(bounds.right, std::ceil(v[0]));
@@ -1794,6 +1843,19 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
 }
 
 // Missing keys use bilinear cylinder vertices (0x43A31D, 0x43D2B8).
+bool TubeScene::ensureTerrainVertex(int x, int y, int layer) {
+  const std::size_t key = static_cast<std::size_t>(layer) + (x + y * 0x101) * 2;
+  if (key >= editKeys_.size() || editKeys_[key] != 0xFFFFFFFFu)
+    return false;
+  // 0x43D2B8 uses the template height stored as faceCount (112 in retail).
+  const auto vertex = cylinderTemplateVertex(mesh_, x, y, layer, static_cast<int>(mesh_.faceCount));
+  if (!vertex)
+    return false;
+  editKeys_[key] = static_cast<std::uint32_t>(mesh_.surface.size());
+  mesh_.surface.push_back(*vertex);
+  return true;
+}
+
 // The native per-block scan (0x4615E9) tests kCellFlag0x400, the gate and door stamp bit.
 // FUN_0043f510 clears cells; its mesh handoff is unresolved.
 // Provisional clone skill edits rebuild touched blocks with a one-cell
@@ -1856,18 +1918,8 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain, std::span<const sim::Co
     const int y0 = band * kRowsPerBlock;
     for (int layer = 0; layer < 2; ++layer)
       for (int y = std::max(0, y0 - 2); y <= std::min(h, y0 + kRowsPerBlock + 2); ++y)
-        for (int x = std::max(0, x0 - 2); x <= std::min(w, x0 + kColumnsPerBlock + 2); ++x) {
-          const std::size_t key = static_cast<std::size_t>(layer) + (x + y * 0x101) * 2;
-          if (key >= editKeys_.size() || editKeys_[key] != 0xFFFFFFFFu)
-            continue;
-          // 43D2B8 clamps with coordinate height world+28 (112, 43D2F9/43D334).
-          const auto v = cylinderTemplateVertex(mesh_, x, y, layer, static_cast<int>(mesh_.faceCount));
-          if (!v)
-            continue;
-          editKeys_[key] = static_cast<std::uint32_t>(mesh_.surface.size());
-          mesh_.surface.push_back(*v);
-          ++terrainVerticesAdded_;
-        }
+        for (int x = std::max(0, x0 - 2); x <= std::min(w, x0 + kColumnsPerBlock + 2); ++x)
+          if (ensureTerrainVertex(x, y, layer)) ++terrainVerticesAdded_;
   }
 
   const std::vector<std::pair<int, int>> blocks(dirty.begin(), dirty.end());

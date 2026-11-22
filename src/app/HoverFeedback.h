@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/Pick.h"
 #include "assets/Bitmap.h"
 #include <algorithm>
 #include <cstddef>
@@ -28,8 +29,17 @@ struct HatchHoverTarget {
 };
 
 int hatchRemaining(int total, int spawned, std::size_t hatchCount, std::size_t index);
-std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget>, int x, int y);
+inline std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> targets, int x, int y,
+                                              std::optional<std::size_t> requiredHatch = std::nullopt) {
+  for (std::size_t i = 0; i < targets.size(); ++i) {
+    const auto& h = targets[i];
+    if (requiredHatch && h.index != *requiredHatch) continue;
+    if (pointerOverSceneBounds(x, y, h.left, h.top, h.right, h.bottom)) return i;
+  }
+  return std::nullopt;
+}
 void drawHatchHover(Image&, const Image& font, const HatchHoverTarget&,
                     std::optional<int> adjustingRate = std::nullopt);
+void drawExitHover(Image&, const Image& font, const PickBox&, int saveTarget);
 
 } // namespace webo::app

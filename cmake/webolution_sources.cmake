@@ -26,6 +26,7 @@ set(WEBOLUTION_SOURCES
   src/assets/PolyList.cpp
   src/assets/SceneNode.cpp
   src/app/SceneMeshSource.cpp
+  src/app/GameDataLocation.cpp
   src/app/ActorVisibility.cpp
   src/app/LemmingMotion.cpp
   src/app/HatchAnimation.cpp
@@ -49,6 +50,9 @@ set(WEBOLUTION_SOURCES
 
 )
 
+if(NOT EMSCRIPTEN)
+  list(APPEND WEBOLUTION_SOURCES src/assets/DiscGameData.cpp)
+endif()
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 
 # Decoder for the original bitmap envelope.

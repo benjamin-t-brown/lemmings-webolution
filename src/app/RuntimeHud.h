@@ -18,8 +18,10 @@ void drawRuntimeHud(webo::Image& frame, const webo::Image& font,
 // Pause discards accumulated and incoming time. Resume starts a fresh interval.
 class RuntimeSimState {
  public:
-  bool paused() const { return paused_; }
+  bool paused() const { return pause_ != Pause::Playing; }
+  bool examining() const { return pause_ == Pause::Examine; }
   void togglePause();
+  void toggleExaminePause();
   void resume();
   // Advance World::tick in 0.2 s steps through SimClock. afterTick can drain
   // each tick's sound cues before the next tick can coalesce them.
@@ -56,11 +58,13 @@ class RuntimeSimState {
   void toggleFastForward() { setFastForward(!fastForward_); }
 
  private:
+  enum class Pause { Playing, Standard, Examine };
+  void setPause(Pause pause);
   SimClock clock_;
   double carryMs_ = 0.0;
   int lastPassMs_ = 0;
   long long discardedStallMs_ = 0;
-  bool paused_ = false;
+  Pause pause_ = Pause::Playing;
   bool fastForward_ = false;
   LevelEndTransition end_;
 };

@@ -34,6 +34,11 @@ struct ObjectBasePrefix {
     bool has_auxiliary_list = false;
     std::uint32_t auxiliary_count = 0;
     struct AuxiliaryRecord {
+        struct Spin {
+            std::uint32_t node_index;
+            std::uint32_t axis_selector;
+            std::uint64_t turns_per_second_bits;
+        };
         std::uint64_t leading_double_bits = 0;
         std::uint32_t first_count = 0;
         std::uint32_t second_count = 0;
@@ -41,6 +46,7 @@ struct ObjectBasePrefix {
         std::string name;
         std::uint32_t trailing_integer_count = 0;
         std::vector<std::uint8_t> serialized_bytes;
+        std::vector<Spin> spins;
     };
     std::vector<AuxiliaryRecord> auxiliary_records;
     bool has_second_object = false;

@@ -35,6 +35,7 @@ struct SceneMeshRecordSource {
   std::string materialName; // empty remains a logical empty name, not a texture handle
   std::uint32_t blendSelector = 0;
   std::vector<SceneMeshCornerSource> corners;
+  std::array<double, 2> materialUvOffset{};
 };
 
 // 12-double row-vector affine matrices: out[j]=sum(in[i]*m[3*i+j])+m[9+j].

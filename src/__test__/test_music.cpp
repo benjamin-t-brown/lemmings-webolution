@@ -105,17 +105,22 @@ void failuresAndDisabled() {
   check(diagnostics == 1 && Access::voices(mixer).empty(),
         "a missing track reports once and continues silently");
   missing.disable();
+  missing.prepareLevelMusic();
   missing.playLevelMusic();
   check(Access::attempts(missing).size() == 1, "disabled music makes no load attempts");
 
   audio::CuePlayback disabled;
   disabled.disable(); disabled.start(empty, true);
-  disabled.playFrontendMusic(); disabled.playLevelMusic();
+  disabled.playFrontendMusic();
+  disabled.prepareLevelMusic();
+  disabled.playLevelMusic();
   check(!disabled.deviceReady() && Access::attempts(disabled).empty(),
         "--no-audio opens no device and never reads a music asset");
   audio::CuePlayback noDevice;
   noDevice.start(empty, false);
-  noDevice.playFrontendMusic(); noDevice.playLevelMusic();
+  noDevice.playFrontendMusic();
+  noDevice.prepareLevelMusic();
+  noDevice.playLevelMusic();
   check(!noDevice.deviceReady() && Access::attempts(noDevice).empty(),
         "audio off test mode remains device-free");
 }
@@ -141,13 +146,21 @@ void installed(const AssetLibrary& library) {
   playback.play(sim::SoundCue::Assign);
   check(effects == 1 && playback.routed() == 1 && playback.drained() == 1,
         "music never enters SFX routing counters or the SFX observer");
+  playback.prepareLevelMusic();
+  check(Access::voices(mixer).size() == 1 && !Access::voices(mixer).front().music,
+        "level preparation silences the previous bed and preserves the effect");
   playback.playLevelMusic();
   const auto track = Access::track(playback);
   check(track >= "lemming02" && track <= "lemming13", "level choice is within the installed table");
   check(Access::voices(mixer).size() == 2 && Access::voices(mixer).back().music &&
             Access::voices(mixer).back().cursor == 0,
-        "level load replaces the bed and preserves an assignment effect");
+        "level music starts at the beginning and preserves the assignment effect");
   Access::render(mixer, 100);
+  playback.playLevelMusic();
+  check(!Access::voices(mixer).empty() && Access::voices(mixer).back().music &&
+            Access::voices(mixer).back().cursor == 100,
+        "the prepared bed starts only once");
+  playback.prepareLevelMusic();
   playback.playLevelMusic();
   check(Access::voices(mixer).back().music && Access::voices(mixer).back().cursor == 0,
         "Retry starts a fresh bed even when its random draw repeats");

@@ -276,7 +276,7 @@ void printHelp() {
             "Explode (blast), Chink (last three builder bricks), and Action (successful assignment). Changeop plays\n"
             "on skill/Nuke selection and provisionally on pause, speed and hatch-rate controls.\n"
             "Fluid entry, lever/pad activation and stored hazard attack samples also play.\n"
-            "Music loops in the frontend/map and levels, continues through pause, and restarts on Retry.\n"
+            "Level music starts after the entry cue, then continues through pause.\n"
             "Level effects pan by screen position and fade on the cylinder's back side; UI and Letsgo stay centred.\n"
             "Gain curves, supplemental triggers and repeated-SFX overlap are provisional.\n"
             "No claim of native audio fidelity. A missing audio\n"
@@ -408,8 +408,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       }
       return 0;
     }
-    // Retry retains selectedLevel and skips the frontend window. Keep its
-    // level bed until the new level starts; do not briefly play menu music.
+    // Retry retains selectedLevel and skips the frontend window and its music.
 #if WEBOLUTION_HAVE_SDL2
     if (cues && !frontend->selectedLevel()) cues->playFrontendMusic();
 #endif
@@ -1052,7 +1051,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   // Start the process audio adapter here if the frontend has not started it.
   if (cues) {
     cues->start(*library, runOptions.enableAudio && !args.noAudio);
-    cues->playLevelMusic();
+    cues->prepareLevelMusic();
+    if (!(args.sim && world)) cues->playLevelMusic(); // Scene-only diagnostics have no entry clock.
   }
   auto& presentation = *sharedWindow;
   if (persistentFrontend) presentation.updateWindowScale(persistentFrontend->windowScale());
@@ -1145,6 +1145,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   std::optional<app::LevelMenu> levelMenu;
   std::string entryCueText;
   if (args.sim && world) {
+    // Direct play uses the short entry clock for music. The connected frontend owns the title and release gate.
+    entryCue.emplace(persistentFrontend && persistentFrontend->levelIntroEnabled());
     auto loadedFont = loadTexture(*library, "TEXTURES\\^FONT.BMP");
     auto loadedPanel = app::RetailSkillPanel::create(*library, args.level);
     auto loadedCursor = app::RuntimeCursor::load(*library);
@@ -1177,7 +1179,6 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         return 1;
       }
       entryCueText = (*strings)[71]; // READ45CAEA pushes hex47: Let's Go!, not Continue/name.
-      entryCue.emplace(persistentFrontend->levelIntroEnabled());
       double doorSeconds = 0.0;
       if (entranceExitPresentation)
         for (const auto& hatch : entranceExitPresentation->entrances)
@@ -1248,12 +1249,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     return app::cursorZoomPose(displayedCamera, cameraIntro.pose(controls.camera()),
         pointerX + 0.5, pointerY + 0.5, depth);
   };
+  std::optional<Uint64> releasePressedAt;
   const auto tryHatchPress = [&](int x, int y, int button, bool actorCanReceiveSkill) {
     if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y) >= 0) return false;
     ensureDisplayedScene();
     const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
     const auto hit = app::RuntimeReleaseRateControl::pressTarget(targets, x, y, button, actorCanReceiveSkill);
     if (!hit || !releaseControl->press(targets[*hit].index, button, *world)) return false;
+    releasePressedAt = SDL_GetPerformanceCounter();
     nukeInput.reset();
     uiClick();
     return true;
@@ -1563,6 +1566,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     previous = now;
     if (args.frames > 0) elapsed = app::FixedCameraClock::stepSeconds;
     if (runOptions.frameSeconds > 0) elapsed = runOptions.frameSeconds;
+    const bool ownedClock = args.frames > 0 || runOptions.frameSeconds > 0;
     if (panelIconAnimation) {
       const int hover = focused && !menuOpen() && !dragButton ?
           app::runtimeSkillPanelIndex(pointerX, pointerY) : -1;
@@ -1572,10 +1576,18 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                                  skillSelection.selectedIndex(), hover);
     }
     if (releaseControl && releaseControl->holding() && focused && !menuOpen()) {
+      // A press already steps once. Count only elapsed time since that press
+      // on its first frame. Injected input enters at the frame boundary.
+      double holdElapsed = elapsed;
+      if (releasePressedAt) {
+        holdElapsed = ownedClock ? 0.0 : std::min(elapsed,
+            static_cast<double>(now - *releasePressedAt) / static_cast<double>(frequency));
+      }
       // One request per rendered frame, even if a long frame catches up several
       // repeats. SkipPlaying discards overlap; nothing accumulates while held.
-      if (advanceReleaseHold(elapsed)) uiClick();
+      if (advanceReleaseHold(holdElapsed)) uiClick();
     }
+    releasePressedAt.reset();
     recordCommands();
     fixedClock.advance(elapsed);
     bool updated = false;
@@ -1589,13 +1601,15 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     }
     bool simTicked = false;
     // 45CC09 advances the entry cue after input and before simulation.
-    // The text clock is independent of voice playback.
-    if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
+    // Start the prepared music once when the cue expires (0x45CEE6).
+    if (entryCue && entryCue->active()) {
+      entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
+      if (!entryCue->active() && cues) cues->playLevelMusic();
+    }
     if (levelStart) levelStart->advance(elapsed, focused && !runtimeSim.paused());
     if (args.sim && world) {
       // Convert elapsed time to integer ms and cap wall-clock stalls at 100 ms.
       // --frames and frameSeconds use the supplied budget without the cap.
-      const bool ownedClock = args.frames > 0 || runOptions.frameSeconds > 0;
       // Capture confirmed motion before stepping and after each World update.
       lemmingMotion.observe(*world);
       const auto afterUpdate = [&] {
@@ -1663,13 +1677,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       // This state-only view is never offered to an ordinary observer. The
       // explicit automation scope opts into inspectLevelFrame() for pixels,
       // hover, visible actor boxes and hatch depth; all other fields are ready.
-      const auto cueFrame = entryCue ? entryCue->frame() : std::nullopt;
+      const auto cueFrame = persistentFrontend && entryCue ? entryCue->frame() : std::nullopt;
       std::optional<app::LevelFrameView> pendingView;
       if (args.sim && world && runtimeFont && runtimePanel)
         pendingView.emplace(app::LevelFrameView{rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
                          std::nullopt, pointerX, pointerY, app::CursorState::Hidden,
                          runtimeSim.endTransition().phase(), runtimeSim.endTransition().timerSeconds(),
-                         cameraIntro.active(), entryCue ? entryCue->seconds() : 0.0, cueFrame, menuOpen(), args.level,
+                         cameraIntro.active(), persistentFrontend && entryCue ? entryCue->seconds() : 0.0,
+                         cueFrame, menuOpen(), args.level,
                          persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
                          cues && cues->deviceReady(), cues ? cues->drained() : 0, cues ? cues->routed() : 0,
                          displayedPose, displayedPickReference,

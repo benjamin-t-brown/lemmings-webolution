@@ -41,8 +41,8 @@ cmake --build --preset gcc-release
 
 For a standalone folder with the runtime DLLs, run
 `cmake --install build/cmake/gcc-release --prefix "$PWD/build/windows-release"`.
-Put the boxes or CD image beside the installed `webolution.exe` to launch it
-without `--game-dir`.
+Put the boxes or CD image beside the installed `lemmings_webolution.exe` to
+launch it without `--game-dir`.
 
 ## Emscripten
 

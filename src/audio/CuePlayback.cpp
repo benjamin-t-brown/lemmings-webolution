@@ -136,28 +136,43 @@ void CuePlayback::playGadgetSample(std::string_view name, StereoGains gains) {
 }
 
 void CuePlayback::playFrontendMusic() {
+  pendingLevelMusic_.clear();
   playMusic("lemming01", false);
 }
 
-void CuePlayback::playLevelMusic() {
-  if (disabled_ || !mixer_.ready()) return;
+void CuePlayback::prepareLevelMusic() {
+  if (disabled_ || !mixer_.ready() || !library_) return;
+  // 0x498E2F stops and releases the previous music buffer before loading the next one.
+  mixer_.stopMusic();
+  currentMusic_.clear();
   // Native 0x498E13..29 indexes the table with trunc(rand()/32767 * 12 + 1).
   // The clone uses a bounded uniform draw independent of the world RNG.
   static std::mt19937 random(static_cast<std::mt19937::result_type>(
       std::chrono::steady_clock::now().time_since_epoch().count()));
   const int track = std::uniform_int_distribution<int>(2, 13)(random);
-  playMusic(std::format("lemming{:02}", track), true);
+  pendingLevelMusic_ = std::format("lemming{:02}", track);
+  loadMusic(pendingLevelMusic_);
 }
 
-void CuePlayback::playMusic(std::string_view name, bool restart) {
-  if (disabled_ || !mixer_.ready() || !library_) return;
-  if (!restart && currentMusic_ == name) return;
+void CuePlayback::playLevelMusic() {
+  if (disabled_ || pendingLevelMusic_.empty()) return;
+  mixer_.playMusic(pendingLevelMusic_);
+  currentMusic_ = std::exchange(pendingLevelMusic_, {});
+}
+
+void CuePlayback::loadMusic(std::string_view name) {
   // Cache load and resample results, including failures, between scenes outside the callback lock.
   if (attemptedMusic_.insert(std::string(name)).second) {
     if (auto loaded = mixer_.loadMusicFrom(*library_, name); !loaded)
       report(std::format("audio: music {} unavailable ({}); it will be silent", name,
                          loaded.error()));
   }
+}
+
+void CuePlayback::playMusic(std::string_view name, bool restart) {
+  if (disabled_ || !mixer_.ready() || !library_) return;
+  if (!restart && currentMusic_ == name) return;
+  loadMusic(name);
   mixer_.playMusic(name); // Preserve active SFX tails.
   currentMusic_ = name;
 }

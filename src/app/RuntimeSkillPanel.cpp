@@ -63,12 +63,13 @@ bool RuntimeReleaseRateControl::advance(double seconds, std::span<const HatchHov
   if (!std::isfinite(seconds) || seconds <= 0) return false;
   const auto& hatch = world.setup().entrances.at(*heldHatch_);
   const int previous = hatch.releaseRate;
-  // Provisional clone repeat steps immediately, waits 0.4 s, then repeats
-  // every 0.1 s in real time. Native repeats on input updates.
+  // The original repeats once per input frame. Use a provisional 50 steps/s
+  // so the hold speed is independent of refresh rate.
+  constexpr double repeatInterval = 0.020;
   repeatSeconds_ += std::min(10.0, seconds);
-  while (repeatSeconds_ + 1e-9 >= 0.4) {
+  while (repeatSeconds_ + 1e-9 >= repeatInterval) {
     change(*heldHatch_, heldButton_ == 1 ? -1 : 1, world);
-    repeatSeconds_ -= 0.1;
+    repeatSeconds_ -= repeatInterval;
   }
   return hatch.releaseRate != previous;
 }

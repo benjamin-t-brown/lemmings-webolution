@@ -34569,7 +34569,7 @@
     {
       "id": "metal-wall-occlusion-001",
       "title": "Lemmings crossing the metal wall are invisible on How do we get up there! (playtest 27 S1)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -34581,12 +34581,98 @@
         "The report names the recording, step, lemming and wall where the actor is hidden, the cause in the production draw path, the change, the static evidence or provisional rule, and the other levels and wall kinds affected, or shows with frames from the walls and views tried that no actor is hidden.",
         "Before and after clone framebuffer crops under build/ of the same view show the lemming hidden before and visible after, a genuine occluder still hides an actor behind it, and the level sweep frames of unaffected levels are unchanged.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261122T084015-14116-01eb0ac3",
+      "started": "2026-11-22T08:40:15.558812+00:00",
+      "finished": "2026-11-22T09:04:11.876713+00:00",
+      "last_run": "build/agent-runs/20261122T084015-14116-01eb0ac3",
+      "review": {
+        "decision": "accept",
+        "reason": "The clone framebuffer evidence confirms that lemming 10 is visible at the retracted lower gate and that the closed gate still hides a faller. Both affected promoted wins reproduced, and the supervisor passed all 95 smoke tests and 84 recovery tests. The footprint rule is provisional. Original-game depth behavior remains unresolved, and the recordings supplied no nearby actors at the upper gate or during gate motion.",
+        "checks": [
+          {
+            "criterion": "The report names the recording, step, lemming and wall where the actor is hidden, the cause in the production draw path, the change, the static evidence or provisional rule, and the other levels and wall kinds affected, or shows with frames from the walls and views tried that no actor is hidden.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/metal-wall-occlusion-001.md",
+                "detail": "Identifies Playtest 27 S1 in H02_JC_1, node 35. Lemming 10 disappears at the fully retracted lower striped gate, id 1, at step 20571 of H02_JC_1-1795313460665625000-2.replay. The report also names a second reproduction and documents the limits of the recording coverage."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "TubeScene::build stamps the closed gate rectangle for mesh topology. The production scene preparation calls syncCounterGates, which now passes the same eased fraction used for the moving vertices into the actor footprint. prepareInjectedWalker still applies completed scene and pipe depth after footprint clipping."
+              },
+              {
+                "path": "src/app/ActorOcclusion.h",
+                "detail": "The footprint check limits gate cells to the eased radial extent and skips the volume test at full retraction. Other terrain cells retain the full-depth footprint."
+              },
+              {
+                "path": "build/metal-wall-occlusion-001/rea.json",
+                "detail": "The retained Ghidra pseudocode and instructions for the registered x86 EXE agree on the easing branches at 0x427016\u20130x427053 and vertex scale and add calls at 0x427097 and 0x4270B5. Actor submission shows the depth bias at 0x43CCB5\u20130x43CCCA and sprite call at 0x43CD4E. The report labels the footprint rule provisional because effective original device depth remains unresolved."
+              },
+              {
+                "path": "build/metal-wall-occlusion-001/gate-census.tsv",
+                "detail": "Lists the affected installed levels and identifies 231 gates across 52 levels, including 209 switch-only and 22 quota gates."
+              }
+            ]
+          },
+          {
+            "criterion": "Before and after clone framebuffer crops under build/ of the same view show the lemming hidden before and visible after, a genuine occluder still hides an actor behind it, and the level sweep frames of unaffected levels are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/metal-wall-occlusion-001/detail-before/20571-10-46-0/20571-10-y46-z0-actor.png",
+                "detail": "At step 20571, yaw 46 and zoom 0, lemming 10 is absent from the base of the retracted gate."
+              },
+              {
+                "path": "build/metal-wall-occlusion-001/detail-after/20571-10-46-0/20571-10-y46-z0-actor.png",
+                "detail": "The same view shows lemming 10 at the foot of the gate. The retained comparison records 119 of 119 body pixels visible."
+              },
+              {
+                "path": "build/metal-wall-occlusion-001/detail-after/14300-0-46-0/14300-0-y46-z0-actor.png",
+                "detail": "At step 14300, the closed gate still fully hides faller 0. The crop matches its before counterpart, and the pixel trace records tube depth in front of all 130 body pixels."
+              },
+              {
+                "path": "build/metal-wall-occlusion-001/detail-after/14300-0-46-0/14300-0-y46-z0-unclipped.png",
+                "detail": "The same closed-gate crop with actor clipping bypassed shows the faller against the striped face, confirming where normal rendering conceals it."
+              },
+              {
+                "path": "build/metal-wall-occlusion-001/sweep-compare.tsv",
+                "detail": "The 50 gate-free levels each have matching settled and final frames. All 100 retained before-and-after PNG pairs were independently checked during this read-only review."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/metal-wall-occlusion-001/replays.tsv",
+                "detail": "Both active promoted recordings on gated levels passed with won=1 and completed=1. The Iron Curtain finished at step 18207 with 21/20 saved, and Wheelbarrows of Doom at step 24891 with 99/98. All 19 copied H02 recordings also reproduced their recorded outcomes."
+              },
+              {
+                "path": "build/agent-runs/20261122T084015-14116-01eb0ac3/verification.log",
+                "detail": "The supervisor built smoke_tests and passed 95 of 95 smoke tests, including every level-sweep chunk, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/metal-wall-occlusion-001.md",
+                "detail": "Ends by asking the playtester to open the lower striped gate in How do we get up there!, rotate to both sides, and check that walkers remain visible across the opening and that the closed gate hides actors on the far side."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T09:07:08.692447+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T084015-14116-01eb0ac3\\verification.log",
+        "verified_content": "22c4504a5acd362bd07cbcaea8c4620ac8128fe86ce4e535f5489cb27646c6ca"
+      }
     },
     {
       "id": "particle-tuning-001",
       "title": "Fewer brown explosion particles and longer dig and mine debris throws (playtest 27 S3, S4)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "metal-wall-occlusion-001"
       ],
@@ -34600,12 +34686,102 @@
         "The report names the production call paths changed, the old and new blast fleck count and colour rule labelled as a user-directed deviation from the static 100-particle reading, and the old and new dig and mine launch, gravity and lifetime values.",
         "Before and after clone framebuffer sequences under build/ show a Bomber explosion with far fewer, brown particles and its body pieces and crater chunks kept, and Digger and Miner debris flying visibly further, for the same views and times.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261122T090708-14116-034aec37",
+      "started": "2026-11-22T09:07:09.221629+00:00",
+      "finished": "2026-11-22T09:18:15.941030+00:00",
+      "last_run": "build/agent-runs/20261122T090708-14116-034aec37",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported. The matched clone frames show a sparser brown Bomber burst and longer Digger and Miner throws. All 29 promoted replays reproduced, and the supervisor smoke profile passed. The frames cover upright actors. Nuke routing and inverted debris motion were verified in source.",
+        "checks": [
+          {
+            "criterion": "The report names the production call paths changed, the old and new blast fleck count and colour rule labelled as a user-directed deviation from the static 100-particle reading, and the old and new dig and mine launch, gravity and lifetime values.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/particle-tuning-001.md",
+                "detail": "Identifies playtest 27 S3 and S4 and documents the death and terrain-cut observer paths. It labels the change from 100 red flecks to 20 brown flecks as the 2026-11-21 user-directed deviation. It gives both horizontal launch formulas and the shared changes in rise speed from 9\u201313.5 to 11\u201316.25, gravity magnitude from 16 to 20, and lifetime from 1.6\u20131.9 to 1.7\u20132.0 seconds."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production application wires World\u2019s death and terrain-cut observers to TubeScene::emitDeathParticles and TubeScene::emitTerrainDebris, respectively."
+              },
+              {
+                "path": "build/particle-tuning-001/task-only.patch",
+                "detail": "The patch confines the longer throws to Digger and Miner and mirrors rise and gravity using the actor\u2019s vertical direction. Both Bomber and nuke use the same 20-fleck branch, which shades a brown base with the removed terrain texel\u2019s luminance and uses the base colour when no sample is available."
+              },
+              {
+                "path": "build/particle-tuning-001/static/rea.json",
+                "detail": "For the registered x86 reference, the instructions at 0x43F8D2\u20130x43F8ED agree with the pseudocode\u2019s RGB inputs of 255, 32, 32. The PUSH 0x64 at 0x43F901 supplies the count to the setter. The 0x492E33 pseudocode passes primitive type 1 at the decoded indirect call at 0x492F66, consistent with a point list."
+              }
+            ]
+          },
+          {
+            "criterion": "Before and after clone framebuffer sequences under build/ show a Bomber explosion with far fewer, brown particles and its body pieces and crater chunks kept, and Digger and Miner debris flying visibly further, for the same views and times.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/particle-tuning-001/frame-comparison.tsv",
+                "detail": "Records eight matched frame pairs per route with the same replay step, level clock, yaw, zoom and elevation. At 14,135 ms the Bomber sequence drops from 110 to 30 total live particles and from 5,448 strongly red effect pixels to zero."
+              },
+              {
+                "path": "build/particle-tuning-001/before/MM_BOMB/age-500.png",
+                "detail": "Shows the dense red cloud at 14,135 ms, with the separated body pieces and textured chunks around the cut."
+              },
+              {
+                "path": "build/particle-tuning-001/after/MM_BOMB/age-500.png",
+                "detail": "The same view and time show sparse brown flecks, with the body pieces and larger textured crater chunks still visible."
+              },
+              {
+                "path": "build/particle-tuning-001/before/MM_DIG_000/age-740.png",
+                "detail": "At 7,562 ms the debris is clustered near the cut and spans 148 pixels."
+              },
+              {
+                "path": "build/particle-tuning-001/after/MM_DIG_000/age-740.png",
+                "detail": "At the same time and camera, the debris spans 265 pixels and reaches visibly farther left along the ledge."
+              },
+              {
+                "path": "build/particle-tuning-001/before/MM_MINE/age-740.png",
+                "detail": "At 8,366 ms the debris ends at x=384 near the start of the steel platform."
+              },
+              {
+                "path": "build/particle-tuning-001/after/MM_MINE/age-740.png",
+                "detail": "At the same time and camera, the debris reaches x=494 across the steel platform."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/particle-tuning-001/replays.tsv",
+                "detail": "Matches all 29 current promoted .replay files. Each entry has a corresponding production CLI log confirming exit zero and PASS with won=1 and completed=1."
+              },
+              {
+                "path": "build/agent-runs/20261122T090708-14116-034aec37/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 of 95 main smoke tests passing, including all installed-level sweep chunks and their report, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/particle-tuning-001.md",
+                "detail": "Ends with the two-line handoff and a What to check note naming all three levels, the corresponding skill assignments, and the expected visible effects. The supervisor log resolves the handoff\u2019s pending smoke status."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T09:20:55.250696+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T090708-14116-034aec37\\verification.log",
+        "verified_content": "64beacc4f258fb260e9005cb285cead097ac4694de653902fca1361ce76adf0a"
+      }
     },
     {
       "id": "load-missing-keys-001",
       "title": "Load-time cell mesh creates missing key vertices on every level, as 0x43A31D does (playtest 27 S2 follow-up)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "particle-tuning-001"
       ],
@@ -34619,12 +34795,94 @@
         "The report names the production call path changed and the 0x43A31D evidence, and gives a census under build/ of missing load-time keys per installed level before and after with any nonzero installed level explained.",
         "Clone framebuffers under build/ of the edited Just Dig show the added earth slabs drawn after the change and absent before, and the level sweep frames of installed levels are unchanged or each difference is explained.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261122T092055-14116-b5dfb4f8",
+      "started": "2026-11-22T09:20:55.788076+00:00",
+      "finished": "2026-11-22T09:29:57.693663+00:00",
+      "last_run": "build/agent-runs/20261122T092055-14116-b5dfb4f8",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by the production diff, retained clone framebuffers, the scoped replay result, and the supervisor\u2019s smoke log. The original executable evidence establishes the static vertex lookup behavior. Original runtime fidelity remains unverified.",
+        "checks": [
+          {
+            "criterion": "The report names the production call path changed and the 0x43A31D evidence, and gives a census under build/ of missing load-time keys per installed level before and after with any nonzero installed level explained.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/load-missing-keys-001.md",
+                "detail": "Names Playtest 27 S2 and traces runApplicationLeg through TubeScene::build, buildCellMeshes, ensureTerrainVertex, and TubeScene::render. Explains that gate stamps introduced ordinary face corners on 11 installed levels and that the existing pass already supplied their vertices."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The load path now collects missing ordinary corner keys whenever the collision grid and key table are available. It supplies the requested vertices through the existing template vertex routine and rebuilds the faces."
+              },
+              {
+                "path": "build/load-missing-keys-001/rea-static.json",
+                "detail": "Retained Ghidra pseudocode and instructions for the registered x86 executable agree. The helper at 0x43C930 computes layer + (x + y * 0x101) * 2. The comparison and branch at 0x43A356\u20130x43A35A allocate only for a -1 entry, store the new index at 0x43A384, and call 0x43D2B8 at 0x43A3AE. The per-face flag at 0x46359B\u20130x4635A0 selects the ordinary resolver at 0x4635BD\u20130x463624 or the movable resolver at 0x463643. The traced path has no level-wide counter-gate condition."
+              },
+              {
+                "path": "build/load-missing-keys-001/key-census.tsv",
+                "detail": "Covers 102 distinct installed levels. All 50 levels without counter gates had zero missing stored keys. The 11 nonzero gated levels required 79 distinct keys in total, including six on H02_JC_1. Both builds supplied all 79, with zero unresolved lookups across the entire census."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffers under build/ of the edited Just Dig show the added earth slabs drawn after the change and absent before, and the level sweep frames of installed levels are unchanged or each difference is explained.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/load-missing-keys-001/before-edited/slab-a.png",
+                "detail": "The first retained camera view shows open space above the arrow-marked walkway where the wider slab belongs."
+              },
+              {
+                "path": "build/load-missing-keys-001/after-edited/slab-a.png",
+                "detail": "The matching view shows the wider earth slab above the walkway and the edge of the second slab at the right."
+              },
+              {
+                "path": "build/load-missing-keys-001/before-edited/slab-c.png",
+                "detail": "The second retained camera view shows open space above the walkway beside the blue pickup."
+              },
+              {
+                "path": "build/load-missing-keys-001/after-edited/slab-c.png",
+                "detail": "The matching view shows the shorter earth slab beside the blue pickup and the edge of the wider slab at the left."
+              },
+              {
+                "path": "build/load-missing-keys-001/sweep-frame-comparison.tsv",
+                "detail": "Lists 102 seeded opening-frame pairs for the same installed levels as the census. Every pair is recorded as byte-identical with matching SHA-256 values."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/load-missing-keys-001/replays/results.tsv",
+                "detail": "The scoped promoted replay for Just Dig, attempt 8, exited successfully at step 1014 with 19 saved against 10 required and won=1 completed=1. The census found no other installed route affected by the change."
+              },
+              {
+                "path": "build/agent-runs/20261122T092055-14116-b5dfb4f8/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including every installed-level sweep chunk and the sweep report, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/load-missing-keys-001.md",
+                "detail": "Ends after the two-line handoff with instructions to open edited Just Dig, rotate and zoom around the upper arrow-marked walkway, and verify that both earth slabs are visible as soon as the level loads."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T17:05:22.111893+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T092055-14116-b5dfb4f8\\verification.log",
+        "verified_content": "cd85545e794496d9ff7cbd707f44fb159c5450d8a45977c8e7641fa2d9a068a8"
+      }
     },
     {
       "id": "level-music-start-001",
       "title": "Level music starts at once on Try again; the original waits for the title cue (playtest 28 T1)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "load-missing-keys-001"
       ],
@@ -34638,12 +34896,110 @@
         "The report cites the instructions at 0x45CC09, 0x498D04 and 0x49905A and the other callers of 0x498D04, and states when the original starts level music after Retry and after map entry and what plays before it.",
         "In the clone, level music starts when the entry title cue expires, about 2.5 s of unpaused play after Retry and 4.5 s after map entry, shown by a run log or PCM observation under build/, with pause freezing that delay.",
         "Frontend and results music, track selection and release timing are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261122T170522-46400-840a02ad",
+      "started": "2026-11-22T17:05:22.757522+00:00",
+      "finished": "2026-11-22T17:19:27.637624+00:00",
+      "last_run": "build/agent-runs/20261122T170522-46400-840a02ad",
+      "review": {
+        "decision": "accept",
+        "reason": "The retained instructions support the original\u2019s ordinary entry timing. Clone mixer logs show playback starting at cue expiry and the countdown freezing during pause. All 29 promoted replays reproduced, and the supervisor smoke profile passed. Physical audibility and the original click-to-music latency remain for human playtest.",
+        "checks": [
+          {
+            "criterion": "The report cites the instructions at 0x45CC09, 0x498D04 and 0x49905A and the other callers of 0x498D04, and states when the original starts level music after Retry and after map entry and what plays before it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/level-music-start-001.md",
+                "detail": "Identifies the registered executable by SHA-256 and derives about 2.5 seconds of playing time after Retry and 4.5 seconds after map entry. It states that the ordinary interval after load has no music and qualifies the exceptional resume and reset paths."
+              },
+              {
+                "path": "build/level-music-start-001/static/45CC09-instructions.json",
+                "detail": "The instructions gate the update on the cue\u2019s active byte and UI state 0, subtract frame time, clear the cue below \u22121.0, and call 0x498D04 at 0x45CEE6."
+              },
+              {
+                "path": "build/level-music-start-001/static/45C9AB-instructions.json",
+                "detail": "The instructions at 0x45CB21 through 0x45CB39 seed the clock at 3.5 seconds. The no-intro branch subtracts 2.0 seconds at 0x45CBA6."
+              },
+              {
+                "path": "build/level-music-start-001/static/498D04-instructions.json",
+                "detail": "The routine checks that the buffer is loaded and stopped, seeks to position zero at 0x498D43, starts looping at 0x498D61, and applies volume at 0x498D91."
+              },
+              {
+                "path": "build/level-music-start-001/static/49905A-instructions.json",
+                "detail": "The loader\u2019s cleanup calls the stop routine at 0x499074 for a playing buffer and releases a loaded buffer at 0x49909E. The report traces the subsequent load through 0x498DE8, which leaves the replacement buffer stopped."
+              },
+              {
+                "path": "build/level-music-start-001/static/play-xrefs.json",
+                "detail": "Lists the trigger at 0x45CEE6 and all three other call sites cited in the report. They are 0x450B3C in the reset callback 0x450B26, 0x45D864 in the UI resume path 0x45CFF9, and 0x486BC2 in the frontend wrapper 0x486BBA."
+              }
+            ]
+          },
+          {
+            "criterion": "In the clone, level music starts when the entry title cue expires, about 2.5 s of unpaused play after Retry and 4.5 s after map entry, shown by a run log or PCM observation under build/, with pause freezing that delay.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-music-start-001/results-retry.log",
+                "detail": "Just Climb still has an active cue and zero music starts at exactly 2.5000 seconds. At the next sampled frame, 2.5625 seconds, the cue retires and the mixer starts a loaded level track."
+              },
+              {
+                "path": "build/level-music-start-001/map.log",
+                "detail": "Four paused frames hold the cue clock at 2.6000 seconds with no level music. Just Climb and MM_BOMB each record one loaded-track start at 4.5000 seconds of active play and 4.9000 seconds elapsed."
+              },
+              {
+                "path": "build/level-music-start-001/menu-retry.log",
+                "detail": "The in-level menu holds the cue clock while open. Its Retry action starts a new level track once at about 2.5 seconds."
+              },
+              {
+                "path": "build/level-music-start-001/direct.log",
+                "detail": "The direct simulation entry records one loaded-track start at 2.5000 seconds, matching the report\u2019s provisional short clock for that route."
+              }
+            ]
+          },
+          {
+            "criterion": "Frontend and results music, track selection and release timing are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The connected level uses the same cue, hatch-opening clock and release predicate. Playback starts at the cue\u2019s active-to-expired transition. Direct simulation still bypasses the connected release gate."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Level preparation retains the independent uniform draw from lemming02 through lemming13, and frontend playback still selects lemming01. The retained results run also records lemming01 at the results screens."
+              },
+              {
+                "path": "build/level-music-start-001/menu-retry-frames/summary.txt",
+                "detail": "The retained Retry route reports cue expiry at 2.5 seconds, door completion at 2.8 seconds and first release at 4.2 seconds, with zero route failures."
+              },
+              {
+                "path": "build/level-music-start-001/replays.json",
+                "detail": "The 29 entries match the full set of promoted .replay files. Each corresponding log records a completed win and an exit of zero, including M02_MG_1 attempt 36 at step 28031."
+              },
+              {
+                "path": "build/agent-runs/20261122T170522-46400-840a02ad/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the 102-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/level-music-start-001.md",
+                "detail": "Ends with a two-line handoff and a Just Climb playtest note covering Try again, pause and resume, expected music timing on Retry and map entry, and the usual lemming release."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T17:22:21.793823+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T170522-46400-840a02ad\\verification.log",
+        "verified_content": "a6f6016362b8bae0c1a70783b7003e0d537f6c048fc6ffcc736ca2edd6b29e1b"
+      }
     },
     {
       "id": "rate-hold-speed-001",
       "title": "Holding a hatch changes the release rate far slower than the original (playtest 28 T2)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "level-music-start-001"
       ],
@@ -34657,12 +35013,155 @@
         "The report cites the instructions at 0x4532E2, 0x455DD0, 0x455D90 and the caller of 0x4532E2, and states the original step rate and any frame limiter found, or that none was found and the rate is provisional.",
         "In the clone, holding a button on a hatch steps on press and then without an initial delay, reaching the hatch limit from rate 1 in about 2 s independent of display refresh, shown by a source test or run log under build/, with limits, button direction and held-hatch geometry unchanged.",
         "Recorded release-rate commands are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261122T172512-46400-c72b5974",
+      "started": "2026-11-22T17:25:12.830854+00:00",
+      "finished": "2026-11-22T17:34:18.312495+00:00",
+      "last_run": "build/agent-runs/20261122T172512-46400-c72b5974",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The worker stopped before implementing the hatch-repeat fix or writing the task report. The supervisor smoke profile passed on the existing implementation, which still waits 0.4 seconds before repeating. The retry needs the production change, refresh-independent timing evidence, promoted replay results, and a smoke pass on the revised content.",
+        "checks": [
+          {
+            "criterion": "The report cites the instructions at 0x4532E2, 0x455DD0, 0x455D90 and the caller of 0x4532E2, and states the original step rate and any frame limiter found, or that none was found and the rate is provisional.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/hatch-rate-hold-001/static-evidence.json",
+                "detail": "Retained Ghidra evidence for the registered executable shows the call from 0x453A42 within 0x4532E2 to 0x455DD0. The wrapper pseudocode links 0x455DD0 and 0x455D90 to the held-state queries at 0x455DF0 and 0x455DB0. This supports the input behavior. The frame cadence and limiter remain unverified in this submission."
+              },
+              {
+                "path": "build/agent-runs/20261122T172221-46400-773614db/last-message.txt",
+                "detail": "The worker reported stopping without changes or checks. The task report is absent, including the instruction citations, caller trace, and limiter finding."
+              }
+            ]
+          },
+          {
+            "criterion": "In the clone, holding a button on a hatch steps on press and then without an initial delay, reaching the hatch limit from rate 1 in about 2 s independent of display refresh, shown by a source test or run log under build/, with limits, button direction and held-hatch geometry unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "The production control still takes one step on press, waits 0.4 seconds, and repeats every 0.1 seconds. That gives about 10 seconds from rate 1 to 99. The existing clamp, button direction, and held-target lookup are present."
+              },
+              {
+                "path": "src/__test__/test_hatch_rate.cpp",
+                "detail": "The unit still expects the rate to remain at the press value after 0.399 seconds and to repeat at 0.400 seconds. It encodes the reported defect and supplies no evidence for the requested cadence across different frame intervals."
+              }
+            ]
+          },
+          {
+            "criterion": "Recorded release-rate commands are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261122T172221-46400-773614db/before-source-hashes.json",
+                "detail": "Compared with the after snapshot, the source inventory changes only the queue file. The worker made no changes to the release-rate command path."
+              },
+              {
+                "path": "build/agent-runs/20261122T172221-46400-773614db/after-source-hashes.json",
+                "detail": "The post-worker snapshot confirms the production and hatch-unit hashes match their pre-worker values."
+              },
+              {
+                "path": "build/agent-runs/20261122T172221-46400-773614db/verification.log",
+                "detail": "The supervisor built smoke_tests and passed 95 main smoke checks, including the level sweep, and 84 recovery checks. The log contains no promoted replay results, and the smoke pass covers the existing hold behavior."
+              },
+              {
+                "path": "build/agent-runs/20261122T172221-46400-773614db/last-message.txt",
+                "detail": "The worker supplied no promoted replay results or task report with a closing what-to-check note."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The worker stopped before implementing the hatch-repeat fix or writing the task report. The supervisor smoke profile passed on the existing implementation, which still waits 0.4 seconds before repeating. The retry needs the production change, refresh-independent timing evidence, promoted replay results, and a smoke pass on the revised content.",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The clone reaches rate 99 from 1 in 1.940\u20131.967 seconds across four tested frame intervals. The 50 steps per second setting is provisional. All 29 promoted recordings reproduced, and the supervisor smoke profile passed on the reviewed changes. Live mouse feel remains for the next human playtest.",
+        "checks": [
+          {
+            "criterion": "The report cites the instructions at 0x4532E2, 0x455DD0, 0x455D90 and the caller of 0x4532E2, and states the original step rate and any frame limiter found, or that none was found and the rate is provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rate-hold-speed-001.md",
+                "detail": "Identifies the registered executable, cites the dispatch, held-state wrappers and frame-loop caller, and reports one step per eligible original frame. The trace found no fixed frame rate, so the report labels the clone's 50 steps per second provisional."
+              },
+              {
+                "path": "build/rate-hold-speed-001/static-input.json",
+                "detail": "The instructions in 0x4532E2 check the selected hatch at +0x1894. The call to 0x455DD0 at 0x453A42 gates the increment, and the call to 0x455D90 at 0x453A7F gates the decrement. The wrappers query sampled held state through 0x455DF0 and 0x455DB0. The instruction trace agrees with the pseudocode and shows no repeat timer on this path."
+              },
+              {
+                "path": "build/rate-hold-speed-001/static-frame.json",
+                "detail": "The xrefs and instructions show mutually exclusive calls at 0x45DAA4 and 0x45DABF in 0x45CFF9, before the simulation pass loop. The back edge at 0x45E435 returns to the timer read at 0x45D074. The 100 ms clamp at 0x45D921\u20130x45D96B changes the measured delta without delaying the next frame."
+              },
+              {
+                "path": "build/rate-hold-speed-001/static-presentation.json",
+                "detail": "The DirectDraw calls at 0x470766 and 0x4707BF can wait during presentation, and the mode-setting call at 0x46F850 takes refresh from the selected mode. These findings leave the original steps per wall-clock second undetermined."
+              }
+            ]
+          },
+          {
+            "criterion": "In the clone, holding a button on a hatch steps on press and then without an initial delay, reaching the hatch limit from rate 1 in about 2 s independent of display refresh, shown by a source test or run log under build/, with limits, button direction and held-hatch geometry unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The gameplay press path applies the first step immediately. The first hold update credits only post-press time, then later frames pass elapsed time through the existing displayed-hatch lookup."
+              },
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "The accumulator repeats at 20 ms intervals and carries fractional time across updates. The authored clamp, left decrement, right increment, press precedence and held-hatch geometry lookup are preserved."
+              },
+              {
+                "path": "build/rate-hold-speed-001/check-hold.cpp",
+                "detail": "The probe links the production control and loads the installed M06_KF_1 level. It verifies the lower bound, the immediate right-press step, each sampled rate through the upper bound, and the overlapping hatch's rate."
+              },
+              {
+                "path": "build/rate-hold-speed-001/hold-probe.log",
+                "detail": "All four simulated frame intervals passed. From rate 1, the press produced rate 2 immediately and the hold reached 99 in 1.967 s at 30 Hz, 1.940 s at 50 Hz, 1.950 s at 60 Hz and 1.944 s at 144 Hz. The overlapping hatch stayed at rate 30."
+              }
+            ]
+          },
+          {
+            "criterion": "Recorded release-rate commands are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/Replay.hpp",
+                "detail": "The existing release-rate command still records rate, interval ticks, hatch index and interval seconds. Playback validates and applies those resolved values directly through World::setHatchReleaseRate."
+              },
+              {
+                "path": "build/rate-hold-speed-001/promoted-replays.tsv",
+                "detail": "The entries match all 29 active promoted replay files. Each retained per-recording log confirms exit 0 and PASS with won=1 and completed=1, including Just Climb at step 1252 and the playtest 28 win at step 28031."
+              },
+              {
+                "path": "build/agent-runs/20261122T172512-46400-c72b5974/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke checks, including the installed-level sweep, and all 84 recovery checks."
+              },
+              {
+                "path": "build/agent-runs/loop-3e04d2db3b4c4bee82cc01a22f993f60/0007-review-aa43e5/before-source-hashes.json",
+                "detail": "The review snapshot's main.cpp, RuntimeSkillPanel.cpp, hatch unit and report hashes match the verified run's post-worker snapshot."
+              },
+              {
+                "path": "docs/scratch/rate-hold-speed-001.md",
+                "detail": "The report ends with a two-line handoff and a what-to-check note. It specifies holding from rate 1 on Sometimes up..sometimes down., expecting an immediate step followed by about two seconds to reach 99, checking release and pointer exit, and confirming Just Climb caps at 50. The later supervisor log resolves the smoke result left pending at handoff."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T17:36:54.633656+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T172512-46400-c72b5974\\verification.log",
+        "verified_content": "2478245a4564170c589a4ed48f4b91e769c153252cc7dafc21b27bc99c5960bd"
+      }
     },
     {
       "id": "release-exe-name-001",
       "title": "Release downloads ship the game as lemmings_webolution(.exe)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "rate-hold-speed-001"
       ],
@@ -34676,7 +35175,178 @@
         "The release workflow and install staging produce lemmings_webolution.exe in the Windows package and lemmings_webolution in the Linux archive, and the workflow version and library checks run the renamed file.",
         "A local staging run under build/ produces lemmings_webolution.exe that prints the expected version, while the gcc-release build tree, test builds and scripts still produce and use webolution.exe.",
         "Player text in the packaging READMEs and the main README names the new executable, scripts/export_main.py passes, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261122T174609-46400-a3e654c4",
+      "started": "2026-11-22T17:46:10.205032+00:00",
+      "finished": "2026-11-22T17:49:39.712960+00:00",
+      "last_run": "build/agent-runs/20261122T174609-46400-a3e654c4",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The packaging review, local Windows staging, and supervisor smoke gate passed. The full public export exited 1 on two pre-existing development-history comments. Resolve those diagnostics and retain a successful full scripts/export_main.py run before accepting.",
+        "checks": [
+          {
+            "criterion": "The release workflow and install staging produce lemmings_webolution.exe in the Windows package and lemmings_webolution in the Linux archive, and the workflow version and library checks run the renamed file.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "CMakeLists.txt",
+                "detail": "Lines 121\u2013127 stage the existing webolution target as lemmings_webolution with the platform executable suffix."
+              },
+              {
+                "path": "release/main/.github/workflows/release.yml",
+                "detail": "Both jobs use cmake --install. Windows runs the staged lemmings_webolution.exe with a Windows-only PATH before zipping the stage. Linux runs ldd and --version against lemmings_webolution and explicitly lists it in the tarball."
+              },
+              {
+                "path": "build/release-exe-name-001/workflow-check.log",
+                "detail": "Records a successful YAML parse and checks both jobs\u2019 staging, version, and archive commands. Linux coverage is static."
+              }
+            ]
+          },
+          {
+            "criterion": "A local staging run under build/ produces lemmings_webolution.exe that prints the expected version, while the gcc-release build tree, test builds and scripts still produce and use webolution.exe.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/release-exe-name-001/configure.log",
+                "detail": "Records a gcc-release configuration with the registered UCRT64 compiler and expected version 0.2.0-rc.1."
+              },
+              {
+                "path": "build/release-exe-name-001/windows-package.log",
+                "detail": "Both native/webolution.exe and staged windows-release/lemmings_webolution.exe printed Lemmings Webolution 0.2.0-rc.1. The staged executable ran with a Windows-only PATH, and the ZIP listing contains the renamed executable and four bundled DLLs."
+              },
+              {
+                "path": "build/agent-native/main/webolution.exe",
+                "detail": "The supervisor\u2019s test build tree contains the executable under its existing name."
+              },
+              {
+                "path": "cmake/webolution_tests.cmake",
+                "detail": "Tests that launch the game still resolve the build-tree executable through TARGET_FILE:webolution."
+              },
+              {
+                "path": "scripts/Play-Clone.ps1",
+                "detail": "The playtest launcher still invokes build/cmake/gcc-release/webolution.exe."
+              }
+            ]
+          },
+          {
+            "criterion": "Player text in the packaging READMEs and the main README names the new executable, scripts/export_main.py passes, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "release/main/packaging/windows/README.txt",
+                "detail": "The asset placement and launch instructions name lemmings_webolution.exe."
+              },
+              {
+                "path": "release/main/packaging/linux/README.txt",
+                "detail": "The asset placement and launch instructions name lemmings_webolution."
+              },
+              {
+                "path": "release/main/README.md",
+                "detail": "The Play on Windows or Linux section gives the renamed commands for both platforms."
+              },
+              {
+                "path": "build/release-exe-name-001/export-main.log",
+                "detail": "The full export exited 1 on development-history text at src/app/RuntimeSkillPanel.cpp:67 and src/app/TubeScene.cpp:1116. The worker\u2019s before and after source hashes match for both files."
+              },
+              {
+                "path": "build/agent-runs/20261122T173654-46400-d7092a8c/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 passing smoke tests, including the installed-level sweep, and 84 passing recovery tests."
+              },
+              {
+                "path": "docs/scratch/release-exe-name-001.md",
+                "detail": "The final note tells the player to extract the package, place the boxes beside the renamed executable, and select Just Climb (MM_CLIMB_002). It states that the game should find the boxes and open the level from the map."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The packaging review, local Windows staging, and supervisor smoke gate passed. The full public export exited 1 on two pre-existing development-history comments. Resolve those diagnostics and retain a successful full scripts/export_main.py run before accepting.",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The full export passed after two comment-only edits, and the supervisor\u2019s smoke run for that revision passed. The Windows package was staged and checked locally. Linux packaging was verified from the install rule and workflow.",
+        "checks": [
+          {
+            "criterion": "The release workflow and install staging produce lemmings_webolution.exe in the Windows package and lemmings_webolution in the Linux archive, and the workflow version and library checks run the renamed file.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "CMakeLists.txt",
+                "detail": "The native install rule copies the webolution target file as lemmings_webolution with the platform executable suffix."
+              },
+              {
+                "path": "release/main/.github/workflows/release.yml",
+                "detail": "Both jobs stage with cmake --install. Windows runs lemmings_webolution.exe with a Windows-only PATH before zipping the stage. Linux runs ldd and --version on lemmings_webolution and names it explicitly in the tar command."
+              },
+              {
+                "path": "build/release-exe-name-001/workflow-check.log",
+                "detail": "Records a successful YAML parse and confirms both staging paths, both version commands, the Linux library check and tar members, and the Windows ZIP input."
+              }
+            ]
+          },
+          {
+            "criterion": "A local staging run under build/ produces lemmings_webolution.exe that prints the expected version, while the gcc-release build tree, test builds and scripts still produce and use webolution.exe.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/release-exe-name-001/configure.log",
+                "detail": "Records configuration with the gcc-release preset, the registered UCRT64 compiler, and version 0.2.0-rc.1."
+              },
+              {
+                "path": "build/release-exe-name-001/windows-package.log",
+                "detail": "The build-tree webolution.exe and staged lemmings_webolution.exe both printed Lemmings Webolution 0.2.0-rc.1. The staged executable ran with a Windows-only PATH, and the ZIP listing includes the renamed executable and four runtime DLLs."
+              },
+              {
+                "path": "build/agent-runs/20261122T174609-46400-a3e654c4/verification.log",
+                "detail": "The supervisor\u2019s smoke build linked webolution.exe."
+              },
+              {
+                "path": "cmake/webolution_tests.cmake",
+                "detail": "Tests that launch the game resolve the build-tree executable through TARGET_FILE:webolution."
+              },
+              {
+                "path": "scripts/Play-Clone.ps1",
+                "detail": "The playtest launcher builds the webolution target and invokes build/cmake/gcc-release/webolution.exe."
+              }
+            ]
+          },
+          {
+            "criterion": "Player text in the packaging READMEs and the main README names the new executable, scripts/export_main.py passes, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "release/main/packaging/windows/README.txt",
+                "detail": "The asset placement and launch instructions name lemmings_webolution.exe."
+              },
+              {
+                "path": "release/main/packaging/linux/README.txt",
+                "detail": "The asset placement and launch instructions use lemmings_webolution."
+              },
+              {
+                "path": "release/main/README.md",
+                "detail": "The Play on Windows or Linux section gives both renamed launch commands."
+              },
+              {
+                "path": "build/release-exe-name-001/export-main-revision.log",
+                "detail": "The full scripts/export_main.py invocation scanned 231 files and exited 0."
+              },
+              {
+                "path": "build/agent-runs/20261122T174609-46400-a3e654c4/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 passing smoke tests, including the installed-level sweep, and 84 passing recovery tests."
+              },
+              {
+                "path": "docs/scratch/release-exe-name-001.md",
+                "detail": "The final what-to-check note asks the player to extract the package, place both boxes beside the renamed executable, launch it, and select Just Climb (MM_CLIMB_002). The expected result is that the game finds the boxes and opens the level from the map."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T17:50:52.249810+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T174609-46400-a3e654c4\\verification.log",
+        "verified_content": "eeb3fcda48f7862157b8a4cfa2beeb1456068dd8d9319426132c0e9bba82c36e"
+      }
     }
   ]
 }

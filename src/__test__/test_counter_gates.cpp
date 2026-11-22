@@ -190,6 +190,31 @@ int main(int argc, char** argv) {
       scene->syncCounterGates(closed);
       assert(surface[corner].x == position.x && surface[corner].y == position.y &&
              surface[corner].z == position.z);
+
+      // Isolate body-footprint clipping by drawing into an empty depth buffer.
+      // At the same progress, opening and closing have different eased depths.
+      auto lower = std::ranges::find(closed, 1, &CounterGate::id);
+      assert(lower != closed.end());
+      app::CameraParams params;
+      params.yawUnits = 22;
+      params.levelEyeHeight = report->setup.terrain.height();
+      const auto camera = app::buildCamera(params);
+      app::SceneOptions options;
+      options.injectedWalkers = {{22, 34, 0.5, 1}};
+      app::Raster raster(camera.width, camera.height);
+      const auto showsBody = [&](double progress, double target) {
+        lower->progress = progress;
+        lower->target = target;
+        scene->syncCounterGates(closed);
+        raster.clear(0, 0, 0);
+        scene->drawInjectedWalkers(raster, camera, options, *lib);
+        return std::ranges::any_of(raster.framebuffer().rgb, [](auto v) { return v != 0; });
+      };
+      assert(!showsBody(1.0, 1.0));
+      assert(showsBody(0.5, 0.0));
+      assert(showsBody(0.0, 0.0));
+      assert(!showsBody(0.5, 1.0));
+      assert(!showsBody(1.0, 1.0));
     }
     if (node == 43) {
       assert(std::any_of(gates.begin(), gates.end(),

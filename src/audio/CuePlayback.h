@@ -80,6 +80,7 @@ public:
   // The independent RNG and default 30% music gain are provisional. Pause and focus preserve playback speed.
   // Music bypasses the SFX observer and counters.
   void playFrontendMusic();
+  void prepareLevelMusic();  // Stop the previous bed and cache the selection before the entry clock starts.
   void playLevelMusic();
 
   // Takes every pending cue from the World and plays each in order.
@@ -100,6 +101,7 @@ private:
   void play(sim::SoundCue cue, StereoGains gains);
   void playName(std::string_view name, Mixer::Overlap overlap, StereoGains gains = {});
   void report(const std::string& message) const;
+  void loadMusic(std::string_view name);
   void playMusic(std::string_view name, bool restart);
 
   Mixer mixer_;
@@ -107,6 +109,7 @@ private:
   std::unordered_set<std::string> attemptedSamples_;
   std::unordered_set<std::string> attemptedMusic_;
   std::string currentMusic_;
+  std::string pendingLevelMusic_;
   CueObserver observer_;
   DiagnosticSink diagnostic_;
   bool disabled_ = false;

@@ -44,8 +44,9 @@ void units(const AssetLibrary& lib, const std::filesystem::path& directory) {
   const auto rightTarget = control->pressTarget(hatch, 20, 20, 3, actorCanReceiveSkill);
   check(rightTarget && control->press(hatch[*rightTarget].index, 3, world),
         "right press can adjust the hatch while the lemming overlaps");
-  control->advance(0.399, hatch, 20, 20, world);
-  check(current() == 21, "hold starts with one click");
+  check(current() == 21, "hold starts with one immediate step");
+  control->advance(0.019, hatch, 20, 20, world);
+  check(current() == 21, "a partial repeat interval carries forward");
   control->advance(0.001, hatch, 20, 20, world);
   check(current() == 22 && control->heldTarget(hatch, 20, 20) == 0,
         "rate and held hover continue through the actor overlap");
@@ -58,10 +59,10 @@ void units(const AssetLibrary& lib, const std::filesystem::path& directory) {
         "left hold starts before a lemming passes under the pointer");
   check(!control->pressTarget(hatch, 20, 20, 1, actorCanReceiveSkill),
         "the passing lemming would take a new left press");
-  control->advance(0.4, hatch, 20, 20, world);
+  control->advance(0.020, hatch, 20, 20, world);
   check(current() == 20 && control->holding(),
         "the existing left hold repeats during that overlap");
-  control->advance(0.1, hatch, 20, 20, world);
+  control->advance(0.020, hatch, 20, 20, world);
   check(current() == 19 && control->holding(), "repeat continues as the lemming passes");
   control->advance(0, hatch, 30, 20, world);
   control->advance(10, hatch, 20, 20, world);

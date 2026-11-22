@@ -34080,7 +34080,7 @@
       }
     },
     {
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
@@ -34094,10 +34094,96 @@
         "The report names the recording, step and lemming that passes through the wall, the terrain or gate cells involved, the cause in the production call path, the original rule with static addresses or the provisional choice, and the change.",
         "Before and after clone traces and framebuffers under build/ show the lemming passing through the wall before and turning around at it after.",
         "The promoted replays reproduce or any divergence is explained as caused by the defect, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261121T234821-24104-507db842",
+      "started": "2026-11-21T23:48:22.370188+00:00",
+      "finished": "2026-11-22T00:03:01.636364+00:00",
+      "last_run": "build/agent-runs/20261121T234821-24104-507db842",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The clone evidence shows lemming 49 turning at the steel overhang in How do we get up there! The same clearance rule explains the sole promoted replay divergence, and the supervisor smoke profile passed. The rule remains provisional pending human playtest and original-route evidence.",
+        "checks": [
+          {
+            "criterion": "The report names the recording, step and lemming that passes through the wall, the terrain or gate cells involved, the cause in the production call path, the original rule with static addresses or the provisional choice, and the change.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/builder-wall-pass-001.md",
+                "detail": "Identifies Playtest 26 R1, H02_JC_1 attempt 14, recording H02_JC_1-1795301570652508000-14.replay, and lemming 49 at step 26780. It records authored steel 0x0003 in column 157 at rows 39\u201342, air at row 43, and the builder brick at row 44. The counter gates occupy other columns."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::updateSegment reaches stepWalker through stepElapsed. The existing rise loop accepted the air at the destination feet and the brick beneath it. The added gravity-relative probe checks the row above the prospective feet when leaving or entering builder support. It turns the walker before entering the gap and allows a supported one-cell descent to clear the ledge."
+              },
+              {
+                "path": "build/builder-wall-pass-001/rea-evidence.json",
+                "detail": "The retained Ghidra evidence identifies the registered x86 reference. The call at 0x41BEE6 reaches 0x41BFFC, where the clear-feet branch at 0x41C482 goes to support handling at 0x41C6EF. Solid feet reach the upward probes at 0x41C48E and 0x41C528 and, if still blocked, the climb-or-turn path at 0x41C5C1\u20130x41C679. The report labels the added stair headroom check provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "Before and after clone traces and framebuffers under build/ show the lemming passing through the wall before and turning around at it after.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-wall-pass-001/before-detail/H02_JC_1-1795301570652508000-14.log",
+                "detail": "Lemming 49 moves right from (156,43) into (157,43) at 26780, then becomes a faller at (158,43) at 26836. The raw grid shows steel immediately above the gap it entered."
+              },
+              {
+                "path": "build/builder-wall-pass-001/h02-final/H02_JC_1-1795301570652508000-14.log",
+                "detail": "At the same step and cell layout, lemming 49 stays at (156,43) and reverses from right to left. At 26836 it is walking left down the stairs at (155,44)."
+              },
+              {
+                "path": "build/builder-wall-pass-001/frames-before/step-26780.png",
+                "detail": "The clone framebuffer shows the steel overhang obscuring the lead walker's body as it enters the last brick column."
+              },
+              {
+                "path": "build/builder-wall-pass-001/frames-final/step-26780.png",
+                "detail": "At the same step and camera position, the lead walker faces left and remains visible on the stair before the steel."
+              },
+              {
+                "path": "build/builder-wall-pass-001/frames-final/step-26836.png",
+                "detail": "The lead walker has moved down the stairs away from the overhang, matching the fixed trace."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce or any divergence is explained as caused by the defect, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-wall-pass-001/promoted-results.tsv",
+                "detail": "The release CLI reproduced 29 of 30 active promoted wins, including Penelope Lem Stop at step 16014 with 32 of 32 saved. Designed with love is the sole divergence. At step 37451 the recording expects zero saved and the patched clone has one."
+              },
+              {
+                "path": "build/builder-wall-pass-001/m11-before/M11_KF_1-1795249788316136900-14.log",
+                "detail": "At step 30496 the inverted lemming 0 enters (3,65) on a builder brick with an earth cell immediately above its feet relative to gravity. Its ensuing climb attempt fails before it turns back. It reaches the exit at clock 265000 ms."
+              },
+              {
+                "path": "build/builder-wall-pass-001/m11-final/M11_KF_1-1795249788316136900-14.log",
+                "detail": "The same headroom check turns lemming 0 at (4,64) at step 30496, skipping the failed climb. It reaches the same exit at 264601 ms, 399 ms earlier, accounting for the save-count divergence."
+              },
+              {
+                "path": "build/agent-runs/20261121T234821-24104-507db842/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 of 95 main smoke tests passing, including the 102-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/builder-wall-pass-001.md",
+                "detail": "Ends with a human check for How do we get up there! Build right from the middle ledge toward the steel overhang, stop short of its top, and confirm ordinary followers turn on the last clear stair column and walk back down."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T00:05:21.436969+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261121T234821-24104-507db842\\verification.log",
+        "verified_content": "d8a1188bc8004065451c673bd44e3782640b8b9120ec64f0f4274acb5150de4b"
+      }
     },
     {
-      "status": "ready",
+      "status": "done",
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
@@ -34113,12 +34199,203 @@
         "The report describes the glitch above the topmost lever-opened wall on H02_JC_1 with a framebuffer crop, its cause in the production draw path, the change, and the other levels sharing it, or shows with frames from the views tried that the clone draws nothing wrong there.",
         "Before and after clone framebuffer crops under build/ of the same view show the glitch removed, and the level sweep frames of levels without such gates are unchanged.",
         "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261122T002505-24104-a2ce3abc",
+      "started": "2026-11-22T00:25:05.825854+00:00",
+      "finished": "2026-11-22T00:29:40.610480+00:00",
+      "last_run": "build/agent-runs/20261122T002505-24104-a2ce3abc",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The framebuffer evidence confirms the gate-top fix, and supervisor smoke passed. Designed with love is still promoted and diverges at step 37451. The divergence comes from the accepted builder-wall-pass-001 change. The lead should preserve the recording through the documented retirement process and update the report before re-review.",
+        "checks": [
+          {
+            "criterion": "The report describes the glitch above the topmost lever-opened wall on H02_JC_1 with a framebuffer crop, its cause in the production draw path, the change, and the other levels sharing it, or shows with frames from the views tried that the clone draws nothing wrong there.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/gate-top-glitch-001.md",
+                "detail": "Identifies Playtest 26 R2, gate 10 on H02_JC_1, and the missing wall and steel trim above it. Links matching crops and distinguishes the open replay view from the diagnostic closed and moving poses."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "After stamping gate topology, TubeScene::build gathers missing ordinary corner keys, fills them using the existing cylinder interpolation, and rebuilds the opaque cell mesh. Gate motion still uses the separate movable vertex records."
+              },
+              {
+                "path": "build/gate-top-glitch-001/before-detail/H02_JC_1-1795301570652508000-14/observe.log",
+                "detail": "The upper static quad in bucket 16, band 5 uses indices [0,286,0,0], sending three corners to the base of the tube."
+              },
+              {
+                "path": "build/gate-top-glitch-001/after/H02_JC_1-1795301570652508000-14/observe.log",
+                "detail": "The same quad uses [600,286,603,604], placing all four corners at Y 89 or 96. Unresolved lookups fall from 21 to zero."
+              },
+              {
+                "path": "build/gate-top-glitch-001/rea-key-instructions.json",
+                "detail": "For the registered x86 image, the ordinary resolver at 0x43A31D checks for a missing key at 0x43A356 and calls cylinder interpolation at 0x43A3AE. The instructions support the resolver behavior cited in the report."
+              },
+              {
+                "path": "build/gate-top-glitch-001/key-census.tsv",
+                "detail": "Names all 102 installed levels. Eleven of the 52 levels with this gate type had unresolved lookups before the change, and all eleven reach zero afterward."
+              }
+            ]
+          },
+          {
+            "criterion": "Before and after clone framebuffer crops under build/ of the same view show the glitch removed, and the level sweep frames of levels without such gates are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gate-top-glitch-001/crops/10-initial-z2-d0-paired.png",
+                "detail": "At the same zoom and yaw, the corrected open view fills the gap above the striped gate with green wall and continuous riveted trim."
+              },
+              {
+                "path": "build/gate-top-glitch-001/crops/10-posed-moving-z1-d16-paired.png",
+                "detail": "At the same oblique camera and fractional gate pose, the corrected frame restores the wall and trim above the gate and removes the displaced triangular slivers."
+              },
+              {
+                "path": "build/gate-top-glitch-001/crops/10-posed-closed-z2-d0-paired.png",
+                "detail": "At the same closed pose and camera, the corrected crop shows continuous wall and steel trim above the gate."
+              },
+              {
+                "path": "build/gate-top-glitch-001/sweep-frame-comparison.tsv",
+                "detail": "Records byte-identical before and after PNGs for all 50 gate-free levels. The frame names in both retained sweep directories match the gate-free rows in the census."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/gate-top-glitch-001/promoted/results.tsv",
+                "detail": "Three of the four promoted recordings on levels with this gate type pass. Designed with love diverges at step 37451 with one save where the recording expects zero."
+              },
+              {
+                "path": "build/builder-wall-pass-001/promoted-results.tsv",
+                "detail": "The earlier dependency run recorded the same step, clock, and save-count divergence before the gate rendering change."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-21-playtest-25/M11_KF_1-1795249788316136900-14.replay",
+                "detail": "The divergent recording still has the active .replay suffix. The replay ledger assigns retirement of recordings affected by intentional fixes to the lead."
+              },
+              {
+                "path": "build/agent-runs/20261122T000521-24104-79b788cb/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passing, including the 102-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/gate-top-glitch-001.md",
+                "detail": "Ends with a what-to-check note for How do we get up there! It directs the player to zoom in on the highest striped gate from both sides and check that the wall and trim meet continuously as the gate moves."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The framebuffer evidence confirms the gate-top fix, and supervisor smoke passed. Designed with love is still promoted and diverges at step 37451. The divergence comes from the accepted builder-wall-pass-001 change. The lead should preserve the recording through the documented retirement process and update the report before re-review.",
+      "review": {
+        "decision": "accept",
+        "reason": "The matching crops show the wall and trim restored above gate 10, and all 50 gate-free opening frames are byte-identical. All three active promoted replays on gated levels reproduced. The lead preserved the Designed with love win byte for byte when retiring it for the earlier builder fix. The current supervisor run passed 95 smoke and 84 recovery tests. The report\u2019s pending-smoke line predates that run. Original depth ordering and frame appearance remain unverified.",
+        "checks": [
+          {
+            "criterion": "The report describes the glitch above the topmost lever-opened wall on H02_JC_1 with a framebuffer crop, its cause in the production draw path, the change, and the other levels sharing it, or shows with frames from the views tried that the clone draws nothing wrong there.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/gate-top-glitch-001.md",
+                "detail": "Identifies Playtest 26 R2, H02_JC_1 gate 10, and the missing green wall and riveted trim. Links the matching crops, distinguishes the replayed open view from the diagnostic moving and closed poses, and reports the remaining diagonal overlaps within the retracted gate face."
+              },
+              {
+                "path": "src/assets/CellMesh.cpp",
+                "detail": "The ordinary corner lookup collects absent keys for the loader. Door vertices resolve through a separate record list."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "After stamping gate topology, TubeScene::build supplies missing ordinary corners with the existing cylinder interpolation and rebuilds the cell mesh. The gate continues to use its separate movable vertex records."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg constructs the scene and calls TubeScene::render for the opaque tube in both the cached and direct draw paths."
+              },
+              {
+                "path": "build/gate-top-glitch-001/before-detail/H02_JC_1-1795301570652508000-14/observe.log",
+                "detail": "The static quad above gate 10 in bucket 16, band 5 uses indices [0,286,0,0], placing three corners at the tube base. The scene reports 21 unresolved lookups."
+              },
+              {
+                "path": "build/gate-top-glitch-001/after/H02_JC_1-1795301570652508000-14/observe.log",
+                "detail": "The same quad uses [600,286,603,604], with all four corners at Y 89 or 96. The scene reports zero unresolved lookups."
+              },
+              {
+                "path": "build/gate-top-glitch-001/rea-key-instructions.json",
+                "detail": "The retained instructions for the registered x86 image show the ordinary resolver at 0x43A31D checking the missing-key sentinel at 0x43A356 and calling cylinder interpolation at 0x43A3AE. This supports the mesh lookup behavior."
+              },
+              {
+                "path": "build/gate-top-glitch-001/key-census.tsv",
+                "detail": "Lists all 102 installed levels. Eleven of the 52 levels with this gate type, including H02_JC_1, had unresolved lookups before the fix. All eleven reached zero afterward."
+              }
+            ]
+          },
+          {
+            "criterion": "Before and after clone framebuffer crops under build/ of the same view show the glitch removed, and the level sweep frames of levels without such gates are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gate-top-glitch-001/crops/10-initial-z2-d0-paired.png",
+                "detail": "At the same yaw and zoom, the corrected open view restores the green wall and steel band above the striped gate."
+              },
+              {
+                "path": "build/gate-top-glitch-001/crops/10-posed-moving-z1-d16-paired.png",
+                "detail": "At the same oblique camera and fractional gate pose, the corrected crop restores the wall and trim and removes the displaced slivers above the gate."
+              },
+              {
+                "path": "build/gate-top-glitch-001/crops/10-posed-closed-z2-d0-paired.png",
+                "detail": "At the same camera and closed pose, the corrected crop shows continuous wall and steel trim above the gate."
+              },
+              {
+                "path": "build/gate-top-glitch-001/sweep-frame-comparison.tsv",
+                "detail": "Records identical PNGs for all 50 gate-free levels. I independently matched both frame directories to the gate-free census and compared SHA-256 hashes for each pair."
+              }
+            ]
+          },
+          {
+            "criterion": "The promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gate-top-glitch-001/review-followup/promoted-results.tsv",
+                "detail": "The three active promoted recordings on gated levels all exit zero and report PASS with won=1 and completed=1. The Iron Curtain reached 21/20 at step 18207, Wheelbarrows of Doom reached 99/98 at step 24891, and Penelope Lem Stop reached 32/32 at step 16014."
+              },
+              {
+                "path": "build/builder-wall-pass-001/promoted-results.tsv",
+                "detail": "The earlier builder change already produced the Designed with love divergence at step 37451, with one save where the recording expected zero."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Records the lead\u2019s retirement of Designed with love and attributes the divergence to the intentional stair-turn change in builder-wall-pass-001."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-21-playtest-25/M11_KF_1-1795249788316136900-14.replay.retired",
+                "detail": "Preserves the 97/85 human win under the retired suffix. Its Git blob hash matches the previously promoted recording."
+              },
+              {
+                "path": "build/agent-runs/20261122T002505-24104-a2ce3abc/verification.log",
+                "detail": "The current supervisor run built smoke_tests and passed 95 of 95 smoke tests, including every 102-level sweep chunk and its report, plus 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/gate-top-glitch-001.md",
+                "detail": "Ends by directing the player to view the highest striped gate in How do we get up there! from both sides and check that the wall and trim meet continuously as the gate moves."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T00:31:52.839626+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T002505-24104-a2ce3abc\\verification.log",
+        "verified_content": "bab4b66e35c8016aebe662d41dd1c281cba844ccc8b9d59d93b0564cb344122a"
+      }
     },
     {
       "id": "multi-hatch-rate-001",
       "title": "Each hatch releases at its own stored rate on multi-hatch levels (playtest 26 R3)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "gate-top-glitch-001"
       ],
@@ -34132,7 +34409,162 @@
         "The report gives the per-hatch release rule and the hatch click rule with static addresses or the provisional choice, explains the earlier M20_MT_1 regression, and names the production call path changed.",
         "A census under build/ lists every multi-hatch level with each hatch count, stored rate, bounds, old and new initial rate, and released totals and completion time before and after against the time limit, single-hatch levels are unchanged, and a clone trace of M04_KF_1 shows the 30-lemming hatch starting at its stored rate.",
         "Each promoted replay either reproduces or is listed with its level, result and first divergent step caused by the per-hatch timing, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261122T004807-24104-58a54951",
+      "started": "2026-11-22T00:48:07.568908+00:00",
+      "finished": "2026-11-22T00:52:00.104214+00:00",
+      "last_run": "build/agent-runs/20261122T004807-24104-58a54951",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Restore the existing single-hatch `SimReleaseTrace --real-seconds` interval override. The loader now sets a per-hatch interval that takes precedence over the explicit CLI value. The multi-hatch census, Penelope Lem Stop trace, replay accounting, and supervisor smoke gate are supported.",
+        "checks": [
+          {
+            "criterion": "The report gives the per-hatch release rule and the hatch click rule with static addresses or the provisional choice, explains the earlier M20_MT_1 regression, and names the production call path changed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/multi-hatch-rate-001.md",
+                "detail": "Names the retail loader, World release scheduler, and runtime click and hover path. Explains that the earlier Bridges attempt released only 45 of 53 because the 50-lemming hatch used rate 1, with five seconds between births. Documents the provisional initial-rate floors for Bridges and VH21_JC."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/static/selected-evidence.json",
+                "detail": "The instructions at 0x453A42 through 0x453AAF agree with the pseudocode. Each branch reads the selected hatch's rate and passes the same hatch to 0x425DE3. The setter clamps against that hatch's bounds and updates its rate and interval while preserving its countdown."
+              },
+              {
+                "path": "build/multi-hatch-release-001/static/0x00425A95-instructions.json",
+                "detail": "The retained instructions test and decrement this hatch's remaining count at 0x425B72 through 0x425BCB and add its own interval to its residual at 0x425D3C through 0x425D4B."
+              }
+            ]
+          },
+          {
+            "criterion": "A census under build/ lists every multi-hatch level with each hatch count, stored rate, bounds, old and new initial rate, and released totals and completion time before and after against the time limit, single-hatch levels are unchanged, and a clone trace of M04_KF_1 shows the 30-lemming hatch starting at its stored rate.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/multi-hatch-rate-001/census.csv",
+                "detail": "Lists all 75 hatches across 33 installed levels for each of three update schedules, with quotas, bounds, stored and effective rates, released totals, and completion times. All 99 level and schedule cases released their full totals before the limit on both cadences."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/M04_KF_1-release.csv",
+                "detail": "Both hatches first release at 6,320 ms. The 30-lemming hatch starts at rate 99 and releases every 200 ms through 12,120 ms. The two-lemming hatch starts at rate 30 and releases its second lemming 2,400 ms later."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/M04_KF_1-hover-99.png",
+                "detail": "The clone framebuffer displays RATE 99 above the hovered hatch's remaining count of 30."
+              },
+              {
+                "path": "src/tools/SimReleaseTrace.cpp",
+                "detail": "Line 107 assigns the explicit positive CLI interval to `LevelSetup::releaseIntervalSeconds` after retail loading. The documented override previously controlled recurring births on single-hatch levels."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Lines 1396\u20131397 now prefer the positive interval that the retail loader put on the entrance. A single-hatch trace with an explicit positive interval different from the stored interval therefore uses the stored cadence and silently ignores the override."
+              }
+            ]
+          },
+          {
+            "criterion": "Each promoted replay either reproduces or is listed with its level, result and first divergent step caused by the per-hatch timing, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/multi-hatch-rate-001/replays-after/results.tsv",
+                "detail": "Covers all six active promoted recordings on affected levels. Four reproduce. MM_E1_5_SKILLS first diverges at step 753 with three births instead of four because its second hatch is slower. M04_KF_1 first diverges at step 1187 with three births instead of two because its 30-lemming hatch is faster."
+              },
+              {
+                "path": "build/agent-runs/20261122T003152-24104-9e019c03/verification.log",
+                "detail": "The supervisor built `smoke_tests` and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/multi-hatch-rate-001.md",
+                "detail": "Ends with a manual check for Penelope Lem Stop, specifying where to click and the expected rate display, click isolation, and paired first births."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Restore the existing single-hatch `SimReleaseTrace --real-seconds` interval override. The loader now sets a per-hatch interval that takes precedence over the explicit CLI value. The multi-hatch census, Penelope Lem Stop trace, replay accounting, and supervisor smoke gate are supported.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision restores the single-hatch SimReleaseTrace override. The per-hatch census and Penelope Lem Stop trace support the production change, both replay divergences are accounted for, and the current supervisor smoke profile passed. Human playtest confirmation and exact original door timing remain open.",
+        "checks": [
+          {
+            "criterion": "The report gives the per-hatch release rule and the hatch click rule with static addresses or the provisional choice, explains the earlier M20_MT_1 regression, and names the production call path changed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/multi-hatch-rate-001.md",
+                "detail": "Traces retail loading through World::stepRelease and runApplicationLeg through RuntimeReleaseRateControl to the selected hatch and its hover readout. Explains that the earlier Bridges attempt released 45 of 53 because the 50-lemming hatch used rate 1 with five seconds between births. Documents the provisional floors of 5 for that hatch and 4 for the 49-lemming hatch on VH21_JC."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/static/selected-evidence.json",
+                "detail": "The retained instructions at 0x453A42 through 0x453AAF agree with the pseudocode. Both branches read the selected hatch's rate at +0xA0 and pass that same hatch to 0x425DE3. The setter clamps to that hatch's bounds, updates its rate and interval, and leaves its pending countdown intact."
+              },
+              {
+                "path": "build/multi-hatch-release-001/static/0x00425A95-instructions.json",
+                "detail": "The hatch update tests and decrements its own remaining count at 0x425B72 through 0x425BCB and adds its own interval to its residual countdown at 0x425D3C through 0x425D4B."
+              }
+            ]
+          },
+          {
+            "criterion": "A census under build/ lists every multi-hatch level with each hatch count, stored rate, bounds, old and new initial rate, and released totals and completion time before and after against the time limit, single-hatch levels are unchanged, and a clone trace of M04_KF_1 shows the 30-lemming hatch starting at its stored rate.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/multi-hatch-rate-001/census.csv",
+                "detail": "Covers 75 hatches across all 33 installed multi-hatch levels. All 99 level and update schedule cases show matching first release times and full hatch quotas released before the time limit on both cadences."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "The capacity floor applies only to multi-hatch levels. A sole hatch keeps its previous clamped rate and table interval."
+              },
+              {
+                "path": "src/tools/SimReleaseTrace.cpp",
+                "detail": "The revision writes the CLI interval to the sole entrance and LevelSetup before World construction, so the entrance interval used by the scheduler carries the explicit override."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/revision/override-check.log",
+                "detail": "On MM_CLIMB_002, both positive overrides retain the first birth at tick 4. The 0.8-second override then releases every four ticks and the 0.4-second override every two. A zero interval still selects legacy tick timing."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/M04_KF_1-release.csv",
+                "detail": "Both hatches first release at 6,320 ms. The 30-lemming hatch starts at stored rate 99 and releases every 200 ms through 12,120 ms. The two-lemming hatch starts at rate 30 and releases its second lemming 2,400 ms later."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/M04_KF_1-hover-99.png",
+                "detail": "The clone framebuffer shows RATE 99 above the hovered hatch's remaining count of 30."
+              },
+              {
+                "path": "build/multi-hatch-rate-001/M04_KF_1-hover-30.png",
+                "detail": "The companion framebuffer shows RATE 30 above the other hatch's remaining count of two."
+              }
+            ]
+          },
+          {
+            "criterion": "Each promoted replay either reproduces or is listed with its level, result and first divergent step caused by the per-hatch timing, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/multi-hatch-rate-001/replays-after/results.tsv",
+                "detail": "Accounts for all six promoted recordings on affected levels. Four reproduce. MM_E1_5_SKILLS first diverges at step 753 with three births against four expected because its second hatch runs at rate 5. M04_KF_1 first diverges at step 1187 with three births against two expected because its 30-lemming hatch runs at rate 99."
+              },
+              {
+                "path": "build/agent-runs/20261122T004807-24104-58a54951/verification.log",
+                "detail": "The supervisor built smoke_tests for this revision and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/multi-hatch-rate-001.md",
+                "detail": "Ends with a two-line handoff and a Penelope Lem Stop playtest note specifying the click action, RATE 99 display, isolated rate adjustment, and paired first births."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-22T00:54:06.536004+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261122T004807-24104-58a54951\\verification.log",
+        "verified_content": "5995140f4a44bc5dd26c16369f7f60586b2d5b689c23142cc98fa57cb1051497"
+      }
     }
   ]
 }

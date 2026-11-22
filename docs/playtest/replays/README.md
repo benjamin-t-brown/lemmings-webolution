@@ -34,3 +34,13 @@ but is no longer replayed, and "all promoted replays reproduce" means the `.repl
   the recording expects 12); Make Mine a Large One diverges at step 5394, where the Miner click finds
   its actor at (120,14) instead of (126,14). Both passed on the builds they were recorded on. Retired
   2026-11-18; the levels need a fresh winning recording to regain replay coverage.
+- 2026-11-21-playtest-25/M11_KF_1 (Designed with love): at step 30496 an inverted lemming on a
+  builder brick with earth directly above its feet climbs on the build it was recorded on; the
+  playtest 26 R1 fix (builder-wall-pass-001) turns it there, so it reaches the exit earlier and the
+  recording diverges at step 37451 (first save) by design. It passed (97/85) on the build it was
+  recorded on. Retired 2026-11-21; the level needs a fresh winning recording to regain replay coverage.
+- 2026-11-18-playtest-14/MM_E1_5_SKILLS (Swings Both Ways) and 2026-11-21-playtest-26/M04_KF_1
+  (Penelope Lem Stop): both levels have two hatches. The playtest 26 R3 fix (multi-hatch-rate-001)
+  releases each hatch at its own stored rate instead of the first hatch's, so the recordings diverge
+  at their early births (steps 753 and 1187) by design. Both passed (MM_E1_5_SKILLS on its build,
+  M04_KF_1 32/32) on the builds they were recorded on. Retired 2026-11-21.

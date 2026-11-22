@@ -34,7 +34,7 @@ under docs/playtest/replays/. Won so far: 35 of 102.
 | 20 | MM_E1_4SKILLS | Sergeant Bash | ok | playtest 11 | pass |  |
 | 21 | E20_mg_1 | The Crowded House | ok | playtest 12 | pass |  |
 | 22 | MM_ALL_8_001 | One Way Ticket | ok | playtest 13 | pass |  |
-| 23 | MM_E1_5_Skills | Swings Both Ways | ok | playtest 14 | pass |  |
+| 23 | MM_E1_5_Skills | Swings Both Ways | ok | playtest 14 | retired (R3 fix) |  |
 | 24 | MM_ALL_8_002 | Wandering Free | ok | playtest 15 | pass | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 25 | MM_ALL_8_003 | The Iron Curtain | ok | playtest 15 | pass |  |
 | 26 | E18_KF_2 | Make Mine a Large One | ok | playtest 17 | retired (G1 fix) | playtest 17 G1, G2 fixed, awaiting playtest |
@@ -44,8 +44,8 @@ under docs/playtest/replays/. Won so far: 35 of 102.
 | 30 | M08_KF_1 | 2 sides to every story | ok | playtest 22 | pass |  |
 | 31 | E16_KF_1 | Wood you believe it? | ok | playtest 22 | pass |  |
 | 32 | M08_mg_1 | Wheelbarrows of Doom | ok | playtest 22 | pass |  |
-| 33 | M11_KF_1 | Designed with love | ok | playtest 25 | pass |  |
-| 34 | M04_KF_1 | Penelope Lem Stop | ok | playtest 26 | pass |  |
+| 33 | M11_KF_1 | Designed with love | ok | playtest 25 | retired (builder-wall-pass-001) |  |
+| 34 | M04_KF_1 | Penelope Lem Stop | ok | playtest 26 | retired (R3 fix) |  |
 | 35 | H02_JC_1 | How do we get up there! | ok |  |  | playtest 26 R1, R2 |
 | 36 | E07_JC_1 | There`s only one way down! | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |
 | 37 | M02_MG_1 | What a Fantastic Pair of Birds | ok |  |  | implemented 2026-11-16, not yet seen by a person: robin |

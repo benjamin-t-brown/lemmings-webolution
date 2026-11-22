@@ -10,24 +10,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- builder-wall-pass-001: **ready** — Lemmings walk through a wall at the top of builder stairs that end too low (playtest 26 R1)
-- gate-top-glitch-001: **ready** — Glitchy graphics above the topmost lever-opened wall on How do we get up there! (playtest 26 R2)
-- multi-hatch-rate-001: **ready** — Each hatch releases at its own stored rate on multi-hatch levels (playtest 26 R3)
 
 ## Recently completed queue entries
 
-- disc-volume-warning-001: CD image: a file shorter than its declared volume is a warning when both boxes are intact
-  Accepted: 2026-11-21T20:05:22.017521+00:00
-  Verification evidence: `build/agent-runs/20261121T195814-5064-1dabea55/verification.log`
-  Verification evidence: `build\agent-runs\20261121T195814-5064-1dabea55\verification.log`
-- lantern-occlusion-001: Lemmings stay visible in front of the lantern glow by the exit on Penelope Lem Stop (playtest 25 Q14)
-  Accepted: 2026-11-21T21:02:33.376026+00:00
-  Verification evidence: `build/agent-runs/20261121T203907-50060-3e890e33/verification.log`
-  Verification evidence: `build\agent-runs\20261121T203907-50060-3e890e33\verification.log`
-- builder-brick-rotate-001: Carried builder plank rotates into place as it grows (playtest 25 Q11)
-  Accepted: 2026-11-21T21:26:28.999237+00:00
-  Verification evidence: `build/agent-runs/20261121T210233-50060-daadf4c0/verification.log`
-  Verification evidence: `build\agent-runs\20261121T210233-50060-daadf4c0\verification.log`
 - examine-pause-001: Examine pause: Enter or Pause/Break freezes the level so the player can drag to look around, with switch highlights (playtest 25 Q12, clone addition)
   Accepted: 2026-11-21T21:51:48.880225+00:00
   Verification evidence: `build/agent-runs/20261121T212629-50060-843e8c9f/verification.log`
@@ -36,14 +21,26 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-21T22:07:02.043752+00:00
   Verification evidence: `build/agent-runs/20261121T215148-50060-d4e9961b/verification.log`
   Verification evidence: `build\agent-runs\20261121T215148-50060-d4e9961b\verification.log`
+- builder-wall-pass-001: Lemmings walk through a wall at the top of builder stairs that end too low (playtest 26 R1)
+  Accepted: 2026-11-22T00:05:21.436969+00:00
+  Verification evidence: `build/agent-runs/20261121T234821-24104-507db842/verification.log`
+  Verification evidence: `build\agent-runs\20261121T234821-24104-507db842\verification.log`
+- gate-top-glitch-001: Glitchy graphics above the topmost lever-opened wall on How do we get up there! (playtest 26 R2)
+  Accepted: 2026-11-22T00:31:52.839626+00:00
+  Verification evidence: `build/agent-runs/20261122T002505-24104-a2ce3abc/verification.log`
+  Verification evidence: `build\agent-runs\20261122T002505-24104-a2ce3abc\verification.log`
+- multi-hatch-rate-001: Each hatch releases at its own stored rate on multi-hatch levels (playtest 26 R3)
+  Accepted: 2026-11-22T00:54:06.536004+00:00
+  Verification evidence: `build/agent-runs/20261122T004807-24104-58a54951/verification.log`
+  Verification evidence: `build\agent-runs\20261122T004807-24104-58a54951\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-57b118598a2b44c29a06077d3fdcf8fd/result.json`
+- Result: `build/agent-runs/loop-ce9e3b456a5d4bf18b0a349c116dde19/result.json`
 - Status: **blocked**
-- Duration: 1h 29m 55s
-- Completed in this invocation: lantern-occlusion-001, builder-brick-rotate-001, examine-pause-001, exit-hover-count-001
-- Reason: The queue has no ready task or planning-required placeholder. The documented Playtest 25 fixes are accepted in the queue and await human confirmation. Penelope Lem Stop is the next level without a recorded human win. Its reported exit-lantern occlusion already has an accepted fix, and the retained 26/32 attempt establishes no additional defect. The next useful evidence is a human playtest on the accepted build. This pass read source, reports, and retained logs. It made no edits, ran no builds or
+- Duration: 1h 08m 02s
+- Completed in this invocation: builder-wall-pass-001, gate-top-glitch-001, multi-hatch-rate-001
+- Reason: All three Playtest 26 defects have accepted fixes, and the queue has no ready task or planning-required placeholder. The next playable-v1 dependency is a human playtest of How do we get up there! (H02_JC_1, node 35) on the revised clone, plus confirmation of the hatch rates on Penelope Lem Stop. The level ledger records 35 human wins out of 102. If the next playtest reproduces the remaining striped-gate overlap on node 35, its camera angle and gate position would give the lead a concrete basis f
 
 ## Documentation handoff
 

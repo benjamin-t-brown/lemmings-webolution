@@ -49,7 +49,7 @@ int main() {
   if (!library) return 1;
   auto map = app::MapScene::build(*library, {});
   if (!map) return 1;
-  auto menuImage = app::LevelMenu::load(*library);
+  auto menuImage = app::LevelMenu::load(*library, "MM_CLIMB_002");
   auto cursor = app::RuntimeCursor::load(*library);
   if (!menuImage || !cursor) return 1;
   const auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");

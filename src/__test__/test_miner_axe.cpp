@@ -12,8 +12,60 @@
 using namespace webo;
 using namespace webo::app;
 
+static bool directionalRefusal() {
+  constexpr int x = 49, y = 63;
+  for (int blockedFacing : {-1, 1}) {
+    CollisionGrid grid;
+    grid.height = 96;
+    grid.cells.resize(grid.width * grid.height);
+    const int cutRow = grid.height - 1 - (y + 1);
+    std::fill_n(grid.cells.begin(), (cutRow + 1) * grid.width, kCellSolid);
+    const auto mask = blockedFacing < 0 ? kCellNoBashLeft : kCellNoBashRight;
+    // A refusal in the second column must also preserve the first column.
+    for (int dir : {-1, 1})
+      grid.cells[cutRow * grid.width + x + 2 * dir] |= mask;
+
+    for (int dir : {-1, 1}) {
+      sim::LevelSetup setup;
+      setup.terrain = sim::Terrain::fromCollisionGrid(grid);
+      setup.totalLemmings = 0;
+      sim::World world(setup);
+      sim::Lemming walker;
+      walker.x = x;
+      walker.y = y;
+      walker.state = sim::State::Walker;
+      walker.facing = dir < 0 ? sim::Facing::Left : sim::Facing::Right;
+      world.place(walker);
+      if (!world.assign(0, sim::Skill::Miner))
+        return false;
+      (void)world.takeSoundEvents();
+      const auto version = world.terrain().version();
+      for (int i = 0; i < 8 && world.lemmings()[0].state == sim::State::Miner &&
+           world.terrain().version() == version; ++i)
+        world.tick();
+
+      const bool refused = dir == blockedFacing;
+      const auto& actor = world.lemmings()[0];
+      const auto cues = world.takeSoundEvents();
+      const auto expected = refused ? sim::Material::Earth : sim::Material::Empty;
+      if (actor.state != (refused ? sim::State::Walker : sim::State::Miner) ||
+          int(actor.facing) != (refused ? -dir : dir) ||
+          actor.x != (refused ? x : x + dir) || actor.y != (refused ? y : y + 1) ||
+          world.terrain().at(x + dir, y + 1) != expected ||
+          world.terrain().at(x + 2 * dir, y + 1) != expected ||
+          cues.size() != 1 ||
+          (refused ? cues[0].sample != "MineMetal" : cues[0].cue != sim::SoundCue::Work)) {
+        std::cerr << "Unexpected Miner stroke facing " << dir << " against mask " << mask << '\n';
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 int main(int argc, char** argv) {
   assert(argc > 1);
+  if (!directionalRefusal()) return 1;
   for (int facing : {-1,1}) {
     sim::LevelSetup setup; setup.terrain = sim::Terrain(256,96); setup.totalLemmings = 0;
     setup.terrain.fillBox(0,64,256,32,sim::Material::Earth);

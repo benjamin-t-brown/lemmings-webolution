@@ -94,6 +94,8 @@ std::expected<std::vector<double>, std::string> parseReleaseRates(std::span<cons
 
 // Read-and-parse helpers against an archive.
 std::expected<std::vector<LevelInfo>, std::string> loadLevelMap(const AssetLibrary&);
+// First LEVELMAP.DAT record matching the archive ID, ignoring case.
+const LevelInfo* findLevelMapEntry(std::span<const LevelInfo> levels, std::string_view id);
 std::expected<LevelTable, std::string> loadLevelTable(const AssetLibrary&);
 std::expected<std::vector<double>, std::string> loadReleaseRates(const AssetLibrary&);
 std::expected<ReleaseRates, std::string> loadReleaseRateTable(const AssetLibrary&);

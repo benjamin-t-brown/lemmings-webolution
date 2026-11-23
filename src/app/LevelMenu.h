@@ -1,10 +1,12 @@
 #pragma once
 
-#include "assets/Bitmap.h"
+#include "shell/HudText.h"
 
 #include <array>
 #include <expected>
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace webo {
 class AssetLibrary;
@@ -18,7 +20,8 @@ enum class LevelMenuAction { None, Resume, Retry, MapQuit, SoundOptions, Examine
 // The native empty selector-19 widget stays unsupported.
 class LevelMenu {
  public:
-  static std::expected<LevelMenu, std::string> load(const AssetLibrary& library);
+  static std::expected<LevelMenu, std::string> load(const AssetLibrary& library,
+                                                   std::string_view levelId);
 
   void open();
   void close();
@@ -33,8 +36,12 @@ class LevelMenu {
   void drawTouchButton(Image& frame) const;
 
  private:
+  void layoutTitle(std::string_view title);
+
   Image font_;
   std::array<std::string, 5> labels_{};
+  std::vector<shell::HudLine> titleLines_;
+  int rowBaseY_ = 0;
   bool open_ = false;
   int focusedIndex_ = 0;
 };

@@ -20,6 +20,7 @@ Outcome Frontend::beginFrontend(Screen page) {
     case Screen::Menu:
     case Screen::Confirm:
     case Screen::SoundOptions:
+    case Screen::KeyboardShortcuts:
     case Screen::Map:
       dispatchMode_ = kUiFrontend;
       break;
@@ -69,13 +70,7 @@ Outcome Frontend::press(Key key, int holdFrames) {
       if (key == Key::Return) return confirmChoice(highlight_ == 0);
       return Outcome::Unobserved;
     case Screen::Map:
-      if (key == Key::MapNodeClick) {
-        if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
-        screen_ = Screen::Level;
-        paused_ = false;
-        dispatchMode_ = kUiLevel;
-        return Outcome::Handled;
-      }
+      if (key == Key::MapNodeClick) return enterLevel();
       return Outcome::Unobserved;
     case Screen::Level:
       if (key == Key::P) {
@@ -100,6 +95,9 @@ Outcome Frontend::press(Key key, int holdFrames) {
     case Screen::SoundOptions:
       if (key == Key::Esc) return returnFromSoundOptions();
       if (key == Key::O && dispatchMode_ == kUiDialog) return closeLevelMenu(true);
+      return Outcome::Unobserved;
+    case Screen::KeyboardShortcuts:
+      if (key == Key::Esc || key == Key::Return) return replacePage(Screen::SoundOptions);
       return Outcome::Unobserved;
     case Screen::Results:
       // Results start with a hidden row. Native keyboard focus repair is unresolved.
@@ -131,6 +129,15 @@ Outcome Frontend::activateMapFooter() {
   return Outcome::Handled;
 }
 
+Outcome Frontend::enterLevel() {
+  if ((screen_ != Screen::Menu && screen_ != Screen::Map) ||
+      endFrontend() != Outcome::Handled) return Outcome::Ignored;
+  screen_ = Screen::Level;
+  paused_ = false;
+  dispatchMode_ = kUiLevel;
+  return Outcome::Handled;
+}
+
 int Frontend::uiState() const {
   return dispatchMode_;
 }
@@ -143,6 +150,7 @@ std::uint32_t Frontend::nodeVtable() const {
     case Screen::Level: return 0;
     case Screen::Dialog: return kVtableDialog;
     case Screen::SoundOptions: return 0x4B24A8;
+    case Screen::KeyboardShortcuts: return 0; // Clone page has no original vtable.
     case Screen::Results: return resultsWon_ ? kVtableWinResults : kVtableLossResults;
   }
   return 0;
@@ -212,6 +220,11 @@ Outcome Frontend::returnFromSoundOptions() {
   highlight_ = 0;
   // 48EE6A / 48F617 pass selector 7 / 1F as page+24. Page replacement preserves dispatch mode.
   return replacePage(dispatchMode_ == kUiDialog ? Screen::Dialog : Screen::Menu);
+}
+
+Outcome Frontend::openKeyboardShortcuts() {
+  if (screen_ != Screen::SoundOptions) return Outcome::Ignored;
+  return replacePage(Screen::KeyboardShortcuts);
 }
 
 Outcome Frontend::retryLevelMenu() {

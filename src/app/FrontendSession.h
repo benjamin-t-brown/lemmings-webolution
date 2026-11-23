@@ -60,6 +60,7 @@ class FrontendSession {
   shell::Screen screen() const { return state_.screen(); }
   int constructionCounter() const { return state_.counter(); }
   shell::Outcome pressReturn();
+  shell::Outcome pressEscapeInOptions();
   void hoverMenu(int x, int y);
   bool moveMenuFocus(int direction);
   int menuFocus() const { return state_.highlight(); }
@@ -79,6 +80,7 @@ class FrontendSession {
   bool clickMap(int x, int y);
   const std::optional<std::string>& selectedLevel() const { return selectedLevel_; }
   bool levelIntroEnabled() const { return levelIntroEnabled_; }
+  bool startDirectLevel(std::string levelId);
   bool retryLevel();
   bool abandonLevelToMap();
   const std::array<std::int32_t, 102>& completionFlags() const { return completionFlags_; }
@@ -99,6 +101,7 @@ class FrontendSession {
   std::function<void(save::SoundSettings, bool)> previewSound_;
   bool soundWritePending_ = false;
   mutable Image soundImage_;
+  mutable Image shortcutsImage_;
   int soundBaseY() const;
   void finishSoundEdit(bool accept);
   // Cache the rendered focus. Page replacement can reset the model's highlight.

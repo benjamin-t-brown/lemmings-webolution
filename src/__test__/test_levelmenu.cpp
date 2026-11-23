@@ -61,7 +61,7 @@ int main() {
     std::cerr << library.error() << '\n';
     return 1;
   }
-  auto menuResult = app::LevelMenu::load(*library);
+  auto menuResult = app::LevelMenu::load(*library, "mm_climb_002");
   check(static_cast<bool>(menuResult), "load UK level-menu font and labels");
   if (!menuResult) return 1;
   auto menu = std::move(*menuResult);
@@ -103,6 +103,11 @@ int main() {
   check(menu.actionAt(320, 245) == LevelMenuAction::None &&
         menu.actionAt(320, 259) == LevelMenuAction::None,
         "native empty widget has no additional hit area or action");
+  for (std::size_t i = 0; i < actions.size(); ++i) {
+    check(menu.focusedIndex() == static_cast<int>(i) && menu.focusedAction() == actions[i],
+          "keyboard focus visits only action rows");
+    menu.moveFocus(1);
+  }
   menu.moveFocus(-1);
   check(menu.focusedAction() == LevelMenuAction::Examine, "up from Resume wraps to Examine");
   menu.moveFocus(1);
@@ -111,6 +116,10 @@ int main() {
   menu.hover(320, 140);
   check(menu.focusedIndex() == 1 && menu.focusedAction() == LevelMenuAction::Retry,
         "hovering Retry updates focus");
+  menu.hover(320, 75);
+  check(menu.focusedIndex() == 1 && menu.actionAt(320, 75) == LevelMenuAction::None &&
+        !menu.touchButtonAt(320, 75), "heading is outside row and touch plate input");
+  check(menu.touchButtonAt(320, 20), "touch Menu plate retains its own hit area");
   menu.hover(252, 141); // panel edge, but outside the text/content hit rectangle
   check(menu.focusedIndex() == 1 && menu.focusedAction() == LevelMenuAction::Retry,
         "miss preserves prior focus");
@@ -130,10 +139,17 @@ int main() {
   auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");
   check(static_cast<bool>(font), "load font for independent render comparison");
   if (!font) return 1;
-  const auto expected = shell::renderMainMenu(before, *font, labels,
-                                               params, shell::fontCells());
+  const auto& cells = shell::fontCells();
+  const auto drawHeading = [&](Image& target, std::string title, int top) {
+    const int left = (640 - shell::textWidth(title, cells)) / 2;
+    const std::array heading{shell::HudLine{title, left + 2, top + 2, {220, 50, 50}},
+                             shell::HudLine{title, left, top, {0, 0, 0}}};
+    shell::drawHud(target, *font, heading, cells);
+  };
+  auto expected = shell::renderMainMenu(before, *font, labels, params, cells);
+  drawHeading(expected, "Just Climb", 60);
   check(frame.rgba == expected.rgba,
-        "draw matches the four UK labels and the clone Examine row using the menu renderer");
+        "centred installed heading uses the map colours above the existing menu rows");
   // Sample the scene outside all panel and text bounds.
   const auto pixelOffset = (static_cast<std::size_t>(20) * 640 + 20) * 4;
   check(std::equal(frame.rgba.begin() + static_cast<std::ptrdiff_t>(pixelOffset),
@@ -151,6 +167,31 @@ int main() {
   menu.open();
   check(menu.focusedIndex() == 0 && menu.focusedAction() == LevelMenuAction::Resume,
         "reopening resets focus to Resume");
+
+  const std::string first(20, 'W'), second(20, 'M');
+  auto wrapped = app::LevelMenu::load(*library, first + " " + second);
+  check(wrapped.has_value(), "load menu for an id with no installed title");
+  if (!wrapped) return 1;
+  wrapped->open();
+  wrapped->hover(320, 171);
+  check(wrapped->focusedIndex() == 1, "hover follows the shifted Retry row");
+  wrapped->hover(320, 105);
+  check(wrapped->focusedIndex() == 1 && wrapped->actionAt(320, 105) == LevelMenuAction::None &&
+        !wrapped->touchButtonAt(320, 105), "second heading line is also outside input");
+  for (std::size_t i = 0; i < rects.size(); ++i) {
+    const auto& r = rects[i];
+    check(wrapped->actionAt(r[0] + 1, r[1] + 32) == actions[i],
+          "wrapped title shifts each row hit down by one line");
+  }
+  params.baseY = 131;
+  params.highlight = 1;
+  expected = shell::renderMainMenu(before, *font, labels, params, cells);
+  drawHeading(expected, first, 60);
+  drawHeading(expected, second, 91);
+  frame = before;
+  wrapped->draw(frame);
+  check(frame.rgba == expected.rgba,
+        "the id fallback wraps at a space and moves the drawn rows with their hit areas");
 
   std::cout << checks << " checks, " << failures << " failures\n";
   return failures == 0 ? 0 : 1;

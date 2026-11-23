@@ -10,41 +10,39 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- level-menu-title-001: **ready** — The level menu shows the level name above its rows (user request 2026-11-23)
-- teleport-sound-001: **ready** — Teleporting plays no sound (playtest 30 W1)
-- options-spacing-001: **ready** — Options menu: Window size and Accept sit too far below the row above (user request 2026-11-23)
-- keyboard-shortcuts-001: **ready** — Options gains a Keyboard Shortcuts row that opens a screen listing every key (user request 2026-11-23)
+- level-start-timing-001: **ready** — Level start: first lemming at about 4.08 s with Let’s Go! still showing, as in the original (user request 2026-11-23)
+- language-page-001: **ready** — The main-menu Language button opens a Language page that offers English only (user request 2026-11-23)
 
 ## Recently completed queue entries
 
-- teleport-hover-partner-001: Hovering a teleport highlights it and its sister portal (playtest 29 U2)
-  Accepted: 2026-11-22T20:32:19.858401+00:00
-  Verification evidence: `build/agent-runs/20261122T202408-44268-a5900692/verification.log`
-  Verification evidence: `build\agent-runs\20261122T202408-44268-a5900692\verification.log`
-- web-landscape-001: Phones play the web build in landscape (mobile request V1)
-  Accepted: 2026-11-23T08:18:25.891812+00:00
-  Verification evidence: `build/agent-runs/20261123T080356-38732-b00d42ba/verification.log`
-  Verification evidence: `build\agent-runs\20261123T080356-38732-b00d42ba\verification.log`
-- touch-camera-001: Touch drag rotates the camera and pinch toggles zoom (mobile request V2)
-  Accepted: 2026-11-23T08:55:53.259497+00:00
-  Verification evidence: `build/agent-runs/20261123T084127-38732-d0645b1d/verification.log`
-  Verification evidence: `build\agent-runs\20261123T084127-38732-d0645b1d\verification.log`
-- touch-assign-001: Touch assigns at touch start, hold gives a precision cursor, hatch slide sets the rate (mobile request V3)
-  Accepted: 2026-11-23T09:19:20.554756+00:00
-  Verification evidence: `build/agent-runs/20261123T085553-38732-c10abad2/verification.log`
-  Verification evidence: `build\agent-runs\20261123T085553-38732-c10abad2\verification.log`
-- touch-buttons-001: Touch Menu button at top centre, and Examine in the level menu (mobile request V4)
-  Accepted: 2026-11-23T09:47:51.050697+00:00
-  Verification evidence: `build/agent-runs/20261123T093659-38732-fd0187e3/verification.log`
-  Verification evidence: `build\agent-runs\20261123T093659-38732-fd0187e3\verification.log`
+- level-menu-title-001: The level menu shows the level name above its rows (user request 2026-11-23)
+  Accepted: 2026-11-23T19:26:24.073671+00:00
+  Verification evidence: `build/agent-runs/20261123T190915-60576-62e26d70/verification.log`
+  Verification evidence: `build\agent-runs\20261123T190915-60576-62e26d70\verification.log`
+- teleport-sound-001: Teleporting plays no sound (playtest 30 W1)
+  Accepted: 2026-11-23T19:35:37.634946+00:00
+  Verification evidence: `build/agent-runs/20261123T192624-60576-1f291aa0/verification.log`
+  Verification evidence: `build\agent-runs\20261123T192624-60576-1f291aa0\verification.log`
+- options-spacing-001: Options menu: Window size and Accept sit too far below the row above (user request 2026-11-23)
+  Accepted: 2026-11-23T19:47:55.103060+00:00
+  Verification evidence: `build/agent-runs/20261123T193537-60576-8340a216/verification.log`
+  Verification evidence: `build\agent-runs\20261123T193537-60576-8340a216\verification.log`
+- keyboard-shortcuts-001: Options gains a Keyboard Shortcuts row that opens a screen listing every key (user request 2026-11-23)
+  Accepted: 2026-11-23T20:18:04.280305+00:00
+  Verification evidence: `build/agent-runs/20261123T201043-60576-645f6ef8/verification.log`
+  Verification evidence: `build\agent-runs\20261123T201043-60576-645f6ef8\verification.log`
+- miner-one-way-001: Make the Miner respect one-way terrain on One Way Ticket
+  Accepted: 2026-11-23T20:45:22.795097+00:00
+  Verification evidence: `build/agent-runs/20261123T204010-60576-fcac5e4f/verification.log`
+  Verification evidence: `build\agent-runs\20261123T204010-60576-fcac5e4f\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-940b183446fc4d859d97667f08a0d6a8/result.json`
+- Result: `build/agent-runs/loop-999ab39d3e8f432ab9b191f121a60045/result.json`
 - Status: **blocked**
-- Duration: 1h 46m 23s
-- Completed in this invocation: web-landscape-001, touch-camera-001, touch-assign-001, touch-buttons-001
-- Reason: No authorized production task is ready. The queue has 216 done entries, four blocked entries and no planning-required placeholder. Playtest 29 U1–U2 and mobile V1–V4 have accepted implementations. The Lone Ranger recorded a 0/90 exit before the portal fixes. A human retry on the current clone is needed to determine whether portal rendering or input still impedes play. The phone pass also awaits live confirmation on Just Climb. A reproduced portal defect would identify work in the BackdropScene e
+- Duration: 1h 40m 02s
+- Completed in this invocation: level-menu-title-001, teleport-sound-001, options-spacing-001, keyboard-shortcuts-001, miner-one-way-001
+- Reason: The queue has 221 accepted tasks, four blocked records, and no planning-required placeholder. Playtest 30 W1–W3 and mobile requests V1–V5 have accepted dispositions. The five losses on Build ’em up ....then bring em down establish that a human win is still outstanding, but the ledger identifies no failing mechanic. The earlier stair-joint question needs a concrete reproduction before further work on World::stepWalker. That evidence would determine whether its provisional headroom check needs a c
 
 ## Documentation handoff
 

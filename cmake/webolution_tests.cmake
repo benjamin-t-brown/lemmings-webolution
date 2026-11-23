@@ -272,7 +272,8 @@ add_executable(test_entrystartcue src/__test__/test_entrystartcue.cpp src/app/En
 target_include_directories(test_entrystartcue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME entrystartcue COMMAND test_entrystartcue)
 
-add_executable(test_levelmenu src/__test__/test_levelmenu.cpp src/app/LevelMenu.cpp src/shell/MenuRender.cpp)
+add_executable(test_levelmenu src/__test__/test_levelmenu.cpp src/app/LevelMenu.cpp
+  src/shell/HudText.cpp src/shell/MenuRender.cpp)
 target_link_libraries(test_levelmenu PRIVATE webolution_objects)
 add_test(NAME levelmenu COMMAND test_levelmenu)
 set_tests_properties(levelmenu PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
@@ -379,6 +380,9 @@ add_executable(test_frontendsession src/__test__/test_frontendsession.cpp
   src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(test_frontendsession PRIVATE webolution_objects)
 add_test(NAME frontendsession COMMAND test_frontendsession)
+add_test(NAME keyboard_shortcuts COMMAND ${CMAKE_COMMAND}
+  "-DSOURCE_DIR=${CMAKE_SOURCE_DIR}"
+  -P "${CMAKE_SOURCE_DIR}/src/__test__/keyboard_shortcuts.cmake")
 
 # save-codec-001: pure SavedGame codec, storage adapter, and the read-only check of
 # the node mapping against the reference executable bytes (hash first).

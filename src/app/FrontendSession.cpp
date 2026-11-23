@@ -176,6 +176,10 @@ const Image& FrontendSession::image() const {
     case shell::Screen::SoundOptions:
       soundImage_ = renderSoundOptions(menuBackdrop_);
       return soundImage_;
+    case shell::Screen::KeyboardShortcuts:
+      if (shortcutsImage_.rgba.empty())
+        shortcutsImage_ = SoundMenu::renderShortcuts(menuBackdrop_, font_);
+      return shortcutsImage_;
     case shell::Screen::Results: return results_->image(menuFocus());
     default: return mapImage_; // Level/Dialog composition belongs to the level renderer.
   }
@@ -197,6 +201,7 @@ Image FrontendSession::composeFrame() const {
 shell::Outcome FrontendSession::pressReturn() {
   if (screen() == shell::Screen::SoundOptions) {
     if (menuFocus() == SoundMenu::Accept) return closeSoundOptions(true);
+    if (menuFocus() == SoundMenu::KeyboardShortcuts) return state_.openKeyboardShortcuts();
     if (menuFocus() == SoundMenu::UnlockAll)
       editingSound_.unlockAllLevels = !editingSound_.unlockAllLevels;
     else
@@ -208,6 +213,11 @@ shell::Outcome FrontendSession::pressReturn() {
   // 49BC59 dispatches the focused row. No returns to Menu5.
   if (screen() == shell::Screen::Confirm) return confirmChoice(menuFocus() == 0);
   return state_.press(shell::Key::Return);
+}
+
+shell::Outcome FrontendSession::pressEscapeInOptions() {
+  if (screen() == shell::Screen::KeyboardShortcuts) return state_.press(shell::Key::Esc);
+  return closeSoundOptions(false);
 }
 
 bool FrontendSession::moveMenuFocus(int direction) {
@@ -248,9 +258,8 @@ void FrontendSession::configureSound(save::SoundSettings levels, std::shared_ptr
 }
 
 int FrontendSession::soundBaseY() const {
-  // Fit the clone rows above the main-menu Accept position.
-  return state_.uiState() == shell::kUiDialog ? 100 :
-      436 - SoundMenu::Accept * 2 * shell::kLineHeight;
+  // Keep the existing Music position for each Options caller.
+  return state_.uiState() == shell::kUiDialog ? 100 : 204;
 }
 
 shell::Outcome FrontendSession::openSoundOptions() {
@@ -283,7 +292,7 @@ shell::Outcome FrontendSession::closeSoundOptions(bool accept) {
 }
 
 bool FrontendSession::adjustSound(int direction) {
-  if (screen() != shell::Screen::SoundOptions || menuFocus() == SoundMenu::Accept ||
+  if (screen() != shell::Screen::SoundOptions || menuFocus() >= SoundMenu::KeyboardShortcuts ||
       (direction != -1 && direction != 1)) return false;
   if (menuFocus() == SoundMenu::UnlockAll) {
     editingSound_.unlockAllLevels = direction > 0;
@@ -338,6 +347,8 @@ bool FrontendSession::click(int x, int y) {
     if (hit->direction == 0) return pressReturn() == shell::Outcome::Handled;
     return adjustSound(hit->direction);
   }
+  if (screen() == shell::Screen::KeyboardShortcuts)
+    return SoundMenu::shortcutsBackAt(x, y) && pressReturn() == shell::Outcome::Handled;
   if (screen() == shell::Screen::Confirm) {
     const int row = shell::menuPanelAt(confirmBoxes_, x, y);
     return row >= 0 && confirmChoice(row == 0) == shell::Outcome::Handled;
@@ -404,9 +415,17 @@ std::expected<void, std::string> FrontendSession::completeLevel(
   return {};
 }
 
+bool FrontendSession::startDirectLevel(std::string levelId) {
+  if (screen() != shell::Screen::Menu || state_.enterLevel() != shell::Outcome::Handled)
+    return false;
+  selectedLevel_ = std::move(levelId);
+  levelIntroEnabled_ = false;
+  return true;
+}
+
 bool FrontendSession::retryLevel() {
   if ((screen() != shell::Screen::Level && screen() != shell::Screen::Dialog) ||
-      !selectedLevel_ || !selectedNode_) return false;
+      !selectedLevel_) return false;
   if (screen() == shell::Screen::Dialog && state_.retryLevelMenu() != shell::Outcome::Handled)
     return false;
   levelIntroEnabled_ = false; // READ48F5ED, selected launch remains owned.

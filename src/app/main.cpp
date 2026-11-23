@@ -146,6 +146,7 @@ struct Args {
   bool version = false;
   bool map = false;
   bool frontend = false;
+  bool levelSpecified = false;
   bool mapFlagsSpecified = false;
   std::string mapFlags;
   bool noInjectedWalkers = false;
@@ -183,7 +184,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--frontend") a.frontend = true;
     else if (arg == "--direct-level") defaultFrontend = false;
     else if (arg == "--map-flags") { a.map = true; a.mapFlagsSpecified = true; a.mapFlags = next(); }
-    else if (arg == "--level") a.level = next();
+    else if (arg == "--level") { a.level = next(); a.levelSpecified = true; }
     else if (arg == "--record") { a.recordDir = next(); a.invalidReplayOption |= a.recordDir.empty(); }
     else if (arg == "--replay") { a.replayFile = next(); a.invalidReplayOption |= a.replayFile.empty(); }
     else if (arg == "--native") a.native = true;
@@ -246,6 +247,7 @@ void printHelp() {
             "No options, or only --game-dir/--no-audio/--window-scale, starts the connected frontend.\n"
             "Any other option keeps its diagnostic route unless --frontend is explicit.\n"
             "--direct-level opens the previous MM_CLIMB_002 injected-walker diagnostic.\n"
+            "--level ID --sim starts direct play. Escape opens the level menu.\n"
             "--window-scale 1|2|3 overrides the saved Window size for this run.\n"
             "Without a saved Window size, ordinary play uses Auto on desktop or Fill on web.\n"
             "--record DIR records each level attempt as DIR/*.replay (default via Play-Clone.ps1).\n"
@@ -357,6 +359,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                             [[maybe_unused]] app::SdlWindow* sharedWindow,
                             [[maybe_unused]] audio::CuePlayback* cues,
                             std::optional<app::LevelOutcome>& completed, LegDisposition& disposition) {
+  // Direct play shares the menu session while retaining the diagnostic simulation path.
+  const bool mapPlay = persistentFrontend && args.frontend;
 #ifdef __EMSCRIPTEN__
   const bool logLevelDetails = true;
 #else
@@ -648,7 +652,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     }
     // Connected play gates the 1.3 s first countdown on entry presentation.
     // Recurring release intervals still come from World.
-    if (persistentFrontend) setup->releaseArmSeconds = 0.0;
+    if (mapPlay) setup->releaseArmSeconds = 0.0;
     world.emplace(*setup);
     world->setDeathObserver([&](const sim::Lemming& lemming, bool explosion,
         std::span<const std::array<int, 2>> removed) {
@@ -1172,8 +1176,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   std::optional<app::LevelMenu> levelMenu;
   std::string entryCueText;
   if (args.sim && world) {
-    // Direct play uses the short entry clock for music. The connected frontend owns the title and release gate.
-    entryCue.emplace(persistentFrontend && persistentFrontend->levelIntroEnabled());
+    // Direct play uses the short entry clock for music. Map entry owns the entry cue and release gate.
+    entryCue.emplace(mapPlay && persistentFrontend->levelIntroEnabled());
     auto loadedFont = loadTexture(*library, "TEXTURES\\^FONT.BMP");
     auto loadedPanel = app::RetailSkillPanel::create(*library, args.level);
     auto loadedCursor = app::RuntimeCursor::load(*library);
@@ -1199,7 +1203,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (!loadedIcons) { std::fprintf(stderr, "panel animation: %s\n", loadedIcons.error().c_str()); return 1; }
     panelIconAnimation = std::move(*loadedIcons);
     runtimeCursor = std::move(*loadedCursor);
-    if (persistentFrontend) {
+    if (mapPlay) {
       auto strings = loadStrings(*library, "UK");
       if (!strings || strings->size() <= 71) {
         std::fprintf(stderr, "entry cue: missing localized string71\n");
@@ -1211,7 +1215,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         for (const auto& hatch : entranceExitPresentation->entrances)
           doorSeconds = std::max(doorSeconds, hatch.animation.duration);
       levelStart.emplace(doorSeconds);
-      auto loadedMenu = app::LevelMenu::load(*library);
+    }
+    if (persistentFrontend) {
+      auto loadedMenu = app::LevelMenu::load(*library, resolvedLevel->id);
       if (!loadedMenu) {
         std::fprintf(stderr, "level menu: %s\n", loadedMenu.error().c_str());
         return 1;
@@ -1224,7 +1230,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   app::RuntimeNukeInput nukeInput;
   std::optional<app::ReplayRecorder> recorder;
   if (!args.recordDir.empty() && world && releaseControl) {
-    auto made = app::ReplayRecorder::create(args.recordDir, args.level, persistentFrontend != nullptr,
+    auto made = app::ReplayRecorder::create(args.recordDir, args.level, mapPlay,
                                            args.simTicks, *world, logLevelDetails);
     if (made) recorder.emplace(std::move(*made));
     else std::fprintf(stderr, "record: %s; playing without recording\n", made.error().c_str());
@@ -1457,7 +1463,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         } else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
           pointerX = event.button.x; pointerY = event.button.y;
         }
-        if (event.type == SDL_KEYDOWN && !event.key.repeat && event.key.keysym.scancode == SDL_SCANCODE_O) {
+        if (persistentFrontend->screen() == shell::Screen::KeyboardShortcuts) {
+          app::handleSoundOptionsInput(*persistentFrontend, event, presentation);
+        } else if (event.type == SDL_KEYDOWN && !event.key.repeat &&
+                   event.key.keysym.scancode == SDL_SCANCODE_O) {
           // READ45D575: O closes all UI2 pages directly to paused UI1.
           levelMenu->close();
           (void)persistentFrontend->closeLevelMenu(true);
@@ -1865,7 +1874,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       };
       // Hold hatch release until both entry text and the full door clip have finished.
       const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryCue && entryCue->active());
-      simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, afterUpdate,
+      simTicked = runtimeSim.advanceElapsed(*world, elapsed, mapPlay, afterUpdate,
                                             ownedClock ? 0 : app::RuntimeSimState::kStallCapMs, releaseEnabled);
       if (recorder && simTicked) recorder->advanced(*world, runtimeSim, releaseEnabled);
       // Advance animation with the admitted integer-ms budget times the pass
@@ -1891,7 +1900,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             departing ? 7.0 - end.timerSeconds() : 0.0, world->levelClockMs() / 1000.0,
             departing ? lemmingMotion.exitBalloonSwayScale(*world) : 1.0);
       }
-      if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
+      if (mapPlay && runtimeSim.endTransition().snapshot()) {
         const auto& result = *runtimeSim.endTransition().snapshot();
         completed = app::LevelOutcome{args.level, result.saved, world->setup().totalLemmings,
             result.needed, static_cast<int>(world->timeRemainingTicks() / world->rules().ticksPerSecond),
@@ -1925,15 +1934,15 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       // This state-only view is never offered to an ordinary observer. The
       // explicit automation scope opts into inspectLevelFrame() for pixels,
       // hover, visible actor boxes and hatch depth; all other fields are ready.
-      const auto cueFrame = persistentFrontend && entryCue ? entryCue->frame() : std::nullopt;
+      const auto cueFrame = mapPlay && entryCue ? entryCue->frame() : std::nullopt;
       std::optional<app::LevelFrameView> pendingView;
       if (args.sim && world && runtimeFont && runtimePanel)
         pendingView.emplace(app::LevelFrameView{rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
                          std::nullopt, cursorX, cursorY, app::CursorState::Hidden,
                          runtimeSim.endTransition().phase(), runtimeSim.endTransition().timerSeconds(),
-                         cameraIntro.active(), persistentFrontend && entryCue ? entryCue->seconds() : 0.0,
+                         cameraIntro.active(), mapPlay && entryCue ? entryCue->seconds() : 0.0,
                          cueFrame, menuOpen(), args.level,
-                         persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
+                         mapPlay ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
                          cues && cues->deviceReady(), cues ? cues->drained() : 0, cues ? cues->routed() : 0,
                          displayedPose, displayedPickReference,
                          scene->terrainCellsChanged(), scene->terrainBlocksRebuilt(), hatchOpeningProgress,
@@ -2047,6 +2056,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           if (menuOpen() && persistentFrontend->screen() == shell::Screen::SoundOptions) {
             persistentFrontend->setWindowScaleMenu(presentation.windowScaleMenu());
             image = persistentFrontend->renderSoundOptions(image);
+          } else if (menuOpen() && persistentFrontend->screen() == shell::Screen::KeyboardShortcuts) {
+            image = persistentFrontend->image();
           } else if (menuOpen()) {
             levelMenu->draw(image);
           } else if (levelMenu && presentation.receivedTouch()) {
@@ -2177,6 +2188,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   const auto location = app::locateGameData(args.gameDir);
   args.gameDir = location.directory;
   const bool connected = args.frontend && args.shot.empty() && !args.map;
+  const bool directPlay = !connected && args.levelSpecified && args.sim && args.shot.empty() && !args.map;
   const bool interactive = connected && !args.framesSpecified && !observer && !levelObserver;
   if (!args.replayFile.empty()) {
     auto library = AssetLibrary::open(args.gameDir / "lemmings.box", args.gameDir / "patch.box");
@@ -2194,8 +2206,10 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   }
 #endif
   std::optional<AssetLibrary> library;
-  if (connected) {
-    auto opened = AssetLibrary::openRequired(args.gameDir / "lemmings.box", args.gameDir / "patch.box");
+  if (connected || directPlay) {
+    auto opened = connected
+        ? AssetLibrary::openRequired(args.gameDir / "lemmings.box", args.gameDir / "patch.box")
+        : AssetLibrary::open(args.gameDir / "lemmings.box", args.gameDir / "patch.box");
     if (!opened) {
       auto message = opened.error();
       if (!location.executableSearch.empty())
@@ -2264,7 +2278,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
 #else
   SdlWindow* sharedWindow = nullptr;
 #endif
-  if (!connected)
+  if (!(connected || directPlay))
     return runApplicationLeg(std::move(args), std::move(observer), std::move(levelObserver), options,
                              nullptr, nullptr, sharedWindow, cues, completed, disposition);
   // Use the injected store or the clone's per-user SavedGame.dat.
@@ -2285,9 +2299,10 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
     if (previewSfx) playback.playUiClick(); // 48EB0B: Changeop
   };
   // Device failure, a missing WAV or no audio backend only print a diagnostic.
-  playback.start(*library, options.enableAudio && !args.noAudio);
+  if (connected) playback.start(*library, options.enableAudio && !args.noAudio);
 #endif
   session->configureSound(sound, std::move(soundFile), std::move(preview));
+  if (directPlay && !session->startDirectLevel(args.level)) return 1;
   // Keep the same frontend session across level, results, map and retry.
   for (;;) {
     completed.reset();
@@ -2301,6 +2316,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
     }
     if (disposition == LegDisposition::ReturnToMap) {
       if (!session->abandonLevelToMap()) return 1;
+      args.frontend = true;
       continue;
     }
     if (!completed) return 1; // Completed is the only disposition allowed to publish an outcome.

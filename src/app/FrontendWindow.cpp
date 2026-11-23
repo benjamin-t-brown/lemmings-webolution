@@ -56,7 +56,7 @@ void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event,
     else if (!event.key.repeat) {
       if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
       else if (key == SDLK_RETURN) session.pressReturn();
-      else if (key == SDLK_ESCAPE) session.closeSoundOptions(false);
+      else if (key == SDLK_ESCAPE) session.pressEscapeInOptions();
     }
   }
 }
@@ -99,7 +99,8 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     if (event.type == SDL_MOUSEMOTION) session.setPointer(event.motion.x, event.motion.y);
     if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
       session.setPointer(event.button.x, event.button.y);
-    if (session.screen() == shell::Screen::SoundOptions) {
+    if (session.screen() == shell::Screen::SoundOptions ||
+        session.screen() == shell::Screen::KeyboardShortcuts) {
       handleSoundOptionsInput(session, event, presentation);
     } else if (event.type == SDL_MOUSEMOTION) {
       session.hoverMenu(session.pointerX(), session.pointerY());

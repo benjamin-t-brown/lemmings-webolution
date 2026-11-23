@@ -36333,7 +36333,7 @@
     {
       "id": "level-menu-title-001",
       "title": "The level menu shows the level name above its rows (user request 2026-11-23)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "touch-buttons-001"
       ],
@@ -36347,12 +36347,102 @@
         "The open level menu shows the installed display title of the current level centred above its rows in the menu font, on map entry, Retry and direct level entry, shown by clone frames under build/ for Just Climb and the longest installed title.",
         "The title is never highlighted, focused or hit by pointer or touch, the rows keep their labels, order, actions and aligned hit testing, and the touch Menu plate is unchanged, shown by the extended level menu test.",
         "Simulation, recorded commands and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261123T190915-60576-62e26d70",
+      "started": "2026-11-23T19:09:15.684588+00:00",
+      "finished": "2026-11-23T19:23:36.622433+00:00",
+      "last_run": "build/agent-runs/20261123T190915-60576-62e26d70",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by the production call path, retained clone frames, extended menu test, replay results, and supervisor smoke log. Direct play was demonstrated with `--level E17_KF_1 --sim`.",
+        "checks": [
+          {
+            "criterion": "The open level menu shows the installed display title of the current level centred above its rows in the menu font, on map entry, Retry and direct level entry, shown by clone frames under build/ for Just Climb and the longest installed title.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Map entry, Retry, and direct simulated play reach the same level-menu load with the resolved archive ID. LevelMenu uses the map's case-insensitive LEVELMAP.DAT lookup and falls back to the ID when the display name is empty."
+              },
+              {
+                "path": "build/level-menu-title-001/frames/just-climb-from-map.png",
+                "detail": "The map-entry frame shows Just Climb centred in the menu font above Resume."
+              },
+              {
+                "path": "build/level-menu-title-001/frames/just-climb-after-retry.png",
+                "detail": "Reopening the menu after Try Again shows the same title above the same five rows."
+              },
+              {
+                "path": "build/level-menu-title-001/frames/longest-title-direct.png",
+                "detail": "The direct-entry frame shows the full title Build 'em up ....then bring em down on one centred line, clear of the rows and frame edges."
+              },
+              {
+                "path": "build/level-menu-title-001/probe.log",
+                "detail": "The 102-node census identifies E17_KF_1 as both the longest title at 35 characters and the widest at 356 glyph pixels. The log ties each frame to its level and records successful map, Retry, and direct entry."
+              },
+              {
+                "path": "build/level-menu-title-001/rea.json",
+                "detail": "For the registered x86 executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained Ghidra pseudocode at 0x48F51B agrees with instructions at 0x48F522\u20130x48F541 on the five-row builder and table 0x4C4228. Map-hover instructions at 0x49AF2D\u20130x49B02A support the provisional black text and red shadow styling."
+              }
+            ]
+          },
+          {
+            "criterion": "The title is never highlighted, focused or hit by pointer or touch, the rows keep their labels, order, actions and aligned hit testing, and the touch Menu plate is unchanged, shown by the extended level menu test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_levelmenu.cpp",
+                "detail": "The extended test checks keyboard focus through all five actions, strict row hit boundaries, title misses that preserve focus, and the separate Menu plate hit. Pixel comparisons verify the row labels and plates. The wrapped fallback case verifies that row rendering and hit rectangles shift together."
+              },
+              {
+                "path": "src/app/LevelMenu.cpp",
+                "detail": "The heading uses a separate text draw with fixed colours. Focus and pointer actions still iterate the five action rows, and row drawing and hit testing share the same vertical origin. The touch Menu plate retains its existing rendering and hit geometry."
+              },
+              {
+                "path": "build/level-menu-title-001/probe.log",
+                "detail": "The SDL probe opened the menu with the touch plate, tapped the title while keeping the menu open, and then used Options, Try Again, and Quit."
+              },
+              {
+                "path": "build/agent-runs/20261123T190915-60576-62e26d70/verification.log",
+                "detail": "The extended levelmenu test passed in the supervisor's smoke run."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation, recorded commands and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The new frontend session for direct play retains the diagnostic release timing and recorder mode. Map play retains its existing release gate and completion path. The menu heading uses the existing draw path without modifying simulation rules, command encoding, or replay playback."
+              },
+              {
+                "path": "build/level-menu-title-001/promoted-replays.tsv",
+                "detail": "All 32 promoted recordings exited successfully and reproduced their recorded outcomes. The results include 31 wins and The Lone Ranger's recorded map exit at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T190915-60576-62e26d70/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 smoke tests, including the 102-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/level-menu-title-001.md",
+                "detail": "The report ends with a two-line handoff and a what-to-check note naming the levels, the Retry and touch actions, and the expected title placement and touch behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T19:26:24.073671+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T190915-60576-62e26d70\\verification.log",
+        "verified_content": "d9aad284bc13838e9a7c2b91dbcd51d097bd0845632f9ef85a9109cc887ae209"
+      }
     },
     {
       "id": "teleport-sound-001",
       "title": "Teleporting plays no sound (playtest 30 W1)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "level-menu-title-001"
       ],
@@ -36366,12 +36456,82 @@
         "The report names where the teleport sound path failed on The Lone Ranger and cites the static evidence for what the original plays on departure and arrival, with addresses and sample names, or states that it plays none.",
         "A clone run of the promoted Lone Ranger win logs or captures the supported teleport sound at departures and arrivals through the gadget sample path, with speed pad sounds, other cues and music unchanged.",
         "Simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261123T192624-60576-1f291aa0",
+      "started": "2026-11-23T19:26:24.612990+00:00",
+      "finished": "2026-11-23T19:33:29.321499+00:00",
+      "last_run": "build/agent-runs/20261123T192624-60576-1f291aa0",
+      "review": {
+        "decision": "accept",
+        "reason": "The registered original skips both teleport samples on The Lone Ranger. The promoted clone win logs the same behavior at both phases. The task explicitly calls for stopping without adding a cue in this case, and the supervisor smoke profile passed.",
+        "checks": [
+          {
+            "criterion": "The report names where the teleport sound path failed on The Lone Ranger and cites the static evidence for what the original plays on departure and arrival, with addresses and sample names, or states that it plays none.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/teleport-sound-001.md",
+                "detail": "Identifies Playtest 30 W1 on MM_TELE_003, node 38. All four installed pads have empty departure and arrival sample fields, so the clone skips CuePlayback before asset lookup, decoding, or spatial gains. The report states that the original plays no teleport sample at either phase."
+              },
+              {
+                "path": "build/teleport-sound-001/rea.json",
+                "detail": "For the registered x86 executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the reader at 0x004347EC stores -1 for empty names at 0x004349ED and 0x00434A42. The departure guard at 0x0043557A skips the play call at 0x004355F5, and the arrival guard at 0x00435198 tests the partner's field and skips the play call at 0x00435207. The retained instructions agree with the pseudocode."
+              }
+            ]
+          },
+          {
+            "criterion": "A clone run of the promoted Lone Ranger win logs or captures the supported teleport sound at departures and arrivals through the gadget sample path, with speed pad sounds, other cues and music unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-sound-001/lone-ranger-trace.log",
+                "detail": "The instrumented replay reproduced the 90/90 win at step 25486. It logged an empty sample and no resolved file at each of 194 departures and 194 arrivals, with zero gadget sample requests. This demonstrates the expected no-cue behavior at the sample path."
+              },
+              {
+                "path": "build/teleport-sound-001/teleport_trace.cpp",
+                "detail": "The scratch observer calls the production BackdropScene::triggerGadget and forwards nonempty results to CuePlayback::playGadgetSample. The trace used SDL dummy audio and establishes request behavior rather than physical audio output."
+              },
+              {
+                "path": "build/agent-runs/20261123T192624-60576-1f291aa0/after-diff.txt",
+                "detail": "Compared with the worker's entry diff, the tracked changes are controller bookkeeping only. The speed pad, other cue, music, and mixer paths are identical to task entry."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261123T192624-60576-1f291aa0/after-source-hashes.json",
+                "detail": "Comparison with the worker's entry manifest shows no changes to simulation, replay code, or recordings."
+              },
+              {
+                "path": "build/teleport-sound-001/promoted-replays.log",
+                "detail": "Both promoted Lone Ranger recordings passed through the stock CLI. The first reproduced the return to map at step 12893, and the second reproduced the 90/90 win at step 25486."
+              },
+              {
+                "path": "build/agent-runs/20261123T192624-60576-1f291aa0/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/teleport-sound-001.md",
+                "detail": "The final note asks the player to send a lemming through a linked pad on The Lone Ranger and expect the visual effect with silence at departure and arrival. It also names Water way to go as the level with two authored cues."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T19:35:37.634946+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T192624-60576-1f291aa0\\verification.log",
+        "verified_content": "c34d82c42acd7bf7e07fdeb7b1777ce5c4fa51e033bcb3f042f06a3c499de77b"
+      }
     },
     {
       "id": "options-spacing-001",
       "title": "Options menu: Window size and Accept sit too far below the row above (user request 2026-11-23)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "teleport-sound-001"
       ],
@@ -36385,12 +36545,102 @@
         "In main-menu and in-level Options, Window size sits one row pitch below Unlock all levels and Accept one row pitch below Window size, while Music and Sfx keep their meters and Music, Sfx and Unlock all levels keep their positions, shown by before and after clone frames under build/.",
         "Hit testing, focus movement and hover match the drawn rows, no plates overlap, and row labels, order, actions, values and saved settings are unchanged.",
         "Simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261123T193537-60576-8340a216",
+      "started": "2026-11-23T19:35:38.219080+00:00",
+      "finished": "2026-11-23T19:45:40.659043+00:00",
+      "last_run": "build/agent-runs/20261123T193537-60576-8340a216",
+      "review": {
+        "decision": "accept",
+        "reason": "Playtest 30 W2 is fixed in both Windows clone Options menus. The retained frames and input probe confirm the 29 px spacing, all 32 active recordings reproduced, and the supervisor smoke profile passed. Browser behavior remains unverified.",
+        "checks": [
+          {
+            "criterion": "In main-menu and in-level Options, Window size sits one row pitch below Unlock all levels and Accept one row pitch below Window size, while Music and Sfx keep their meters and Music, Sfx and Unlock all levels keep their positions, shown by before and after clone frames under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/options-spacing-001/main-before.png",
+                "detail": "The main-menu clone frame shows both meters and the old 58 px pitch below Unlock all levels and Window size."
+              },
+              {
+                "path": "build/options-spacing-001/main-after.png",
+                "detail": "The first three rows remain at y=204, 262 and 320. Both meters remain visible. Window size and Accept move to y=349 and 378."
+              },
+              {
+                "path": "build/options-spacing-001/level-before.png",
+                "detail": "The Just Climb (MM_CLIMB_002) clone frame shows both meters and the old 58 px pitch below Unlock all levels and Window size."
+              },
+              {
+                "path": "build/options-spacing-001/level-after.png",
+                "detail": "The first three rows remain at y=100, 158 and 216. Both meters remain visible. Window size and Accept move to y=245 and 274."
+              },
+              {
+                "path": "build/options-spacing-001/rea-instructions.json",
+                "detail": "Ghidra instructions for the registered x86 EXE, SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, corroborate the retained pseudocode for builder 0x48E5B4. The label row pushes at 0x48E62F, 0x48E678 and 0x48E6B4 use 1, 3 and 5. The meter row pushes at 0x48E767 and 0x48E7E4 use 2 and 4, with 8 px added at 0x48E771 and 0x48E7EE. The compact pitch for the two clone rows follows the clone's LevelMenu."
+              }
+            ]
+          },
+          {
+            "criterion": "Hit testing, focus movement and hover match the drawn rows, no plates overlap, and row labels, order, actions, values and saved settings are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/SoundMenu.cpp",
+                "detail": "Rendering and hit testing use the same layout and arrow coordinates. The layout reserves a second line only after Music and Sfx. Label generation, row order and hit actions are preserved."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Both callers use the same Options renderer and hit handler with their existing base Y. Hover uses the hit row, keyboard focus cycles through the same five indices, and Accept uses the existing settings sidecar write path."
+              },
+              {
+                "path": "build/options-spacing-001/probe-after.log",
+                "detail": "Both 640\u00d7480 frames contain all five plates with two clear pixel rows between adjacent compact plates. The probe passed keyboard focus, hover, clicks and Accept in both menus."
+              },
+              {
+                "path": "build/options-spacing-001/options-spacing-probe.cpp",
+                "detail": "The probe asserts that a main-menu arrow click and Accept persist the selected scale to a private sidecar, then checks that the in-level edit restores the initial scale with both volume values and the unlock flag preserved."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261123T193537-60576-8340a216/after-diff.txt",
+                "detail": "Compared with the worker's before diff, the task changes Options geometry and its base coordinates. Simulation, replay code, recordings and test expectations have no task changes."
+              },
+              {
+                "path": "build/options-spacing-001/probe-after.log",
+                "detail": "The Just Climb probe confirms that the simulation tick stays paused while Options is open."
+              },
+              {
+                "path": "build/options-spacing-001/replay-results.tsv",
+                "detail": "All 32 active recordings exit successfully and reproduce their recorded outcomes, including 31 wins and the Playtest 29 Lone Ranger return to the map at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T193537-60576-8340a216/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/options-spacing-001.md",
+                "detail": "The report ends with a two-line handoff followed by a what-to-check note for main-menu and Just Climb Options. It names the hover, scale change and Accept actions and the expected spacing, meters, saved setting and return to the calling menu."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T19:47:55.103060+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T193537-60576-8340a216\\verification.log",
+        "verified_content": "9d70331f64145bba1a39dfc0a10ba79e601cdbb06eaca6c85c62986cf290af05"
+      }
     },
     {
       "id": "keyboard-shortcuts-001",
       "title": "Options gains a Keyboard Shortcuts row that opens a screen listing every key (user request 2026-11-23)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "options-spacing-001"
       ],
@@ -36404,6 +36654,547 @@
         "Options shows a Keyboard Shortcuts row above Accept changes and exit, from the main menu and in a level, that opens a screen in the menu font listing the keyboard controls grouped by context within the 640 by 480 frame, shown by clone frames under build/.",
         "Back, Escape, Return or a click or tap on Back returns to Options with pending edits kept, a legacy test checks that the source table covers each scancode the level, menu and frontend handlers react to, and the report names any key left out.",
         "Other Options rows, Accept and Escape behaviour, saved settings, the level menu, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261123T201043-60576-645f6ef8",
+      "started": "2026-11-23T20:10:43.839249+00:00",
+      "finished": "2026-11-23T20:15:43.281677+00:00",
+      "last_run": "build/agent-runs/20261123T201043-60576-645f6ef8",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The revised pause descriptions are correct. The shortcuts page still promises that Keypad 4 and 6 move the visible cursor, but the level draws its cursor from SDL pointer coordinates. Describe those keys as turning the camera while dragging, show that 1 to 8 also select skills during standard pause, and refresh both shortcuts frames.",
+        "checks": [
+          {
+            "criterion": "Options shows a Keyboard Shortcuts row above Accept changes and exit, from the main menu and in a level, that opens a screen in the menu font listing the keyboard controls grouped by context within the 640 by 480 frame, shown by clone frames under build/.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/keyboard-shortcuts-001/main-options.png",
+                "detail": "The main-menu Options frame shows Keyboard Shortcuts directly above Accept Changes And Exit."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/level-options.png",
+                "detail": "The Just Climb Options frame shows the same row placement."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/main-shortcuts.png",
+                "detail": "The two menu-font columns and Back plate fit the 640 by 480 frame. Standard Pause now says the examine keys enter Examine Pause, and Examine Pause says they resume play. The camera section still says Keypad 4 and 6 move the cursor, and 1 to 8 appear only under Level Play."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/level-shortcuts.png",
+                "detail": "The in-level route displays the same revised page, including the same keypad description and skill-key placement."
+              },
+              {
+                "path": "src/app/CameraInput.cpp",
+                "detail": "Lines 70\u201395 apply Keypad 4 and 6 to camera yaw while grabbed and to the controller's internal cursor coordinate otherwise."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Lines 1105\u20131110, 1807 and 2072 show that the visible cursor uses the SDL pointer or touch coordinates. Lines 1598\u20131611 allow 1 through 8 to select stocked skills in standard pause because the handler excludes only Examine Pause."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "At line 99, the examine toggle enters Examine Pause from standard pause and resumes play from Examine Pause, matching the revised frames."
+              }
+            ]
+          },
+          {
+            "criterion": "Back, Escape, Return or a click or tap on Back returns to Options with pending edits kept, a legacy test checks that the source table covers each scancode the level, menu and frontend handlers react to, and the report names any key left out.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/keyboard-shortcuts-001/menu-probe.cpp",
+                "detail": "The main-menu probe compares the pending Options frame after Escape, Return, and clicking Back. The Just Climb probe taps Back and compares the edited Window size row and the private settings sidecar."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/probe.log",
+                "detail": "Both probe routes completed successfully on the revision."
+              },
+              {
+                "path": "src/__test__/keyboard_shortcuts.cmake",
+                "detail": "The legacy test compares the table's scancode names with SDL scancode and keycode names in the app and shell sources and reports missing and stale codes. It checks key names, so an inaccurate action description can still pass."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/revision-legacy-coverage.log",
+                "detail": "The revised legacy test passed and matched 25 distinct scancodes."
+              },
+              {
+                "path": "docs/scratch/keyboard-shortcuts-001.md",
+                "detail": "The report identifies Escape's quit binding in the standalone diagnostic viewers as the omitted action."
+              }
+            ]
+          },
+          {
+            "criterion": "Other Options rows, Accept and Escape behaviour, saved settings, the level menu, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261123T200223-60576-72d53338/after-source-hashes.json",
+                "detail": "Comparison with the revision's before snapshot shows SoundMenu.cpp is the only changed production source in the revision. The first-attempt snapshots show the LevelMenu implementation, simulation and save sources, and recordings were preserved across the task."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/probe.log",
+                "detail": "The clone probe confirmed Accept writes to the private sidecar, Escape rolls back pending Options edits, and the simulation tick stays frozen while the in-level shortcuts page is open."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/replay-results.tsv",
+                "detail": "The first attempt reproduced all 32 promoted recordings. This includes 31 completed wins and The Lone Ranger's recorded return to the map at step 12893. The revision changed only shortcut text and layout in production."
+              },
+              {
+                "path": "build/agent-runs/20261123T200223-60576-72d53338/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests on the revision."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/rea-instructions.json",
+                "detail": "For the registered x86 reference with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained Ghidra instructions at 0x48E62F, 0x48E678 and 0x48E6B4 confirm label rows 1, 3 and 5 in the 0x48E5B4 pseudocode. The pushes at 0x48E767 and 0x48E7E4 select meter rows 2 and 4, with 8 px offsets at 0x48E771 and 0x48E7EE. This supports the inherited spacing as static evidence."
+              },
+              {
+                "path": "docs/scratch/keyboard-shortcuts-001.md",
+                "detail": "The report ends with a what-to-check note covering pending Options edits, the two pause transitions in Just Climb, and returning from the shortcuts page with the level still paused."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The revised pause descriptions are correct. The shortcuts page still promises that Keypad 4 and 6 move the visible cursor, but the level draws its cursor from SDL pointer coordinates. Describe those keys as turning the camera while dragging, show that 1 to 8 also select skills during standard pause, and refresh both shortcuts frames.",
+      "review": {
+        "decision": "accept",
+        "reason": "Both entry routes show the revised shortcuts page, including camera turns during a drag and skill selection during standard pause. The retained probe confirms that Back preserves pending edits, the legacy test covers 25 scancodes, and the current supervisor run passed all 95 smoke tests and 84 recovery tests. Human playtest remains pending.",
+        "checks": [
+          {
+            "criterion": "Options shows a Keyboard Shortcuts row above Accept changes and exit, from the main menu and in a level, that opens a screen in the menu font listing the keyboard controls grouped by context within the 640 by 480 frame, shown by clone frames under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/keyboard-shortcuts-001/main-options.png",
+                "detail": "Main-menu Options shows the highlighted Keyboard Shortcuts plate directly above Accept Changes And Exit."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/level-options.png",
+                "detail": "Options opened in Just Climb shows the same row order over the paused level."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/main-shortcuts.png",
+                "detail": "The two menu-font columns and Back plate fit within 640 by 480 without overlap. The page shows Keypad 4 and 6 as turning during a drag and lists 1 to 8 under both Level Play and Standard Pause."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/level-shortcuts.png",
+                "detail": "Opening the page from Just Climb displays the same complete layout and revised descriptions."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Loads TEXTURES\\^FONT.BMP at line 39 and renders the shortcuts page with that font at lines 179\u2013182."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Lines 1586\u20131611 route the examine keys and allow number keys to select stocked skills whenever Examine Pause is inactive. Lines 1794\u20131800 and 1832\u20131839 forward keypad and drag state to the camera controller."
+              },
+              {
+                "path": "src/app/CameraInput.cpp",
+                "detail": "The grabbed branch applies Keypad 4 and 6 to camera yaw, with Left Shift increasing the step. The ungrabbed branch only changes the controller's internal cursor coordinate."
+              }
+            ]
+          },
+          {
+            "criterion": "Back, Escape, Return or a click or tap on Back returns to Options with pending edits kept, a legacy test checks that the source table covers each scancode the level, menu and frontend handlers react to, and the report names any key left out.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/shell/Frontend.cpp",
+                "detail": "Escape and Return on Keyboard Shortcuts replace the page with Options. Page replacement preserves focus and the caller's dispatch mode."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/menu-probe.cpp",
+                "detail": "The probe compares the pending main-menu Options frame after Escape, Return and clicking Back. The Just Climb route taps Back and compares the edited Window size row and private sidecar."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/probe.log",
+                "detail": "Both entry routes completed successfully. The main-menu key and click exits and the in-level tap exit passed with pending values preserved."
+              },
+              {
+                "path": "src/__test__/keyboard_shortcuts.cmake",
+                "detail": "Extracts the table's scancode names, normalizes SDL keycodes from the app and shell source to scancode names, and fails on missing or stale names."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/keypad-review-legacy-coverage.log",
+                "detail": "The revised keyboard_shortcuts test ran under the legacy label and matched 25 distinct scancodes."
+              },
+              {
+                "path": "docs/scratch/keyboard-shortcuts-001.md",
+                "detail": "Names Escape's quit action in the standalone diagnostic map and level viewers as the omitted binding. Escape's ordinary play and menu bindings appear on the page."
+              }
+            ]
+          },
+          {
+            "criterion": "Other Options rows, Accept and Escape behaviour, saved settings, the level menu, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261123T194755-60576-87881c3e/after-source-hashes.json",
+                "detail": "Compared with the first attempt's before snapshot, the task changed the Options and frontend paths and registered the coverage test. The level-menu implementation, save and simulation sources, and recorded replays were preserved."
+              },
+              {
+                "path": "build/agent-runs/20261123T201043-60576-645f6ef8/after-source-hashes.json",
+                "detail": "The final before and after snapshots identify SoundMenu.cpp as the only production file changed in the revision. The review snapshot matches the verified production and test sources."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/probe.log",
+                "detail": "Accept persisted the edited Music value to the private sidecar. Escape rolled back the Window size edit, and Just Climb's simulation tick stayed frozen while Options and Keyboard Shortcuts were open."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/replay-results.tsv",
+                "detail": "All 32 promoted recordings reproduced on the initial implementation, including 31 completed wins and The Lone Ranger's recorded return to the map at step 12893. The final revision changes shortcut text and layout."
+              },
+              {
+                "path": "build/agent-runs/20261123T201043-60576-645f6ef8/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "build/keyboard-shortcuts-001/rea-instructions.json",
+                "detail": "For the registered x86 reference with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained Ghidra instructions at 0x48E62F, 0x48E678 and 0x48E6B4 confirm label rows 1, 3 and 5 in the 0x48E5B4 pseudocode. Instructions at 0x48E767 and 0x48E7E4 select meter rows 2 and 4, with 8 px offsets at 0x48E771 and 0x48E7EE. This is static evidence for the inherited Options spacing."
+              },
+              {
+                "path": "docs/scratch/keyboard-shortcuts-001.md",
+                "detail": "The two-line handoff is followed by the final What to check note. It gives actions and expected results for pending edits, camera turns, skill selection and pause transitions in Just Climb, and returning to Options by tapping Back."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T20:18:04.280305+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T201043-60576-645f6ef8\\verification.log",
+        "verified_content": "84c7b9ede008fcf32df0ebebff217af7379f9413d5bc5c2809dfe253fcf89272"
+      }
+    },
+    {
+      "id": "miner-one-way-001",
+      "title": "Make the Miner respect one-way terrain on One Way Ticket",
+      "scope": "Playable v1 gameplay on One Way Ticket (MM_ALL_8_001, node 22), near the reverse-bash zone identified in Playtest 13 C4. Difficulty is routine. Recommended model is Sonnet because the installed terrain flags and the existing Miner refusal path already supply both sides of the integration. The map entry loads the collision grid through loadRetailLevelReport and Terrain::fromCollisionGrid. The ordinary skill click reaches World::assign, and elapsed simulation dispatches World::stepMiner. The Miner preflight checks only steel, so clearSkillBox can remove directional earth from the prohibited side. The installed grid starts at byte 255753 of the level entry. At file feet (70,53), clone terrain (70,42), the right-facing stroke reaches 0x05 at (71,52) and (72,52) in file coordinates. The left-facing stroke reaches 0x05 at (69,52) and (68,52), where that flag permits cutting. Neither footprint contains steel. For the registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained Ghidra pseudocode and instructions agree that 0x4189B0\u20130x4189C0 selects mask 0x04 for right and 0x08 for left. At 0x418AAD\u20130x418ADF, a matching bit or steel takes the MineMetal refusal branch before the cell-clear store at 0x418B29. Reuse the live directional flag query in the existing Miner preflight. Keep the existing footprint, cadence, steel handling, and supported-stair exit. The clone's whole-stroke preflight remains provisional because the reference checks individual cells. This is the next gameplay dependency because the level presents a one-way rule that the stocked Miner can bypass.",
+      "runtime_change": "A Miner approaching the installed one-way earth from the blocked direction currently cuts it. After the change, the existing refusal path leaves that stroke's terrain intact, requests one MineMetal cue, and returns the lemming to walking facing away. From the permitted direction, the existing diagonal stroke still clears terrain and the level view shows the opening.",
+      "production_files": [
+        "src/sim/World.cpp"
+      ],
+      "acceptance": [
+        "Use the ordinary map and skill assignment route on One Way Ticket. Record clone evidence of a blocked-direction Miner leaving the flagged terrain intact and turning with one MineMetal request. Show that a permitted-direction Miner cuts the same authored terrain type and that the cut is visible. Use the installed collision grid to distinguish the directional refusal from a steel refusal. A focused assertion in an existing legacy Miner or refusal test may guard the predicate.",
+        "Keep mining cadence, footprint, steel refusal, Basher behavior, and the accepted staircase exit intact. Run the relevant promoted human recordings with the existing headless replay command. Report any intended divergence by recording and step, and preserve the recordings and their checks.",
+        "Keep the existing clone-owned 1,504-byte SavedGame.dat contract, including preservation of supported fields and the last good save on a failed write. Use a private save for clone observations and leave the normal clone save and installed save untouched. Headless replay uses its existing save-free path.",
+        "Record the production call path, installed cells, static addresses, and the provisional whole-stroke rule in the short handoff. Supervisor smoke, including the 102-level sweep and recovery suite, must pass. Human confirmation remains for the next playtest.",
+        "Production implementation changes in src/sim/World.cpp deliver this runtime behavior: A Miner approaching the installed one-way earth from the blocked direction currently cuts it. After the change, the existing refusal path leaves that stroke's terrain intact, requests one MineMetal cue, and returns the lemming to walking facing away. From the permitted direction, the existing diagonal stroke still clears terrain and the level view shows the opening.. Independent review must trace the real call path and before/after behavior; test-only changes, dead code, comments or build registration alone do not satisfy this criterion."
+      ],
+      "depends_on": [
+        "basher-one-way-001",
+        "refusal-sounds-001",
+        "miner-staircase-stop-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "status": "done",
+      "planning_required": false,
+      "loop_attempts": 2,
+      "run_id": "20261123T204010-60576-fcac5e4f",
+      "started": "2026-11-23T20:40:11.621940+00:00",
+      "finished": "2026-11-23T20:42:58.360156+00:00",
+      "last_run": "build/agent-runs/20261123T204010-60576-fcac5e4f",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The Miner fix, private-save evidence, and supervisor smoke pass review. The replay run omitted the active Now You're Stalking recording, which exercises Basher assignments at the installed one-way wall. Run that recording with the existing headless replay command and retain the result. If it diverges, report the first divergent step and whether the divergence is intended.",
+        "checks": [
+          {
+            "criterion": "Use the ordinary map and skill assignment route on One Way Ticket. Record clone evidence of a blocked-direction Miner leaving the flagged terrain intact and turning with one MineMetal request. Show that a permitted-direction Miner cuts the same authored terrain type and that the cut is visible. Use the installed collision grid to distinguish the directional refusal from a steel refusal. A focused assertion in an existing legacy Miner or refusal test may guard the predicate.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-one-way-001/contact.cpp",
+                "detail": "The diagnostic positions a Walker at the contact and uses the connected SDL map, Miner panel, and actor-picking clicks for both facings. Production simulation performs the stroke."
+              },
+              {
+                "path": "build/miner-one-way-001/scout.log",
+                "detail": "The installed footprints contain only empty cells and 0x05 earth. File cells (71,52) and (72,52) refuse rightward mining. Cells (69,52) and (68,52) carry the same word and permit leftward mining. Neither footprint contains the steel bit."
+              },
+              {
+                "path": "build/miner-one-way-001/contact-right-final.log",
+                "detail": "At 208 ms the Miner became a left-facing Walker at (70,42). Both flagged cells remained Earth, mesh edit counts stayed flat, and the cue adapter recorded exactly one MineMetal request."
+              },
+              {
+                "path": "build/miner-one-way-001/contact-left-final.log",
+                "detail": "At 208 ms the permitted Miner advanced to (69,43), cleared both flagged cells, and requested Mine. Terrain sync recorded two edited cells and one rebuilt block."
+              },
+              {
+                "path": "build/miner-one-way-001/left-before-stroke.png",
+                "detail": "The frame shows the intact arrow ledge immediately before the permitted stroke."
+              },
+              {
+                "path": "build/miner-one-way-001/left-after-stroke.png",
+                "detail": "The corresponding frame shows a visible notch in the ledge under the Miner."
+              }
+            ]
+          },
+          {
+            "criterion": "Keep mining cadence, footprint, steel refusal, Basher behavior, and the accepted staircase exit intact. Run the relevant promoted human recordings with the existing headless replay command. Report any intended divergence by recording and step, and preserve the recordings and their checks.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/miner-one-way-001/task-source.patch",
+                "detail": "The production diff adds the directional check to the existing Miner preflight. The cadence, two-column footprint and skipped cell, steel refusal, Basher code, and empty-stroke exit onto Built support are preserved."
+              },
+              {
+                "path": "build/miner-one-way-001/replays.tsv",
+                "detail": "Nine promoted recordings passed, including One Way Ticket with 46/40 saved at step 13812. The retained results show no divergence in those nine runs and contain no E22_KF_1 result."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-19-playtest-19/E22_KF_1-1795077450383129100-7.replay",
+                "detail": "This active promoted Now You're Stalking recording has accepted Basher assignments at steps 5366 and 17073 at (188,66) and (176,66), the one-way wall area. It is directly relevant to the Basher regression check."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "The old Make Mine a Large One staircase recording was retired for an earlier Builder change. It remains in the archive and is outside the active replay set."
+              }
+            ]
+          },
+          {
+            "criterion": "Keep the existing clone-owned 1,504-byte SavedGame.dat contract, including preservation of supported fields and the last good save on a failed write. Use a private save for clone observations and leave the normal clone save and installed save untouched. Headless replay uses its existing save-free path.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-one-way-001/contact.cpp",
+                "detail": "The probe injects a FileSaveSink under build/miner-one-way-001/private-{left,right}. It compares the entire serialized image on load and after the contact, including the prepared flag and A/B fields. Both retained private files are 1,504 bytes."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The --replay branch returns through replayLevel before save-store setup. The connected observation uses its supplied private store and leaves default save-store resolution disabled."
+              },
+              {
+                "path": "src/__test__/test_savedgame.cpp",
+                "detail": "The smoke test covers the 1,504-byte format, supported-field preservation, the prior good file after a failed write, and protection of the installed save."
+              },
+              {
+                "path": "build/agent-runs/20261123T202303-60576-b2b5baa6/verification.log",
+                "detail": "The supervisor recorded passes for both savedgame and savepersist."
+              }
+            ]
+          },
+          {
+            "criterion": "Record the production call path, installed cells, static addresses, and the provisional whole-stroke rule in the short handoff. Supervisor smoke, including the 102-level sweep and recovery suite, must pass. Human confirmation remains for the next playtest.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/miner-one-way-001.md",
+                "detail": "The handoff names Playtest 13 C4, map node 22, the live call path, the installed cells, and the reference addresses. It labels the clone's whole-stroke refusal provisional and records the next human check for both facings."
+              },
+              {
+                "path": "build/miner-one-way-001/rea-miner.json",
+                "detail": "Independent Ghidra review of reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f confirmed the mask selection at 0x4189B0\u20130x4189C0. At 0x418AAD\u20130x418ADF, steel or a matching direction bit reaches the MineMetal call and skips that cell's clear at 0x418B29. The loop resumes at 0x418A01. The pseudocode and instructions agree, and the session closed without a snapshot."
+              },
+              {
+                "path": "build/agent-runs/20261123T202303-60576-b2b5baa6/verification.log",
+                "detail": "All 95 main smoke tests passed, including all 17 sweep chunks and the aggregate report. All 84 recovery tests passed."
+              },
+              {
+                "path": "build/agent-native/main/agent-results.xml",
+                "detail": "The aggregate sweep report recorded 102/102 level records."
+              }
+            ]
+          },
+          {
+            "criterion": "Production implementation changes in src/sim/World.cpp deliver this runtime behavior: A Miner approaching the installed one-way earth from the blocked direction currently cuts it. After the change, the existing refusal path leaves that stroke's terrain intact, requests one MineMetal cue, and returns the lemming to walking facing away. From the permitted direction, the existing diagonal stroke still clears terrain and the level view shows the opening.. Independent review must trace the real call path and before/after behavior; test-only changes, dead code, comments or build registration alone do not satisfy this criterion.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "clickMap resolves the clicked node to its installed level ID. The application enters that level and sends the actor picked under the Miner selection to World::assign."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "loadRetailLevelReport passes the installed collision grid to Terrain::fromCollisionGrid. The terrain importer flips the file rows and retains the facing masks used by the live predicate."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::assign sets the Miner state. The elapsed update dispatches World::stepMiner at the existing cadence. The new live flag query sends a matching cell to the existing cue, turn, and Walker return before any clear. A permitted stroke still reaches clearSkillBox and advances diagonally. The level renderer syncs the resulting terrain edits."
+              },
+              {
+                "path": "build/miner-one-way-001/task-source.patch",
+                "detail": "The incoming preflight checked only Steel, so the installed blocked-direction 0x05 Earth could reach clearSkillBox. The source diff isolates the behavior change to that preflight, and the retained clone observations show the new refusal and the visible permitted cut."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The Miner fix, private-save evidence, and supervisor smoke pass review. The replay run omitted the active Now You're Stalking recording, which exercises Basher assignments at the installed one-way wall. Run that recording with the existing headless replay command and retain the result. If it diverges, report the first divergent step and whether the divergence is intended.",
+      "review": {
+        "decision": "accept",
+        "reason": "The live Miner path now refuses blocked-direction earth and still renders the permitted cut. All ten relevant promoted recordings passed, including the previously omitted Now You're Stalking replay. Supervisor smoke passed across all 102 installed levels and the recovery suite. Human confirmation remains for the next playtest.",
+        "checks": [
+          {
+            "criterion": "Use the ordinary map and skill assignment route on One Way Ticket. Record clone evidence of a blocked-direction Miner leaving the flagged terrain intact and turning with one MineMetal request. Show that a permitted-direction Miner cuts the same authored terrain type and that the cut is visible. Use the installed collision grid to distinguish the directional refusal from a steel refusal. A focused assertion in an existing legacy Miner or refusal test may guard the predicate.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-one-way-001/contact.cpp",
+                "detail": "The diagnostic places a Walker at the contact after entering One Way Ticket through the SDL map click on node 22. The Miner panel and actor-picking clicks then assign the skill through the normal frontend path."
+              },
+              {
+                "path": "build/miner-one-way-001/scout.log",
+                "detail": "The right footprint reaches installed file cells (71,52) and (72,52), and the left footprint reaches (69,52) and (68,52). All four contain 0x05, solid earth with the rightward refusal bit. Every other probed cell is empty and neither footprint contains steel."
+              },
+              {
+                "path": "build/miner-one-way-001/contact-right-final.log",
+                "detail": "At 208 ms the right-facing Miner became a left-facing Walker at (70,42). Both flagged cells remained Earth, mesh edit counts stayed flat, and the cue adapter recorded one MineMetal request."
+              },
+              {
+                "path": "build/miner-one-way-001/contact-left-final.log",
+                "detail": "At 208 ms the left-facing Miner advanced to (69,43), cleared both flagged cells, and requested Mine. The renderer recorded two edited cells and one rebuilt mesh block."
+              },
+              {
+                "path": "build/miner-one-way-001/left-before-stroke.png",
+                "detail": "The retained clone frame shows the intact arrow-marked ledge beneath the assigned Miner."
+              },
+              {
+                "path": "build/miner-one-way-001/left-after-stroke.png",
+                "detail": "The corresponding frame shows a visible notch in the ledge below the Miner."
+              }
+            ]
+          },
+          {
+            "criterion": "Keep mining cadence, footprint, steel refusal, Basher behavior, and the accepted staircase exit intact. Run the relevant promoted human recordings with the existing headless replay command. Report any intended divergence by recording and step, and preserve the recordings and their checks.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-one-way-001/task-source.patch",
+                "detail": "The patch adds the directional lookup to the existing Miner preflight. It preserves the bite timing, two-column footprint and skipped cell, steel branch, Basher implementation, and empty-stroke exit onto Built support."
+              },
+              {
+                "path": "build/miner-one-way-001/replays.tsv",
+                "detail": "All nine promoted recordings with accepted Miner assignments and the relevant Basher recording exited successfully. One Way Ticket passed at step 13812 with 46/40 saved. None of the ten recordings diverged."
+              },
+              {
+                "path": "build/miner-one-way-001/replays/E22_KF_1-1795077450383129100-7.log",
+                "detail": "The retry used the existing headless --replay command on Now You're Stalking and passed at step 24402 with 49/49 saved, won=1, completed=1, and exit code 0."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-19-playtest-19/E22_KF_1-1795077450383129100-7.replay",
+                "detail": "The preserved recording contains accepted Basher assignments at steps 5366 and 17073 at (188,66) and (176,66). The replay runner still validates the recorded actor position, state, and assignment result."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "The Make Mine a Large One recording remains archived under its earlier retirement for the Builder change. The active recordings and replay assertions were preserved."
+              }
+            ]
+          },
+          {
+            "criterion": "Keep the existing clone-owned 1,504-byte SavedGame.dat contract, including preservation of supported fields and the last good save on a failed write. Use a private save for clone observations and leave the normal clone save and installed save untouched. Headless replay uses its existing save-free path.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-one-way-001/contact.cpp",
+                "detail": "The observation injects a private file store for each facing and compares the full serialized image after frontend load and after the stroke. Both saves are 1,504 bytes, and the prepared flag and A/B fields survive."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The observation uses its supplied store with default save lookup disabled, leaving the normal clone and installed saves outside the write path. The --replay branch returns through replayLevel before save-store setup."
+              },
+              {
+                "path": "src/__test__/test_savedgame.cpp",
+                "detail": "Existing coverage checks the 1,504-byte layout, supported-field preservation, retention of the prior good file after a failed write, and protection of the installed save."
+              },
+              {
+                "path": "build/agent-runs/20261123T204010-60576-fcac5e4f/verification.log",
+                "detail": "The current supervisor run records passes for both savedgame and savepersist."
+              }
+            ]
+          },
+          {
+            "criterion": "Record the production call path, installed cells, static addresses, and the provisional whole-stroke rule in the short handoff. Supervisor smoke, including the 102-level sweep and recovery suite, must pass. Human confirmation remains for the next playtest.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/miner-one-way-001.md",
+                "detail": "The handoff records the Playtest 13 C4 location, node 22, the live call path, installed cell coordinates, reference identity and addresses, and the provisional whole-stroke preflight. It specifies the rightward refusal and leftward cut for the next human playtest."
+              },
+              {
+                "path": "build/miner-one-way-001/rea-miner.json",
+                "detail": "The retained Ghidra pseudocode and instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f agree. Instructions at 0x4189B0\u20130x4189C0 select 0x04 for right and 0x08 for left. Steel or a matching direction bit reaches the MineMetal branch at 0x418AAD\u20130x418ADF and loops back at 0x418A01 before that cell's clear at 0x418B29. This supports the per-cell reference check and the distinction from the clone's whole-stroke rule."
+              },
+              {
+                "path": "build/agent-runs/20261123T204010-60576-fcac5e4f/verification.log",
+                "detail": "The current supervisor run passed 95/95 main smoke tests, including all 17 level sweep chunks and the aggregate report, and 84/84 recovery tests."
+              },
+              {
+                "path": "build/agent-native/main/agent-results.xml",
+                "detail": "The aggregate sweep report records 102/102 installed level results."
+              }
+            ]
+          },
+          {
+            "criterion": "Production implementation changes in src/sim/World.cpp deliver this runtime behavior: A Miner approaching the installed one-way earth from the blocked direction currently cuts it. After the change, the existing refusal path leaves that stroke's terrain intact, requests one MineMetal cue, and returns the lemming to walking facing away. From the permitted direction, the existing diagonal stroke still clears terrain and the level view shows the opening.. Independent review must trace the real call path and before/after behavior; test-only changes, dead code, comments or build registration alone do not satisfy this criterion.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "FrontendSession::clickMap resolves the picked node to its installed level ID and stores it as the selected level."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "loadRetailLevelReport imports the installed grid through Terrain::fromCollisionGrid, which flips the file rows and retains the directional flags used by the Miner preflight."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The connected level route sends the picked actor and selected skill to World::assign. The frame loop advances the live world and synchronizes its terrain into the rendered scene."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::assign enters Miner and the live state update dispatches stepMiner at the existing bite cadence. A matching directional flag now reaches the existing MineMetal, turn, and Walker return before any clear. The permitted stroke still calls clearSkillBox and advances diagonally."
+              },
+              {
+                "path": "build/miner-one-way-001/task-source.patch",
+                "detail": "The incoming preflight checked only Steel, allowing the installed 0x05 Earth cells to reach clearSkillBox from the blocked side. The production change places the directional predicate in that same preflight, consistent with the retained refusal and visible permitted cut."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T20:45:22.795097+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T204010-60576-fcac5e4f\\verification.log",
+        "verified_content": "e9caaad8902d2fee1b7ee69e817f4b97ff63ec6248389a29c641cfc6c5e37230"
+      }
+    },
+    {
+      "id": "level-start-timing-001",
+      "title": "Level start: first lemming at about 4.08 s with Let\u2019s Go! still showing, as in the original (user request 2026-11-23)",
+      "status": "ready",
+      "depends_on": [
+        "keyboard-shortcuts-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User request (2026-11-23, recorded in docs/playtest/2026-11-23-playtest-30.md as W5): tighten the clone's level-start timing to match a recording of the original. User authorization covers the parked release-start timing for this change only. Lead measurement of the user's recording of the original, entered from the map (build/lead/level-start-gif/analysis.md, frames and times.txt beside it): the HUD level timer reads 05:00 and ticks to 04:59, 04:58, 04:57 and 04:56 at 1.0, 2.0, 3.0 and 4.0 s, which anchors recording time to the level clock within 80 ms; the camera intro is already under way at 0; Let's Go! first appears at 1.92..2.00 s, settles about 2.8 s and is gone at 4.44..4.52 s; the first lemming leaves the hatch, and the Out counter goes from 0 to 1, at 4.04..4.12 s, while Let's Go! is still on screen. The title times agree with the retained static title clock (docs/scratch/level-entry-start-cue.md: seed 3.5 on map entry, drawn once t <= 1.5, retired below -1.0, so 2.0 s and 4.5 s) if the title clock and the level timer start together. The clone instead holds release until both the 2.8 s door clip and the title cue are over (LevelStartSequence::releaseEnabled in src/app/LevelStartSequence.h, gated in main.cpp before World::advance), so on map entry no lemming can leave before 4.5 s. First measure the clone on map entry and on Retry, relative to the clone HUD level timer: when the timer starts, when Let's Go! first draws and is gone, when the doors finish, and when the first lemming leaves the hatch, from a source-built run with a time log or frames under build/<task-id>/. Then trace statically what starts the original's release (the hatch update, its door clip and first-release delay, and any test of the title clock or of +0x26024; start from 0x451121, the loader 0x45C9AB and the playing update 0x45CC09) and cite the addresses. Change the clone so that on map entry the level timer, the title and the first release keep the recorded relation: Let's Go! first draws 2.0 s and is gone 4.5 s after the timer starts, and the first lemming leaves at 4.08 s within the recording's 4.04..4.12 s bracket, using the static rule where it is found and otherwise a provisional rule labelled as such; apply the same rule on Retry and direct level entry and state the resulting Retry times (the user judged the clone's Retry spawn time about right in playtest 28, so say how it moves). Release rate, hatch order, the per-hatch rules, the door clip, the title drawing and level music start (level-music-start-001) stay as they are except where the rule itself requires. The recorder records the release gate per advance, so promoted replays must still reproduce; new recordings carry the new gate. Update a legacy test only where it encodes the old gate, with before and after justification. Difficulty: routine. Recommended model: Sonnet. Reason: one start gate measured against a recording, on a traced path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "acceptance": [
+        "The report gives the clone times before and after the change on map entry and Retry for the level timer start, Let\u2019s Go! first draw and removal, door end and first lemming, from runs logged under build/, and cites the static release-start evidence or labels the rule as provisional.",
+        "After the change, on map entry Let\u2019s Go! first draws 2.0 s and is gone 4.5 s after the level timer starts, and the first lemming leaves the hatch between 4.04 and 4.12 s while the title is still shown, with the same rule applied on Retry and direct entry.",
+        "Release rate, hatch order, the door clip, title drawing and music start are otherwise unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "language-page-001",
+      "title": "The main-menu Language button opens a Language page that offers English only (user request 2026-11-23)",
+      "status": "ready",
+      "depends_on": [
+        "level-start-timing-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User request and decision (2026-11-23, recorded in docs/playtest/2026-11-23-playtest-30.md as W4): make the Language button work, make English the default language, and drop support for every other language for now (they will be added back later). Today the main menu draws five rows from UK labels 125, 126, 120, 3 and 43 (shell::kLabelIndices, READ 0x4C4214); row 2, Language, can take focus but FrontendSession::click and pressReturn ignore it because its page was never built. Every production string load already uses LANGUAGE\\UK.LTX (loadStrings with UK in FrontendSession, LevelMenu, MapScene, ResultsScene and main.cpp), and the clone progress codec (src/shell/Progress.h) stores a language field defaulting to UK. Statically trace the original Language page from the row 2 dispatch (the menu dispatch near 0x49BC59, the language loader 0x486670 that opens Language\\%s.ltx, and the page builder they reach): its rows, labels, layout and how a choice is stored and applied; cite the addresses. Build the clone Language page in that layout and plate style, but offering only English (the UK table), shown as the current choice; choosing it, Return, Escape or the original back path returns to the main menu. Make the Language row work by click, Return and touch tap. English is the default and the only language: the frontend, menus, map, level HUD, results and level text always load the UK table; a saved or stored language other than UK is treated as English for display and does not fail, reset or silently rewrite the save (keep the accepted save codecs and preserve unknown fields; write UK only when the player picks English on the Language page, and say what you chose). Drop other languages from production: no production path lists, selects or loads another LANGUAGE file, and any production code that exists only for other languages is removed with a one-line reason; the asset library's generic string parsing, codepage handling and the developer tools (lrtool, FrontendAssetDump) stay as they are. Keep the other main-menu rows, Options, the level menu and the touch Menu plate unchanged. Presentation only: simulation and replays stay unchanged. Update legacy tests only where they encode the unsupported row 2, with before and after justification. Evidence under build/<task-id>/: clone frames of the main menu with Language focused and of the Language page, and a log of the row 2 click, Return and back paths. Difficulty: routine. Recommended model: Sonnet. Reason: one menu page on an existing frontend with a static trace of its layout. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "acceptance": [
+        "The report cites the original row 2 dispatch, the language loader 0x486670 and the Language page builder, and the clone Language page follows that layout while offering only English as the current choice, shown by clone frames under build/.",
+        "Click, Return and touch tap on the main-menu Language row open the page and choosing English, Return or Escape returns to the main menu, every production string load uses the UK table, and a stored non-UK language displays English without failing, resetting or silently rewriting the save.",
+        "No production path lists, selects or loads another language, the other menus are unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
       ]
     }
   ]

@@ -320,16 +320,13 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
        static_cast<std::size_t>(slot)>=levels->groups[static_cast<std::size_t>(group)].size())
       return std::unexpected("map node mapping is outside the loaded level table");
     scene.levelIds_[i]=levels->groups[static_cast<std::size_t>(group)][static_cast<std::size_t>(slot)].id;
-    const auto id = normaliseAssetName(scene.levelIds_[i]);
-    const auto title = std::find_if(titles->begin(), titles->end(), [&](const LevelInfo& info) {
-      return normaliseAssetName(info.id) == id;
-    });
-    if (title == titles->end() || title->name.empty())
-      return std::unexpected("map display title missing for " + scene.levelIds_[i]);
+    const auto* title = findLevelMapEntry(*titles, scene.levelIds_[i]);
+    if (!title)
+      return std::unexpected("map metadata missing for " + scene.levelIds_[i]);
     // READ 49B2F6: "%d Lemmings : %s %d", localized string 123, "%d:%02d".
     scene.hoverText_[i] = {
         std::format("{} Lemmings : {} {}",title->totalLemmings,(*strings)[123],title->saveTarget),
-        title->name,
+        title->name.empty() ? scene.levelIds_[i] : title->name,
         std::format("{}:{:02}",title->timeLimitSeconds/60,title->timeLimitSeconds%60)};
   }
   scene.background_ = std::move(*bg);

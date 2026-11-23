@@ -2,7 +2,6 @@
 
 #include "app/WindowScale.h"
 #include "assets/GameData.h"
-#include "shell/MenuRender.h"
 
 #include <utility>
 
@@ -14,20 +13,47 @@ constexpr std::array kActions{
     LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions, LevelMenuAction::Examine};
 constexpr std::array<std::size_t, 4> kLabelIndices{44, 48, 43, 3};
 constexpr int kMenuBaseY = 100;
+constexpr int kTitleTop = 60;
+constexpr int kTitleShadow = 2;
+constexpr int kTitleLineStep = shell::kLineHeight + kTitleShadow;
+constexpr int kTitleMaxWidth = kGameWidth - 2 * (16 + kTitleShadow);
+constexpr int kTitleMaxLines = 1 + (kGameHeight - kMenuBaseY -
+    static_cast<int>(kActions.size()) * shell::kLineHeight) / kTitleLineStep;
 constexpr shell::MenuParams kTouchButtonParams{.xWord = kGameWidth, .baseY = 8, .highlight = -1};
 const std::array<std::string, 1> kTouchButtonLabel{"Menu"};
 
-bool containsStrict(int x, int y, std::size_t row, std::string_view label) {
+bool containsStrict(int x, int y, int baseY, std::size_t row, std::string_view label) {
   const auto& cells = shell::fontCells();
   const int width = shell::textWidth(label, cells);
   const int left = shell::labelLeft(label, cells, kGameWidth);
-  const int top = kMenuBaseY + static_cast<int>(row) * shell::kLineHeight;
+  const int top = baseY + static_cast<int>(row) * shell::kLineHeight;
   return left < x && x < left + width && top < y && y < top + shell::kLineHeight;
+}
+
+// Use the same literal glyph advances as drawHud, including a literal '^'.
+std::pair<std::size_t, int> fitTitleLine(std::string_view title, int maxWidth) {
+  const auto& cells = shell::fontCells();
+  std::size_t count = 0, space = 0;
+  int width = 0, widthBeforeSpace = 0;
+  for (; count < title.size(); ++count) {
+    const auto ch = static_cast<unsigned char>(title[count]);
+    if (ch == ' ') {
+      space = count;
+      widthBeforeSpace = width;
+    }
+    const unsigned index = ch - shell::kFirstChar;
+    const int advance = index < cells.size() ? cells[index].width : 0;
+    if (width + advance > maxWidth) break;
+    width += advance;
+  }
+  if (count < title.size() && space > 0) return {space, widthBeforeSpace};
+  return {count, width};
 }
 
 } // namespace
 
-std::expected<LevelMenu, std::string> LevelMenu::load(const AssetLibrary& library) {
+std::expected<LevelMenu, std::string> LevelMenu::load(const AssetLibrary& library,
+                                                      std::string_view levelId) {
   auto font = loadTexture(library, "TEXTURES\\^FONT.BMP");
   if (!font) return std::unexpected(font.error());
   auto strings = loadStrings(library, "UK");
@@ -40,7 +66,37 @@ std::expected<LevelMenu, std::string> LevelMenu::load(const AssetLibrary& librar
   for (std::size_t i = 0; i < kLabelIndices.size(); ++i)
     menu.labels_[i] = std::string((*strings)[kLabelIndices[i]]);
   menu.labels_.back() = "Examine";
+  const auto levels = loadLevelMap(library);
+  const auto* level = levels ? findLevelMapEntry(*levels, levelId) : nullptr;
+  menu.layoutTitle(level && !level->name.empty() ? std::string_view(level->name) : levelId);
   return menu;
+}
+
+void LevelMenu::layoutTitle(std::string_view title) {
+  rowBaseY_ = kMenuBaseY;
+  // Clone heading: centre the map hover's black-over-red text above the rows.
+  // Wrap on spaces when possible, or at a glyph boundary in a long word.
+  for (int line = 0; line < kTitleMaxLines && !title.empty(); ++line) {
+    auto [count, width] = fitTitleLine(title, kTitleMaxWidth);
+    const bool ellipsize = line + 1 == kTitleMaxLines && count < title.size();
+    constexpr std::string_view ellipsis = "...";
+    if (ellipsize) {
+      const int ellipsisWidth = shell::textWidth(ellipsis, shell::fontCells());
+      const auto fitted = fitTitleLine(title, kTitleMaxWidth - ellipsisWidth);
+      count = fitted.first;
+      width = fitted.second + ellipsisWidth;
+    }
+    std::string text(title.substr(0, count));
+    if (ellipsize) text += ellipsis;
+    const int x = (kGameWidth - width) / 2;
+    const int y = kTitleTop + line * kTitleLineStep;
+    titleLines_.push_back({text, x + kTitleShadow, y + kTitleShadow, {220, 50, 50}});
+    titleLines_.push_back({std::move(text), x, y, {0, 0, 0}});
+    rowBaseY_ = kMenuBaseY + line * kTitleLineStep;
+    const auto next = title.find_first_not_of(' ', count);
+    if (next == std::string_view::npos) break;
+    title.remove_prefix(next);
+  }
 }
 
 void LevelMenu::open() {
@@ -59,7 +115,7 @@ void LevelMenu::moveFocus(int direction) {
 void LevelMenu::hover(int x, int y) {
   if (!open_) return;
   for (std::size_t i = 0; i < kActions.size(); ++i) {
-    if (containsStrict(x, y, i, labels_[i])) {
+    if (containsStrict(x, y, rowBaseY_, i, labels_[i])) {
       focusedIndex_ = static_cast<int>(i);
       return;
     }
@@ -70,7 +126,7 @@ void LevelMenu::hover(int x, int y) {
 LevelMenuAction LevelMenu::actionAt(int x, int y) const {
   if (!open_) return LevelMenuAction::None;
   for (std::size_t i = 0; i < kActions.size(); ++i)
-    if (containsStrict(x, y, i, labels_[i])) return kActions[i];
+    if (containsStrict(x, y, rowBaseY_, i, labels_[i])) return kActions[i];
   return LevelMenuAction::None;
 }
 
@@ -82,10 +138,12 @@ LevelMenuAction LevelMenu::focusedAction() const {
 
 void LevelMenu::draw(Image& frame) const {
   if (!open_) return;
+  const auto& cells = shell::fontCells();
+  shell::drawHud(frame, font_, titleLines_, cells);
   shell::MenuParams params;
-  params.baseY = kMenuBaseY;
+  params.baseY = rowBaseY_;
   params.highlight = focusedIndex_;
-  shell::drawMenuRows(frame, font_, labels_, params, shell::fontCells());
+  shell::drawMenuRows(frame, font_, labels_, params, cells);
 }
 
 bool LevelMenu::touchButtonAt(int x, int y) const {

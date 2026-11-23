@@ -13,6 +13,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - level-menu-title-001: **ready** — The level menu shows the level name above its rows (user request 2026-11-23)
 - teleport-sound-001: **ready** — Teleporting plays no sound (playtest 30 W1)
 - options-spacing-001: **ready** — Options menu: Window size and Accept sit too far below the row above (user request 2026-11-23)
+- keyboard-shortcuts-001: **ready** — Options gains a Keyboard Shortcuts row that opens a screen listing every key (user request 2026-11-23)
 
 ## Recently completed queue entries
 

@@ -19,8 +19,9 @@ provisional where a threshold is chosen. Desktop mouse and keyboard behaviour st
 - Hatch release rate on touch: touch and hold a hatch, then slide up to raise and down to lower,
   stepping at the mouse-hold speed while past a small threshold.
 
-- V4 (follow-up, same day): touch buttons for the keyboard-only level controls, centred at the top
-  of the screen, drawn like the in-game menu buttons (red plates with black text).
+- V4 (follow-up, same day): a touch Menu button centred at the top of the screen, drawn like the
+  in-game menu buttons (red plates with black text). No touch buttons for pause or camera flip.
+  Examine pause becomes a level menu item for every input, mouse included.
 - The mobile warning stays as it is until the phone pass has been playtested.
 
 ## Queued

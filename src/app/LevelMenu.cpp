@@ -1,25 +1,27 @@
 #include "app/LevelMenu.h"
 
+#include "app/WindowScale.h"
 #include "assets/GameData.h"
 #include "shell/MenuRender.h"
 
 #include <utility>
-#include <vector>
 
 namespace webo::app {
 namespace {
 
-constexpr std::array<LevelMenuAction, 4> kActions{
+constexpr std::array kActions{
     LevelMenuAction::Resume, LevelMenuAction::Retry,
-    LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions};
+    LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions, LevelMenuAction::Examine};
 constexpr std::array<std::size_t, 4> kLabelIndices{44, 48, 43, 3};
+constexpr int kMenuBaseY = 100;
+constexpr shell::MenuParams kTouchButtonParams{.xWord = kGameWidth, .baseY = 8, .highlight = -1};
+const std::array<std::string, 1> kTouchButtonLabel{"Menu"};
 
-bool containsStrict(int x, int y, std::size_t row,
-                    const std::array<std::string, 4>& labels) {
+bool containsStrict(int x, int y, std::size_t row, std::string_view label) {
   const auto& cells = shell::fontCells();
-  const int width = shell::textWidth(labels[row], cells);
-  const int left = shell::labelLeft(labels[row], cells, 640);
-  const int top = 100 + static_cast<int>(row) * shell::kLineHeight;
+  const int width = shell::textWidth(label, cells);
+  const int left = shell::labelLeft(label, cells, kGameWidth);
+  const int top = kMenuBaseY + static_cast<int>(row) * shell::kLineHeight;
   return left < x && x < left + width && top < y && y < top + shell::kLineHeight;
 }
 
@@ -37,6 +39,7 @@ std::expected<LevelMenu, std::string> LevelMenu::load(const AssetLibrary& librar
   menu.font_ = std::move(*font);
   for (std::size_t i = 0; i < kLabelIndices.size(); ++i)
     menu.labels_[i] = std::string((*strings)[kLabelIndices[i]]);
+  menu.labels_.back() = "Examine";
   return menu;
 }
 
@@ -49,8 +52,6 @@ void LevelMenu::close() { open_ = false; }
 
 void LevelMenu::moveFocus(int direction) {
   if (!open_ || (direction != -1 && direction != 1)) return;
-  // SDL traversal includes the four labelled actions; the empty fifth
-  // selector is outside the playable menu.
   constexpr int rows = static_cast<int>(kActions.size());
   focusedIndex_ = (focusedIndex_ + rows + direction) % rows;
 }
@@ -58,7 +59,7 @@ void LevelMenu::moveFocus(int direction) {
 void LevelMenu::hover(int x, int y) {
   if (!open_) return;
   for (std::size_t i = 0; i < kActions.size(); ++i) {
-    if (containsStrict(x, y, i, labels_)) {
+    if (containsStrict(x, y, i, labels_[i])) {
       focusedIndex_ = static_cast<int>(i);
       return;
     }
@@ -69,7 +70,7 @@ void LevelMenu::hover(int x, int y) {
 LevelMenuAction LevelMenu::actionAt(int x, int y) const {
   if (!open_) return LevelMenuAction::None;
   for (std::size_t i = 0; i < kActions.size(); ++i)
-    if (containsStrict(x, y, i, labels_)) return kActions[i];
+    if (containsStrict(x, y, i, labels_[i])) return kActions[i];
   return LevelMenuAction::None;
 }
 
@@ -82,10 +83,21 @@ LevelMenuAction LevelMenu::focusedAction() const {
 void LevelMenu::draw(Image& frame) const {
   if (!open_) return;
   shell::MenuParams params;
-  params.baseY = 100;
+  params.baseY = kMenuBaseY;
   params.highlight = focusedIndex_;
-  const std::vector<std::string> labels(labels_.begin(), labels_.end());
-  frame = shell::renderMainMenu(frame, font_, labels, params, shell::fontCells());
+  shell::drawMenuRows(frame, font_, labels_, params, shell::fontCells());
+}
+
+bool LevelMenu::touchButtonAt(int x, int y) const {
+  const auto& cells = shell::fontCells();
+  const auto& label = kTouchButtonLabel.front();
+  const auto bounds = shell::menuPlateBounds(shell::labelLeft(label, cells, kTouchButtonParams.xWord),
+      kTouchButtonParams.baseY, shell::textWidth(label, cells), kTouchButtonParams);
+  return shell::menuPanelAt(std::span(&bounds, 1), x, y) == 0;
+}
+
+void LevelMenu::drawTouchButton(Image& frame) const {
+  shell::drawMenuRows(frame, font_, kTouchButtonLabel, kTouchButtonParams, shell::fontCells());
 }
 
 } // namespace webo::app

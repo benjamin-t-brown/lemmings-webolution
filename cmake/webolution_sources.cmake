@@ -105,6 +105,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/Camera.cpp
   src/app/CameraIntro.cpp
   src/app/CameraInput.cpp
+  src/app/TouchInput.cpp
   src/app/SimClock.cpp
   src/app/RuntimeHud.cpp
   src/app/LevelEndTransition.cpp

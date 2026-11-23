@@ -37,18 +37,20 @@ CameraController::CameraController(CameraParams initial, int levelRows)
       pickReference_{initial.yawUnits, static_cast<double>(std::max(0, levelRows) / 2), 0.5},
       levelRows_(std::max(0, levelRows)) {}
 
+void CameraController::toggleZoom(std::optional<CameraZoomPose> anchor) {
+  camera_.zoomShift = camera_.zoomShift == 0 ? 1 : 0;
+  if (camera_.zoomShift != 0) {
+    const auto pose = anchor.value_or(CameraZoomPose{0.0, 18.5});
+    camera_.zoomLateralOffset = pose.lateralOffset;
+    camera_.elevation = pose.elevation;
+  }
+}
+
 void CameraController::update(const CameraInput& in, double dt) {
   constexpr double flipDuration = 0.384;
   grabbed_ = in.uiAllowsCamera && (in.uiState == 0 || in.uiState == 1) && in.rightMouseDown;
 
-  if (in.zoomPressed && in.uiAllowsCamera && in.uiState == 0) {
-    camera_.zoomShift = camera_.zoomShift == 0 ? 1 : 0;
-    if (camera_.zoomShift != 0) {
-      const auto pose = in.zoomPose.value_or(CameraZoomPose{0.0, 18.5});
-      camera_.zoomLateralOffset = pose.lateralOffset;
-      camera_.elevation = pose.elevation;
-    }
-  }
+  if (in.zoomPressed && in.uiAllowsCamera && in.uiState == 0) toggleZoom(in.zoomPose);
 
   if (in.backspacePressed && in.uiAllowsCamera && (in.uiState == 0 || in.uiState == 1)) {
     flipElapsed_ = 0.0;

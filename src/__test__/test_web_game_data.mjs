@@ -14,7 +14,7 @@ const expectedPatch11 = 'a393a45e71d797fc5b646a9a235d1f64298129f378c6f4b79f47ec7
 const encoder = new TextEncoder();
 const blockSize = 2048;
 
-async function checkMobileWarning(shellPath) {
+async function checkMobilePage(shellPath) {
   const html = await readFile(shellPath, 'utf8');
   const notice = html.match(/<aside id="mobile-warning"[^>]*\bhidden>([\s\S]*?)<\/aside>/);
   assert.ok(notice);
@@ -22,36 +22,73 @@ async function checkMobileWarning(shellPath) {
   assert.match(notice[1], /<button id="dismiss-mobile-warning" type="button">Dismiss<\/button>/);
   assert.ok(notice.index < html.indexOf('id="setup"'));
   assert.ok(notice.index < html.indexOf('id="start"'));
+  assert.match(html, /<canvas id="canvas" width="640" height="480"/);
+  assert.match(html, /<p id="rotate-phone" role="status" hidden>Turn your phone sideways to play\. The game keeps running\.<\/p>/);
+  assert.match(html, /html\.phone-play, \.phone-play body\s*\{[^}]*overflow: hidden; overscroll-behavior: none;/);
+  assert.match(html, /\.phone-play main\s*\{[^}]*position: fixed; inset: 0;[^}]*place-items: center;[^}]*touch-action: none;[^}]*user-select: none;[^}]*-webkit-touch-callout: none;/);
+  assert.match(html, /\.phone-play main > :not\(#canvas, #rotate-phone\)\s*\{ display: none; \}/);
+  assert.match(html, /\.phone-play #canvas\s*\{[^}]*width: min\(100dvw, calc\(100dvh \* 4 \/ 3\)\);/);
+  assert.match(html, /\.phone-play #canvas\[inert\]\s*\{ pointer-events: none; \}/);
+  assert.match(html, /\.phone-play #rotate-phone:not\(\[hidden\]\)\s*\{[^}]*position: absolute; inset: 0; z-index: 1;/);
+  const [, setupViewport] = html.match(/<meta name="viewport" content="([^"]+)">/);
+  assert.equal(setupViewport, 'width=device-width, initial-scale=1');
   const [, script] = html.match(/<script>([\s\S]*?)<\/script>/);
 
   const noStorage = () => { throw new Error('Storage unavailable'); };
+  class MouseEvent extends Event {
+    constructor(type, fields) {
+      super(type, {cancelable: true});
+      Object.assign(this, fields);
+    }
+  }
   function visit({coarse = false, fine = false, userAgentData, getStorage = noStorage} = {}) {
-    const elements = new Map();
+    const viewport = {content: setupViewport};
+    const classes = new Set();
+    const elements = new Map([['meta[name="viewport"]', viewport]]);
+    const windowEvents = new EventTarget();
+    const portrait = Object.assign(new EventTarget(), {matches: true});
+    const queries = new Map([
+      ['(pointer: coarse)', {matches: coarse}], ['(any-pointer: fine)', {matches: fine}],
+      ['(orientation: portrait)', portrait],
+    ]);
+    const document = {
+      documentElement: {classList: {add: name => classes.add(name), remove: name => classes.delete(name)}},
+      querySelector(selector) {
+        if (!elements.has(selector)) elements.set(selector, Object.assign(new EventTarget(), {
+          hidden: true, inert: false,
+          focus() { document.activeElement = this; },
+        }));
+        return elements.get(selector);
+      },
+      hasFocus: () => true,
+      createElement: () => ({}),
+      head: {append(script) { gameScript = script.src; }},
+    };
     let gameScript;
-    const queries = new Map([['(pointer: coarse)', coarse], ['(any-pointer: fine)', fine]]);
     const browser = {
       navigator: {userAgentData},
       matchMedia(query) {
-        assert.ok(queries.has(query), `Unexpected pointer query ${query}`);
-        return {matches: queries.get(query)};
+        assert.ok(queries.has(query), `Unexpected media query ${query}`);
+        return queries.get(query);
       },
       get localStorage() { return getStorage(); },
       URL, location: {href: 'https://example.test/game/'}, crossOriginIsolated: true,
       sessionStorage: {removeItem() {}},
-      document: {
-        querySelector(selector) {
-          if (!elements.has(selector)) elements.set(selector, {hidden: true, addEventListener() {}});
-          return elements.get(selector);
-        },
-        createElement: () => ({}),
-        head: {append(script) { gameScript = script.src; }},
-      },
+      document, screen: {}, Event, MouseEvent,
+      addEventListener: windowEvents.addEventListener.bind(windowEvents),
+      dispatchEvent: windowEvents.dispatchEvent.bind(windowEvents),
     };
     browser.window = browser;
     runInNewContext(script, browser, {filename: 'webolution.html'});
     assert.equal(gameScript, './webolution.js');
     assert.equal(typeof elements.get('#start').onclick, 'function');
-    return {notice: elements.get('#mobile-warning'), dismiss: elements.get('#dismiss-mobile-warning')};
+    return {notice: elements.get('#mobile-warning'), dismiss: elements.get('#dismiss-mobile-warning'),
+      start: elements.get('#start'), canvas: elements.get('#canvas'), prompt: elements.get('#rotate-phone'),
+      main: elements.get('main'), browser, document, viewport, classes,
+      turn(matches) {
+        portrait.matches = matches;
+        portrait.dispatchEvent(new Event('change'));
+      }};
   }
 
   assert.equal(visit({coarse: true}).notice.hidden, false);
@@ -75,6 +112,131 @@ async function checkMobileWarning(shellPath) {
     assert.equal(visit(phone).notice.hidden, hiddenOnReturn);
   }
   console.log('PASS mobile warning dismissal with working storage, throwing methods and a throwing getter');
+
+  async function startGame({browser, start}, onMain = () => {}) {
+    const {Module, navigator} = browser;
+    let close;
+    Module.ccall = name => {
+      assert.equal(name, 'main');
+      onMain();
+      return new Promise(resolve => { close = resolve; });
+    };
+    Module.FS = {mkdir() {}, mount() {}, syncfs(read, done) { done(); }};
+    navigator.locks = {request: async (name, options, run) => run({})};
+    const saveLock = runInNewContext('loadSaveAndOfferStart([])', browser);
+    await new Promise(setImmediate);
+    assert.equal(start.hidden, false);
+    const finished = start.onclick();
+    assert.equal(typeof close, 'function', 'main starts in the click handler');
+    return async () => {
+      close(0);
+      await finished;
+      await saveLock;
+    };
+  }
+
+  const phone = visit({coarse: true});
+  const calls = [];
+  let allowFullscreen;
+  phone.main.requestFullscreen = () => {
+    calls.push('fullscreen');
+    return new Promise(resolve => { allowFullscreen = resolve; });
+  };
+  phone.document.exitFullscreen = async () => {
+    calls.push('exit fullscreen');
+    phone.document.fullscreenElement = null;
+  };
+  phone.browser.screen.orientation = {
+    async lock(mode) {
+      assert.equal(phone.document.fullscreenElement, phone.main);
+      calls.push(mode);
+      throw new Error('Orientation lock denied');
+    },
+    unlock() { calls.push('unlock'); },
+  };
+  phone.browser.addEventListener('blur', () => calls.push('blur'));
+  phone.browser.addEventListener('focus', () => calls.push('focus'));
+  assert.equal(phone.prompt.hidden, true);
+  assert.equal(phone.viewport.content, setupViewport);
+  const endPhoneGame = await startGame(phone, () => calls.push('main'));
+  assert.deepEqual(calls, ['blur', 'fullscreen', 'main']);
+  assert.equal(phone.notice.hidden, true);
+  assert.equal(phone.canvas.hidden, false);
+  assert.equal(phone.prompt.hidden, false);
+  assert.equal(phone.canvas.inert, true);
+  assert.ok(phone.classes.has('phone-play'));
+  assert.equal(phone.viewport.content, setupViewport + ', maximum-scale=1, user-scalable=no');
+  phone.document.fullscreenElement = phone.main;
+  allowFullscreen();
+  await new Promise(setImmediate);
+  assert.deepEqual(calls, ['blur', 'fullscreen', 'main', 'landscape']);
+
+  let receivedPointer;
+  phone.canvas.addEventListener('mousemove', event => { receivedPointer = [event.clientX, event.clientY]; });
+  function pressCanvas() {
+    const press = new MouseEvent('mousedown', {clientX: 360, clientY: 180, buttons: 1});
+    // Node has no DOM capture tree. Send capture to window before delivering to the canvas.
+    if (phone.browser.dispatchEvent(press)) phone.canvas.dispatchEvent(press);
+    return press.defaultPrevented;
+  }
+  assert.equal(pressCanvas(), true);
+  assert.equal(receivedPointer, undefined);
+  for (const type of ['touchstart', 'touchmove', 'keydown', 'wheel']) {
+    assert.equal(phone.browser.dispatchEvent(new Event(type, {cancelable: true})), false);
+  }
+  assert.equal(phone.browser.dispatchEvent(new Event('touchend', {cancelable: true})), true);
+  phone.turn(false);
+  assert.equal(phone.prompt.hidden, true);
+  assert.equal(phone.canvas.inert, false);
+  assert.equal(phone.document.activeElement, phone.canvas);
+  assert.equal(calls.at(-1), 'focus');
+  assert.equal(pressCanvas(), false);
+  assert.deepEqual(receivedPointer, [360, 180]);
+  assert.equal(phone.canvas.dispatchEvent(new Event('contextmenu', {cancelable: true})), false);
+  phone.turn(true);
+  assert.equal(phone.prompt.hidden, false);
+  assert.equal(phone.canvas.inert, true);
+  assert.equal(calls.at(-1), 'blur');
+  await endPhoneGame();
+  assert.deepEqual(calls, ['blur', 'fullscreen', 'main', 'landscape', 'focus', 'blur', 'unlock', 'exit fullscreen']);
+  assert.equal(phone.canvas.hidden, true);
+  assert.equal(phone.prompt.hidden, true);
+  assert.equal(phone.canvas.inert, false);
+  assert.equal(phone.classes.size, 0);
+  assert.equal(phone.viewport.content, setupViewport);
+  console.log('PASS phone fullscreen gesture, rejected landscape lock, portrait input gate and landscape restore');
+
+  const manualPhone = visit({userAgentData: {mobile: true}});
+  manualPhone.turn(false);
+  const endManualGame = await startGame(manualPhone);
+  assert.equal(manualPhone.prompt.hidden, true);
+  assert.ok(manualPhone.classes.has('phone-play'));
+  manualPhone.turn(true);
+  assert.equal(manualPhone.prompt.hidden, false);
+  assert.equal(manualPhone.canvas.inert, true);
+  await endManualGame();
+  console.log('PASS manual phone rotation without fullscreen or orientation APIs');
+
+  for (const coarse of [false, true]) {
+    const desktop = visit({coarse, fine: true});
+    let fullscreenCalls = 0;
+    let lockCalls = 0;
+    desktop.main.requestFullscreen = () => { ++fullscreenCalls; };
+    desktop.browser.screen.orientation = {lock() { ++lockCalls; }};
+    const endDesktopGame = await startGame(desktop);
+    desktop.turn(false);
+    desktop.turn(true);
+    assert.equal(desktop.classes.size, 0);
+    assert.equal(desktop.viewport.content, setupViewport);
+    assert.equal(desktop.document.activeElement, desktop.canvas);
+    assert.equal(desktop.prompt.hidden, true);
+    assert.equal(desktop.canvas.inert, false);
+    assert.equal(desktop.browser.dispatchEvent(new Event('touchstart', {cancelable: true})), true);
+    await endDesktopGame();
+    assert.equal(fullscreenCalls, 0);
+    assert.equal(lockCalls, 0);
+  }
+  console.log('PASS desktop and touch laptop keep ordinary viewport, focus and input');
 }
 
 function bothEndian(bytes, offset, value, width) {
@@ -339,7 +501,7 @@ async function realDisc(path, wasm) {
 }
 
 const [, , wasmPath, discPath] = process.argv;
-await checkMobileWarning(wasmPath ? resolve(dirname(wasmPath), 'webolution.html')
+await checkMobilePage(wasmPath ? resolve(dirname(wasmPath), 'webolution.html')
   : new URL('../web/webolution.html', import.meta.url));
 const sampleFiles = await synthetic();
 let discPresent = false;

@@ -6,16 +6,46 @@
 #if defined(WEBOLUTION_HAVE_SDL2) && WEBOLUTION_HAVE_SDL2
 #include <SDL.h>
 #include "app/SdlShutdown.hpp"
+#include "app/TouchInput.h"
 #include "app/WindowScale.h"
 #ifdef __EMSCRIPTEN__
 #include "web/Browser.h"
 #endif
+#include <cmath>
 #include <expected>
 #include <optional>
 #include <string>
 #include <string_view>
 
 namespace webo::app {
+
+inline bool isFingerEvent(Uint32 type) {
+  return type == SDL_FINGERDOWN || type == SDL_FINGERMOTION || type == SDL_FINGERUP;
+}
+
+inline bool isTouchMouseEvent(const SDL_Event& event) {
+  switch (event.type) {
+    case SDL_MOUSEMOTION: return event.motion.which == SDL_TOUCH_MOUSEID;
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP: return event.button.which == SDL_TOUCH_MOUSEID;
+    case SDL_MOUSEWHEEL: return event.wheel.which == SDL_TOUCH_MOUSEID;
+    default: return false;
+  }
+}
+
+inline int touchPixel(double position) { return static_cast<int>(std::floor(position)); }
+
+// A recognized tap enters the left-click handlers directly in presentation pixels.
+inline SDL_Event touchButton(Uint32 type, TouchPoint point, Uint32 timestamp) {
+  SDL_Event event{};
+  event.type = type;
+  event.button.timestamp = timestamp;
+  event.button.button = SDL_BUTTON_LEFT;
+  event.button.x = touchPixel(point.x);
+  event.button.y = touchPixel(point.y);
+  return event;
+}
+
 class SdlWindow {
  public:
   explicit SdlWindow(int choice = 1, int runOverride = 0,
@@ -40,6 +70,8 @@ class SdlWindow {
       return std::unexpected("window scale must be 0, 1, 2 or 3");
     SDL_SetMainReady();
     if (!initialized_) {
+      SDL_SetHintWithPriority(SDL_HINT_TOUCH_MOUSE_EVENTS, "0", SDL_HINT_OVERRIDE);
+      SDL_SetHintWithPriority(SDL_HINT_MOUSE_TOUCH_EVENTS, "0", SDL_HINT_OVERRIDE);
       if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) return error("SDL_Init");
       initialized_ = true;
 #ifdef __EMSCRIPTEN__
@@ -104,6 +136,31 @@ class SdlWindow {
     }
   }
 
+  bool receivedTouch() const { return receivedTouch_; }
+  std::optional<TouchPoint> touchCoordinates(const SDL_TouchFingerEvent& event) {
+    if (event.touchId == SDL_MOUSE_TOUCHID ||
+        (event.windowID && event.windowID != SDL_GetWindowID(window_)) ||
+        !std::isfinite(event.x) || !std::isfinite(event.y)) return std::nullopt;
+    receivedTouch_ = true;
+    int width, height;
+    SDL_GetWindowSize(window_, &width, &height);
+    // SDL reports normalized client coordinates. Keep subpixel drag deltas;
+    // map clicks to pixels in the same client-to-presentation scale as mouse input.
+    const auto axis = [this](double normalized, int size) {
+      const double extent = double(size) / scale_;
+      return normalized == 1.0 ? std::nextafter(extent, 0.0) : normalized * extent;
+    };
+    return TouchPoint{axis(event.x, width), axis(event.y, height)};
+  }
+
+  static TouchAction feedTouch(TouchInput& touch, const SDL_TouchFingerEvent& event,
+                               TouchPoint point, TouchTarget target = TouchTarget::Tap) {
+    const TouchId id{event.touchId, event.fingerId};
+    if (event.type == SDL_FINGERDOWN) return touch.down(id, point, target, event.timestamp);
+    if (event.type == SDL_FINGERMOTION) return touch.motion(id, point);
+    return touch.up(id, point, event.timestamp);
+  }
+
  private:
 #ifndef __EMSCRIPTEN__
   struct DesktopArea {
@@ -162,6 +219,7 @@ class SdlWindow {
     return std::unexpected(std::string(action) + ": " + SDL_GetError());
   }
   bool initialized_ = false;
+  bool receivedTouch_ = false;
   int choice_, runOverride_;
   void (*setIcon_)(SDL_Window*);
   int scale_ = 1;

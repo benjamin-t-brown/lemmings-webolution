@@ -12,10 +12,10 @@ class AssetLibrary;
 
 namespace webo::app {
 
-enum class LevelMenuAction { None, Resume, Retry, MapQuit, SoundOptions };
+enum class LevelMenuAction { None, Resume, Retry, MapQuit, SoundOptions, Examine };
 
-// The four labelled UI2 rows. The native fifth, empty selector-19 widget is
-// intentionally unsupported: its draw/raster behaviour is not established.
+// The four labelled UI2 rows followed by the clone's Examine action.
+// The native empty selector-19 widget stays unsupported.
 class LevelMenu {
  public:
   static std::expected<LevelMenu, std::string> load(const AssetLibrary& library);
@@ -29,10 +29,12 @@ class LevelMenu {
   LevelMenuAction focusedAction() const;
   int focusedIndex() const { return focusedIndex_; }
   void draw(Image& frame) const;
+  bool touchButtonAt(int x, int y) const;
+  void drawTouchButton(Image& frame) const;
 
  private:
   Image font_;
-  std::array<std::string, 4> labels_{};
+  std::array<std::string, 5> labels_{};
   bool open_ = false;
   int focusedIndex_ = 0;
 };

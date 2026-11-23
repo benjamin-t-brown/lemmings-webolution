@@ -82,13 +82,14 @@ int main() {
         menu.focusedAction() == LevelMenuAction::Resume,
         "open focuses Resume");
   // UK content rectangles are (L,T,R,B) and exclude their edges.
-  const std::array<std::array<int, 4>, 4> rects{{
+  const std::array<std::array<int, 4>, 5> rects{{
       {{281, 100, 360, 129}}, {{271, 129, 369, 158}},
       {{300, 158, 341, 187}}, {{282, 187, 359, 216}},
+      {{279, 216, 362, 245}},
   }};
-  const std::array<LevelMenuAction, 4> actions{{
+  const std::array<LevelMenuAction, 5> actions{{
       LevelMenuAction::Resume, LevelMenuAction::Retry,
-      LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions,
+      LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions, LevelMenuAction::Examine,
   }};
   for (std::size_t i = 0; i < rects.size(); ++i) {
     const auto& r = rects[i];
@@ -99,9 +100,13 @@ int main() {
           menu.actionAt(r[0] + 1, r[3]) == LevelMenuAction::None,
           "content rectangle edges are strict");
   }
-  check(menu.actionAt(320, 216) == LevelMenuAction::None &&
-        menu.actionAt(320, 230) == LevelMenuAction::None,
-        "empty fifth widget has no invented hit area/action");
+  check(menu.actionAt(320, 245) == LevelMenuAction::None &&
+        menu.actionAt(320, 259) == LevelMenuAction::None,
+        "native empty widget has no additional hit area or action");
+  menu.moveFocus(-1);
+  check(menu.focusedAction() == LevelMenuAction::Examine, "up from Resume wraps to Examine");
+  menu.moveFocus(1);
+  check(menu.focusedAction() == LevelMenuAction::Resume, "down from Examine wraps to Resume");
 
   menu.hover(320, 140);
   check(menu.focusedIndex() == 1 && menu.focusedAction() == LevelMenuAction::Retry,
@@ -112,20 +117,23 @@ int main() {
   menu.hover(320, 200);
   check(menu.focusedIndex() == 3 && menu.focusedAction() == LevelMenuAction::SoundOptions,
         "focused Options requests sound settings");
+  menu.hover(320, 230);
+  check(menu.focusedIndex() == 4 && menu.focusedAction() == LevelMenuAction::Examine,
+        "hovering Examine updates focus");
 
   Image frame = before;
   menu.draw(frame);
-  const std::vector<std::string> literalUkLabels{"Resume", "Try Again", "Quit", "Options"};
+  const std::vector<std::string> labels{"Resume", "Try Again", "Quit", "Options", "Examine"};
   shell::MenuParams params;
   params.baseY = 100;
-  params.highlight = 3;
+  params.highlight = 4;
   auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");
   check(static_cast<bool>(font), "load font for independent render comparison");
   if (!font) return 1;
-  const auto expected = shell::renderMainMenu(before, *font, literalUkLabels,
+  const auto expected = shell::renderMainMenu(before, *font, labels,
                                                params, shell::fontCells());
   check(frame.rgba == expected.rgba,
-        "draw matches independent literal-UK renderer assembly (shared primitives, not native oracle)");
+        "draw matches the four UK labels and the clone Examine row using the menu renderer");
   // Sample the scene outside all panel and text bounds.
   const auto pixelOffset = (static_cast<std::size_t>(20) * 640 + 20) * 4;
   check(std::equal(frame.rgba.begin() + static_cast<std::ptrdiff_t>(pixelOffset),

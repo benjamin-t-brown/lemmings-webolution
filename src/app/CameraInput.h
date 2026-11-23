@@ -59,6 +59,7 @@ class FixedCameraClock {
 class CameraController {
  public:
   explicit CameraController(CameraParams initial = {}, int levelRows = 96);
+  void toggleZoom(std::optional<CameraZoomPose> pose);
   void update(const CameraInput& input, double dt = 1.0 / 144.0);
   const CameraParams& camera() const { return camera_; }
   double cursorX() const { return cursorX_; }

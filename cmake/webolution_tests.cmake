@@ -439,7 +439,7 @@ add_test(NAME cameraintro COMMAND test_cameraintro)
 if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_executable(test_frontendwindow src/__test__/test_frontendwindow.cpp
     src/app/ResultsScene.cpp
-    src/app/FrontendWindow.cpp src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp
+    src/app/FrontendWindow.cpp src/app/TouchInput.cpp src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp
     src/app/RuntimeCursor.cpp src/app/CursorPolicy.cpp src/app/SkillPanel.cpp
     src/shell/Frontend.cpp src/shell/MenuRender.cpp src/shell/HudText.cpp)
   target_link_libraries(test_frontendwindow PRIVATE webolution_objects)
@@ -1307,6 +1307,10 @@ add_test(NAME cellmesh COMMAND test_cellmesh)
 add_executable(test_camerainput src/__test__/test_camerainput.cpp src/app/CameraInput.cpp)
 target_include_directories(test_camerainput PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME camerainput COMMAND test_camerainput)
+
+add_executable(test_touchinput src/__test__/test_touchinput.cpp src/app/TouchInput.cpp)
+target_include_directories(test_touchinput PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME touchinput COMMAND test_touchinput)
 
 add_executable(test_simclock src/__test__/test_simclock.cpp src/app/SimClock.cpp)
 target_include_directories(test_simclock PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

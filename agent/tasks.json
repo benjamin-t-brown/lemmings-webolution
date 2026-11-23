@@ -35735,7 +35735,7 @@
     {
       "id": "web-landscape-001",
       "title": "Phones play the web build in landscape (mobile request V1)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "teleport-hover-partner-001"
       ],
@@ -35749,12 +35749,86 @@
         "On a phone profile the page requests fullscreen and landscape lock on Start game, ignores a rejected lock, shows a turn-sideways prompt over the canvas in portrait and blocks canvas input under it, shown by the extended Node page test.",
         "In landscape the canvas fills the viewport at the game aspect ratio with page scrolling, page zoom, text selection and the long-press menu suppressed over it, while the desktop and touch-laptop profiles keep the current page, shown by the Node test and the built page.",
         "Game-data setup, the mobile warning, Start game and the main export are unchanged, scripts/export_main.py passes, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261123T080356-38732-b00d42ba",
+      "started": "2026-11-23T08:03:57.407256+00:00",
+      "finished": "2026-11-23T08:15:55.805863+00:00",
+      "last_run": "build/agent-runs/20261123T080356-38732-b00d42ba",
+      "review": {
+        "decision": "accept",
+        "reason": "The retained Node runs, built page, export scan and supervisor smoke log support all three criteria. Real-phone layout, gesture suppression and fullscreen startup audio remain for the phone playtest.",
+        "checks": [
+          {
+            "criterion": "On a phone profile the page requests fullscreen and landscape lock on Start game, ignores a rejected lock, shows a turn-sideways prompt over the canvas in portrait and blocks canvas input under it, shown by the extended Node page test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/web/webolution.html",
+                "detail": "Start requests fullscreen on the element containing both the canvas and prompt, then attempts the landscape lock and catches rejection. In portrait, the prompt covers the play area, the canvas becomes inert and capture listeners block new input and movement. Window blur clears held gameplay controls while simulation continues."
+              },
+              {
+                "path": "src/__test__/test_web_game_data.mjs",
+                "detail": "The phone stub checks that fullscreen is requested and game main starts in the click handler. It rejects the landscape lock, checks portrait input blocking, rotates back to landscape and verifies that input resumes."
+              },
+              {
+                "path": "build/web-landscape-001/node-source-final.log",
+                "detail": "The retained Node run passed the fullscreen, rejected-lock and portrait input checks, plus manual rotation without either browser API."
+              }
+            ]
+          },
+          {
+            "criterion": "In landscape the canvas fills the viewport at the game aspect ratio with page scrolling, page zoom, text selection and the long-press menu suppressed over it, while the desktop and touch-laptop profiles keep the current page, shown by the Node test and the built page.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/cmake/emscripten-release/webolution.html",
+                "detail": "The emitted page matches the source. Phone play centers the largest 4:3 canvas that fits the viewport, hides the other page content, and applies overflow, overscroll, touch-action, selection and callout controls. Phone play adds viewport zoom limits, and the canvas cancels context-menu events."
+              },
+              {
+                "path": "build/web-landscape-001/node-built-disc.log",
+                "detail": "The Node run against the emitted page passed the phone layout and input assertions. The desktop and touch-laptop profiles retained their ordinary viewport, canvas focus and input behavior, with no fullscreen or orientation-lock requests."
+              }
+            ]
+          },
+          {
+            "criterion": "Game-data setup, the mobile warning, Start game and the main export are unchanged, scripts/export_main.py passes, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/web/webolution.html",
+                "detail": "The diff preserves the setup and save-lock flow, warning text and dismissal behavior, and the Start game button's direct call to game main. The Start handler adds phone presentation around that call."
+              },
+              {
+                "path": "build/web-landscape-001/node-built-disc.log",
+                "detail": "The retained run passed warning detection and dismissal, game-data selection and validation, and read-only mounting of both boxes before game main."
+              },
+              {
+                "path": "build/web-landscape-001/export-scan.log",
+                "detail": "The unchanged export script passed its scan of all 231 files. The exported Pages workflow matches the checked-in workflow and still stages the emitted page as index.html."
+              },
+              {
+                "path": "build/agent-runs/20261123T080356-38732-b00d42ba/verification.log",
+                "detail": "The supervisor smoke profile passed all 95 main tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/web-landscape-001.md",
+                "detail": "The report ends with a what-to-check note for Just Climb (MM_CLIMB_002) covering portrait blocking, landscape input and scaling, and the expected behavior for swipe, pinch, double-tap and long-press."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T08:18:25.891812+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T080356-38732-b00d42ba\\verification.log",
+        "verified_content": "69797646bc1526bac914f2346ee379ee377d580ae62b007f29b3a922230d12d7"
+      }
     },
     {
       "id": "touch-camera-001",
       "title": "Touch drag rotates the camera and pinch toggles zoom (mobile request V2)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "web-landscape-001"
       ],
@@ -35768,12 +35842,199 @@
         "Injected one-finger drags rotate the camera as the right-button drag does and look around while examining, and injected pinches toggle the zoom once per direction at the pinch midpoint, shown by frames and logs under build/ and a unit test of the gesture state machine.",
         "Injected taps act as left clicks on the HUD, menus, frontend, map and results, touch is not also delivered as a synthesized mouse click, and real mouse, keyboard and wheel input behave as before.",
         "Simulation and recorded commands are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261123T084127-38732-d0645b1d",
+      "started": "2026-11-23T08:41:27.713221+00:00",
+      "finished": "2026-11-23T08:52:08.562162+00:00",
+      "last_run": "build/agent-runs/20261123T084127-38732-d0645b1d",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Preserve pinch transitions in event order so a reversal in the same SDL batch cannot erase the first zoom. Make fast-forward hold recognition depend on event timestamps so the same press is classified consistently across frame cadences. Both issues are source-traced. The retained smoke and replay runs passed.",
+        "checks": [
+          {
+            "criterion": "Injected one-finger drags rotate the camera as the right-button drag does and look around while examining, and injected pinches toggle the zoom once per direction at the pinch midpoint, shown by frames and logs under build/ and a unit test of the gesture state machine.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Lines 1602\u20131605 store each pinch action in a single slot. Lines 1705\u20131709 consume only its final value. Starting wide, a qualifying spread followed by a qualifying shrink before the camera tick overwrites ZoomIn with ZoomOut. The tick then sees the camera is already wide and applies neither transition."
+              },
+              {
+                "path": "build/touch-camera-001/sdl-probe.cpp",
+                "detail": "The probe puts the spread and the qualifying reversal in separate observer frames. Injecting both threshold crossings before one camera tick would cover the dropped transition."
+              },
+              {
+                "path": "build/touch-camera-001/sdl-probe.log",
+                "detail": "On One Way Ticket, the touch drag changed yaw by 13.3333 units and opposite right-button motion restored it. Examine drag changed the pose while the level clock stayed at 80 ms. The separated pinch events zoomed in and out, and the wheel at (448, 236) reproduced the pinch-in pose."
+              },
+              {
+                "path": "build/touch-camera-001/frames/04-pinch-in.png",
+                "detail": "The examine frame shows the zoomed view after the injected spread."
+              },
+              {
+                "path": "build/touch-camera-001/frames/05-pinch-out.png",
+                "detail": "The later examine frame shows the wide view after the injected reversal."
+              },
+              {
+                "path": "build/touch-camera-001/touchinput.log",
+                "detail": "The legacy unit passed. It tests drag and pinch recognition, including the midpoint and reversal, before actions reach the level loop."
+              },
+              {
+                "path": "build/touch-camera-001/static/rea.json",
+                "detail": "Retained instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f agree with the pseudocode. The drag updates fields +0x58 and +0x60 at 0x45411B\u20130x45414E, and the zoom pose divides by 1 shifted by the zoom state at 0x45CC61\u20130x45CCC2. The touch gesture rules are clone behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "Injected taps act as left clicks on the HUD, menus, frontend, map and results, touch is not also delivered as a synthesized mouse click, and real mouse, keyboard and wheel input behave as before.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/touch-camera-001/sdl-probe.log",
+                "detail": "The retained probe verifies Floater selection, Nuke, fast-forward during a sampled hold, New Game, map entry into Just Climb, Resume, and Continue from seeded results. The injected right-button, keyboard and wheel controls worked, and touch-originated mouse events were ignored."
+              },
+              {
+                "path": "src/app/SdlWindow.hpp",
+                "detail": "Both synthesis hints are disabled. The two SDL input loops filter touch-originated mouse buttons, motion and wheel events before dispatch. A recognized tap goes directly to the existing left-button handlers."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Lines 1611\u20131636 drain queued finger events before checking whether a hold has reached its time threshold. This makes classification depend on when the loop polls."
+              },
+              {
+                "path": "src/app/TouchInput.cpp",
+                "detail": "A stationary fast-forward press released after 200 ms can take the tap path if its release is processed before advance runs. With an intervening advance at 180 ms, the same press enters the hold path and releases as a hold."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation and recorded commands are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261123T081826-38732-7bfc83c2/after-diff.txt",
+                "detail": "The task diff leaves the simulation implementation, replay format, command definitions and promoted recording files intact. The adapter routes input through existing commands."
+              },
+              {
+                "path": "build/touch-camera-001/replays.log",
+                "detail": "All 30 promoted recordings reproduced through the stock CLI. Twenty-nine reproduced completed wins. The Lone Ranger reproduced its recorded map exit at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T081826-38732-7bfc83c2/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/touch-camera-001.md",
+                "detail": "The two-line handoff precedes the final what-to-check note, which names One Way Ticket and gives expected results for drag, pinch reversal, skill selection and sliding off fast-forward. Physical phone and trackpad behavior await playtesting."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Preserve pinch transitions in event order so a reversal in the same SDL batch cannot erase the first zoom. Make fast-forward hold recognition depend on event timestamps so the same press is classified consistently across frame cadences. Both issues are source-traced. The retained smoke and replay runs passed.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision preserves both pinch transitions in a single SDL poll and classifies fast-forward holds by event time. The retained SDL probe, gesture unit, all 30 promoted replays, and the current supervisor smoke gate passed. Physical phone and trackpad behavior await playtesting.",
+        "checks": [
+          {
+            "criterion": "Injected one-finger drags rotate the camera as the right-button drag does and look around while examining, and injected pinches toggle the zoom once per direction at the pinch midpoint, shown by frames and logs under build/ and a unit test of the gesture state machine.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Touch drag feeds the existing camera drag and relative motion path. Lines 1602\u20131605 queue pinch transitions and lines 1710\u20131723 apply them in order, checking the current zoom state and resolving the midpoint through zoomAtPointer."
+              },
+              {
+                "path": "build/touch-camera-001/revision/sdl-probe.log",
+                "detail": "On One Way Ticket, the touch drag changed yaw by 13.3333 units and opposite right-button motion restored the pose. Examine drag moved the view while the level clock stayed at 80 ms. A spread and shrink in one poll returned wide with a new anchor that the wheel reproduced at (244, 236). The reverse sequence returned zoomed."
+              },
+              {
+                "path": "build/touch-camera-001/revision/frames/03-examine-touch-drag.png",
+                "detail": "The retained frame shows the rotated cylinder with the examine pause overlay still visible."
+              },
+              {
+                "path": "build/touch-camera-001/revision/frames/16-batched-spread-shrink.png",
+                "detail": "The retained frame shows the wide view after two pinch transitions in one poll. The probe log records the changed anchor that confirms the zoom-in transition also ran."
+              },
+              {
+                "path": "build/touch-camera-001/revision/frames/18-batched-shrink-spread.png",
+                "detail": "The retained frame shows the zoomed view after the opposite pair of transitions in one poll, with the default anchor for a midpoint over the HUD."
+              },
+              {
+                "path": "src/__test__/test_touchinput.cpp",
+                "detail": "The legacy unit checks drag deltas, cancellation by a second contact, the pinch midpoint, suppression of repeated motion in the same direction, and threshold crossings after reversal."
+              },
+              {
+                "path": "build/touch-camera-001/revision/touchinput.log",
+                "detail": "The revised legacy gesture unit passed in 0.03 seconds."
+              },
+              {
+                "path": "build/touch-camera-001/static/rea.json",
+                "detail": "Retained findings for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show drag writes to fields +0x58 and +0x60 at 0x45411B\u20130x45414E and zoom-pose division by a power of two at 0x45CC61\u20130x45CCC2. The touch thresholds and gesture rules are clone additions."
+              }
+            ]
+          },
+          {
+            "criterion": "Injected taps act as left clicks on the HUD, menus, frontend, map and results, touch is not also delivered as a synthesized mouse click, and real mouse, keyboard and wheel input behave as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/SdlWindow.hpp",
+                "detail": "Both SDL synthesis hints are disabled. The shared filter rejects touch-originated mouse buttons, motion, and wheel events. Recognized taps are converted to presentation-pixel left-button events for direct dispatch."
+              },
+              {
+                "path": "src/app/FrontendWindow.cpp",
+                "detail": "The frontend filters synthesized mouse events and sends recognized taps through the same click handler used by mouse input on menus, the map, and results."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level loop advances the gesture recognizer to each finger event's timestamp before dispatching that event. The idle timestamp is sampled before polling. Together these preserve the order of a hold deadline and a queued move or release."
+              },
+              {
+                "path": "build/touch-camera-001/revision/sdl-probe.log",
+                "detail": "The probe passed Floater and Nuke taps, New Game, map entry into Just Climb, touch Resume after Escape opened the menu, and Continue from seeded results. Synthesized mouse events were ignored, and ordinary right-button, keyboard, and wheel events worked. Fast-forward advanced the level clock by 140 ms per held probe frame and 20 ms after sliding off. The same-poll early and late motion cases followed their event timestamps."
+              },
+              {
+                "path": "build/touch-camera-001/static/rea-hold-review.json",
+                "detail": "The retained plate-8 branch at 0x455B12\u20130x455B37 calls the button predicate at 0x455B1D and sets the fast-forward flag when the predicate succeeds. The touch hold deadline is a provisional clone choice."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation and recorded commands are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261123T084127-38732-d0645b1d/after-diff.txt",
+                "detail": "The touch changes route actions through existing input and command handlers. The diff leaves the simulation implementation, replay format, command definitions, and promoted recording files intact."
+              },
+              {
+                "path": "build/touch-camera-001/revision/replays.log",
+                "detail": "The rebuilt stock CLI reproduced all 30 promoted recordings. Twenty-nine reproduced completed wins. The Lone Ranger reproduced its recorded map exit at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T084127-38732-d0645b1d/verification.log",
+                "detail": "The current supervisor run built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/touch-camera-001.md",
+                "detail": "The report ends with a two-line handoff and a what-to-check note naming One Way Ticket and the expected results for drag, pinch reversal, skill selection, and sliding off fast-forward."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T08:55:53.259497+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T084127-38732-d0645b1d\\verification.log",
+        "verified_content": "c270bed3c61f67d7740fbcde67e02426effe4673b2d78bb7377fcd8d5bd57dd4"
+      }
     },
     {
       "id": "touch-assign-001",
       "title": "Touch assigns at touch start, hold gives a precision cursor, hatch slide sets the rate (mobile request V3)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "touch-camera-001"
       ],
@@ -35787,12 +36048,90 @@
         "Injected touches assign at touch start on an assignable lemming through the recorded assignment path, and a tap-hold on an empty spot shows a precision cursor above the finger that drives the same hover highlights as the mouse and assigns on lift only when a lemming is highlighted, shown by frames and logs under build/ and the gesture unit test.",
         "An injected hold-and-slide on a hatch raises the rate when sliding up and lowers it when sliding down at the mouse-hold cadence within the hatch limits, a second finger cancels the precision cursor without assigning, and a drag past the slop before the hold time still rotates.",
         "Recorded commands and replays are unchanged, real mouse and keyboard input behave as before, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261123T085553-38732-c10abad2",
+      "started": "2026-11-23T08:55:53.812391+00:00",
+      "finished": "2026-11-23T09:15:49.991278+00:00",
+      "last_run": "build/agent-runs/20261123T085553-38732-c10abad2",
+      "review": {
+        "decision": "accept",
+        "reason": "The retained SDL runs, frames, and gesture unit test support all three criteria. The supervisor passed 95 smoke tests, including the installed-level sweep, and 84 recovery tests. All 30 promoted recordings reproduced. Browser event delivery and touch feel still await a phone playtest.",
+        "checks": [
+          {
+            "criterion": "Injected touches assign at touch start on an assignable lemming through the recorded assignment path, and a tap-hold on an empty spot shows a precision cursor above the finger that drives the same hover highlights as the mouse and assigns on lift only when a lemming is highlighted, shown by frames and logs under build/ and the gesture unit test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Touch-down and left click share the displayed-scene actor picker and the assignment helper, which calls World::assign, records the resolved actor and skill, and resumes ordinary pause on success. The precision cursor supplies coordinates to the mouse hover renderer, and release checks actor eligibility at its final offset position."
+              },
+              {
+                "path": "build/touch-assign-001/sdl-probe.log",
+                "detail": "On Just Float, finger-down over an actor overlapping the hatch spent one Floater, resumed pause, and produced one accepted assignment row. On Just Climb, the cursor appeared 28 pixels above the finger, matched mouse actor and hatch feedback, and spent one Climber on the highlighted lift. The empty lift preserved stock. The portal and switch comparisons also passed."
+              },
+              {
+                "path": "build/touch-assign-001/frames/06-precision-actor.png",
+                "detail": "The paused Just Climb frame shows the precision cursor highlighting the actor while Climber stock is still 10. The probe compared the actor and cursor pixels with the retained mouse frame."
+              },
+              {
+                "path": "build/touch-assign-001/gesture-unit.log",
+                "detail": "The extended touchinput unit passed. Its cases cover touch-down assignment, duplicate suppression, the hold deadline, cursor offset and clamping, and the final position on lift."
+              }
+            ]
+          },
+          {
+            "criterion": "An injected hold-and-slide on a hatch raises the rate when sliding up and lowers it when sliding down at the mouse-hold cadence within the hatch limits, a second finger cancels the precision cursor without assigning, and a drag past the slop before the hold time still rotates.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/touch-assign-001/sdl-probe.log",
+                "detail": "On Just Climb, mouse hold and both touch slide directions stepped once immediately and twice per 40 ms frame. Touch reached and held the limits of 50 and 1, while neutral and lift stopped repeats mid-range. A second finger removed the active precision override without spending stock or resuming pause. The early empty swipe on Just Float changed yaw from 42.8333 to 32.8333."
+              },
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "Mouse and touch use the same press and advance methods. They step immediately, repeat every 20 ms, and clamp the rate to the selected hatch's loaded limits."
+              },
+              {
+                "path": "build/touch-assign-001/rea.json",
+                "detail": "Retained Ghidra evidence for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f shows projected hatch bounds at 0x454E67\u20130x454E89 and rate setter references at 0x453A72 and 0x453AAF. At 0x425DF0\u20130x425E44, the instructions confirm the pseudocode's lower and upper clamps and interval and rate writes. These are findings about the original hatch code. The slide gesture and repeat cadence are clone choices."
+              }
+            ]
+          },
+          {
+            "criterion": "Recorded commands and replays are unchanged, real mouse and keyboard input behave as before, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/touch-assign-001/task-only.patch",
+                "detail": "The task diff preserves the mouse button and keyboard routes and extracts their existing assignment and hatch hold logic for touch to share. Recorder and playback code are unchanged. The worker snapshots agree on all files under docs/playtest/replays/."
+              },
+              {
+                "path": "build/touch-assign-001/promoted-replays.log",
+                "detail": "The clone CLI reproduced all 30 promoted recordings. Twenty-nine were completed wins, and The Lone Ranger reproduced its recorded map exit at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T085553-38732-c10abad2/verification.log",
+                "detail": "The supervisor built smoke_tests and passed 95 of 95 smoke tests and 84 of 84 recovery tests. The smoke results include the installed-level sweep and levelinteraction coverage of mouse assignment, keyboard input, and pause behavior."
+              },
+              {
+                "path": "docs/scratch/touch-assign-001.md",
+                "detail": "The report ends with a two-line handoff followed by a What to check note for Just Climb. It names the actions and expected results for assignment, rotation, precision cancellation, and hatch rate adjustment."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T09:19:20.554756+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T085553-38732-c10abad2\\verification.log",
+        "verified_content": "038dce3153395a6cf7857cc761685af0275a25f3fb0674fb2136c9b325bc9525"
+      }
     },
     {
       "id": "touch-buttons-001",
       "title": "Touch Menu button at top centre, and Examine in the level menu (mobile request V4)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "touch-assign-001"
       ],
@@ -35806,7 +36145,190 @@
         "During level play after a touch, one Menu button appears centred at the top as a red plate with black text in the menu font, clear of the HUD, it never appears for mouse and keyboard play, and an injected tap on it opens the level menu without assigning, rotating or reaching the scene, shown by frames and logs under build/.",
         "The level menu has an Examine row after its four native rows that, chosen by mouse, keyboard focus or injected touch, closes the menu into examine pause without advancing the World, and Resume from the menu returns to play, shown by frames and logs under build/.",
         "There are no touch buttons for pause or flip, keys, mouse and the other touch rules are unchanged, the mobile warning is unchanged, recorded commands and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261123T093659-38732-fd0187e3",
+      "started": "2026-11-23T09:36:59.504530+00:00",
+      "finished": "2026-11-23T09:45:22.925610+00:00",
+      "last_run": "build/agent-runs/20261123T093659-38732-fd0187e3",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "After mouse and keyboard entry into Just Climb, the first finger-down can activate the Menu hit area before the plate has appeared. A tap at logical (320, 20) opens an unseen menu, and a swipe starting there loses its camera gesture. Enable the hit area once the plate has been presented, then retain a probe that covers this first-touch route. Examine and Resume meet their acceptance criterion, and the supervisor smoke profile passed.",
+        "checks": [
+          {
+            "criterion": "During level play after a touch, one Menu button appears centred at the top as a red plate with black text in the menu font, clear of the HUD, it never appears for mouse and keyboard play, and an injected tap on it opens the level menu without assigning, rotating or reaching the scene, shown by frames and logs under build/.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/touch-buttons-001/frames/touch-playing-scale2.png",
+                "detail": "The frame shows a single red Menu plate with black menu-font text at the top centre, clear of the skill plates, counters and timer."
+              },
+              {
+                "path": "build/touch-buttons-001/sdl-probe.log",
+                "detail": "Desktop frames 0\u201312 report plate=0 through play and both pauses. At scale 2, frames 20\u201321 show a tap opening the menu and requesting one UI cue while World tick, actor count, skill stock, release rate, yaw, zoom and pointer stay fixed."
+              },
+              {
+                "path": "src/app/SdlWindow.hpp",
+                "detail": "At lines 139\u2013153, touchCoordinates sets receivedTouch_ as it converts the first valid finger event."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "At lines 1707\u20131721, the same finger-down immediately tests touchMenuVisible and can claim the contact at (320, 20). A qualifying lift calls openMenu even when the preceding frame had no button."
+              },
+              {
+                "path": "build/touch-buttons-001/sdl_probe.cpp",
+                "detail": "The desktop route injects its first real touch outside the plate. The touch routes use touch to enter the level, so their first Menu tap already has a visible target."
+              }
+            ]
+          },
+          {
+            "criterion": "The level menu has an Examine row after its four native rows that, chosen by mouse, keyboard focus or injected touch, closes the menu into examine pause without advancing the World, and Resume from the menu returns to play, shown by frames and logs under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/touch-buttons-001/frames/touch-level-menu-scale2.png",
+                "detail": "The visible order is Resume, Try Again, Quit, Options and Examine. The top plate is hidden while the menu is open."
+              },
+              {
+                "path": "build/touch-buttons-001/frames/desktop-hover-examine-scale1.png",
+                "detail": "Mouse hover highlights the Examine row with the shared menu plate style."
+              },
+              {
+                "path": "build/touch-buttons-001/frames/touch-examine-scale2.png",
+                "detail": "After touch activation, the menu rows give way to the examine caption and the top Menu plate returns."
+              },
+              {
+                "path": "build/touch-buttons-001/sdl-probe.log",
+                "detail": "Desktop frames 3\u20134 show mouse activation and frames 10\u201311 show keyboard activation with World counters frozen. At scale 2, touch frames 20\u201322 hold tick 52, update 62 and clock 10,500 ms. Frame 24 changes yaw while those values hold. Resume advances the clock to 11,000 ms at frame 28."
+              },
+              {
+                "path": "build/touch-buttons-001/rea.json",
+                "detail": "The retained static evidence identifies the registered x86 EXE by SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Instructions at 0x48F530\u20130x48F541 corroborate the five-entry table at 0x4C4228. The fifth widget dispatch at 0x48F632\u20130x48F649 uses selector 0x19. The clone adds Examine after the four labeled actions and leaves that dispatch unsupported."
+              }
+            ]
+          },
+          {
+            "criterion": "There are no touch buttons for pause or flip, keys, mouse and the other touch rules are unchanged, the mobile warning is unchanged, recorded commands and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "P and Backspace retain their key bindings and the only added gameplay touch control is Menu. The new hit test also consumes a first scene swipe starting at (320, 20) when the preceding frame had no Menu plate, changing that existing touch gesture."
+              },
+              {
+                "path": "build/agent-runs/20261123T091920-38732-5cbf8721/after-source-hashes.json",
+                "detail": "Compared with the worker entry snapshot, the hashes for the web page, Replay.hpp and RuntimeHud.cpp match. The recorder still uses the existing p command for transitions of paused(). The replay files have no working-tree changes."
+              },
+              {
+                "path": "build/touch-buttons-001/promoted-replays.tsv",
+                "detail": "All 30 promoted recordings reproduced, including 29 wins and The Lone Ranger's recorded map exit at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T091920-38732-5cbf8721/verification.log",
+                "detail": "The supervisor built smoke_tests with registered MinGW-w64 GCC and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/touch-buttons-001.md",
+                "detail": "The report records the provisional 92 \u00d7 27 logical-pixel plate and ends with the two-line handoff and a What to check note for Just Climb covering Examine, camera drag, Resume and desktop visibility. Phone and browser behavior remain pending playtest."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "After mouse and keyboard entry into Just Climb, the first finger-down can activate the Menu hit area before the plate has appeared. A tap at logical (320, 20) opens an unseen menu, and a swipe starting there loses its camera gesture. Enable the hit area once the plate has been presented, then retain a probe that covers this first-touch route. Examine and Resume meet their acceptance criterion, and the supervisor smoke profile passed.",
+      "review": {
+        "decision": "accept",
+        "reason": "The Menu plate becomes a touch target only after it has been presented. The revised Just Climb probe confirms that a first tap reveals the plate, a first swipe still turns the camera, and a subsequent tap on the visible plate opens the menu. Examine and Resume work through the retained SDL input routes, and the supervisor smoke profile passed for this revision. Phone and browser behavior still awaits playtest.",
+        "checks": [
+          {
+            "criterion": "During level play after a touch, one Menu button appears centred at the top as a red plate with black text in the menu font, clear of the HUD, it never appears for mouse and keyboard play, and an injected tap on it opens the level menu without assigning, rotating or reaching the scene, shown by frames and logs under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The hit test uses the last presented frame at lines 1709\u20131719 and updates that state after SDL_RenderPresent at lines 2122\u20132125. The menu recognizer consumes its contact before scene routing and calls the same openMenu path as the keys."
+              },
+              {
+                "path": "src/app/LevelMenu.cpp",
+                "detail": "The overlay uses the shared menu row renderer, TEXTURES\\^FONT.BMP and the same plate bounds for drawing and hit testing. Its 92 \u00d7 27 logical-pixel rectangle is centred at the top, clear of the left-side controls and right-side HUD in the shared 640 \u00d7 480 composition."
+              },
+              {
+                "path": "build/touch-buttons-001/frames/touch-playing-scale2.png",
+                "detail": "The Just Climb frame shows a single red Menu plate with black text, centred above the scene and clear of the skill plates, fast-forward, Nuke, counters and timer."
+              },
+              {
+                "path": "build/touch-buttons-001/frames/desktop-before-first-swipe-scale2.png",
+                "detail": "The mouse-and-keyboard entry frame shows the same top-centre location with no Menu plate before the first touch."
+              },
+              {
+                "path": "build/touch-buttons-001/revision-sdl-probe.log",
+                "detail": "Desktop frames 0\u201312 keep the plate hidden through play and both pauses. Frame 13 reveals it while play continues, and frame 14 opens the menu with one additional UI cue. The fresh-session first swipe turns yaw from 32 to 65.33 across frames 20\u201322 as the plate appears. At scales 1, 2 and 3, tapping the visible plate opens the menu while World counters, actors, skill stock, release rate, yaw, zoom and pointer stay fixed."
+              },
+              {
+                "path": "build/touch-buttons-001/frames/touch-results-scale3.png",
+                "detail": "The natural Just Climb timeout reaches Results with the top Menu plate hidden."
+              }
+            ]
+          },
+          {
+            "criterion": "The level menu has an Examine row after its four native rows that, chosen by mouse, keyboard focus or injected touch, closes the menu into examine pause without advancing the World, and Resume from the menu returns to play, shown by frames and logs under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/touch-buttons-001/frames/desktop-hover-examine-scale1.png",
+                "detail": "The frame shows Resume, Try Again, Quit and Options in order, followed by Examine. Mouse hover highlights the new row in the shared menu style."
+              },
+              {
+                "path": "build/touch-buttons-001/frames/touch-examine-scale2.png",
+                "detail": "After touch selects Examine, the menu closes, the paused camera-drag caption appears, and the top Menu plate returns."
+              },
+              {
+                "path": "build/touch-buttons-001/revision-sdl-probe.log",
+                "detail": "Desktop frames 3\u20134 show mouse activation and frames 10\u201311 show keyboard activation with the World frozen. At scale 2, touch activation holds tick 52, update 62 and 10,500 ms through frames 20\u201324 while the camera can turn. Touch Resume returns to play and advances the clock to 11,000 ms at frame 28."
+              },
+              {
+                "path": "build/touch-buttons-001/rea.json",
+                "detail": "For the registered x86 EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, instructions at 0x48F530\u20130x48F541 corroborate the decompiled five-entry table at 0x4C4228. Instructions at 0x48F632\u20130x48F649 confirm selector 0x19 for the empty fifth widget. The clone adds Examine after the four labelled actions and leaves that native widget unsupported."
+              }
+            ]
+          },
+          {
+            "criterion": "There are no touch buttons for pause or flip, keys, mouse and the other touch rules are unchanged, the mobile warning is unchanged, recorded commands and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Menu is the only added gameplay touch control. P and Backspace retain their keyboard bindings, and mouse input and touches outside the presented plate continue through the existing handlers. Menu activation shares the key path for cancelling holds and drags."
+              },
+              {
+                "path": "build/agent-runs/20261123T091920-38732-5cbf8721/before-source-hashes.json",
+                "detail": "The original task-entry snapshot provides the baseline hashes for the mobile warning page, RuntimeHud.cpp and Replay.hpp."
+              },
+              {
+                "path": "build/agent-runs/20261123T093659-38732-fd0187e3/after-source-hashes.json",
+                "detail": "The web page, RuntimeHud.cpp and Replay.hpp match the task-entry hashes. The recorder still emits p on paused-state transitions, and the working-tree diff shows no changes to the recorded replay files."
+              },
+              {
+                "path": "build/touch-buttons-001/revision-promoted-replays.tsv",
+                "detail": "All 30 promoted recordings reproduced, including 29 wins and The Lone Ranger's recorded map exit at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T093659-38732-fd0187e3/verification.log",
+                "detail": "The supervisor built smoke_tests with the registered MinGW-w64 toolchain and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/touch-buttons-001.md",
+                "detail": "The report records the provisional plate size and ends with the two-line handoff and a What to check note for Just Climb. It specifies the expected behavior for Menu, Examine, camera drag, Resume, and the first tap or swipe after desktop entry."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T09:47:51.050697+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T093659-38732-fd0187e3\\verification.log",
+        "verified_content": "10fefad3bafc112d91a45bc19bba322219e6bb5d03008fc3b68f2009dc1bdb96"
+      }
     }
   ]
 }

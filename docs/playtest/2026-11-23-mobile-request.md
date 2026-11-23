@@ -23,7 +23,8 @@ provisional where a threshold is chosen. Desktop mouse and keyboard behaviour st
   in-game menu buttons (red plates with black text). No touch buttons for pause or camera flip.
   Examine pause becomes a level menu item for every input, mouse included.
 - The mobile warning stays as it is until the phone pass has been playtested.
+- V5 (follow-up, same day): the level menu shows the level name above all its rows.
 
 ## Queued
 web-landscape-001 (V1), touch-camera-001 (V2), touch-assign-001 (V3 and the hatch decision),
-touch-buttons-001 (V4).
+touch-buttons-001 (V4), level-menu-title-001 (V5).

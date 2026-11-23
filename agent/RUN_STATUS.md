@@ -11,6 +11,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
 - level-menu-title-001: **ready** — The level menu shows the level name above its rows (user request 2026-11-23)
+- teleport-sound-001: **ready** — Teleporting plays no sound (playtest 30 W1)
 
 ## Recently completed queue entries
 

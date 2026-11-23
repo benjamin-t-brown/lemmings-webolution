@@ -4,6 +4,8 @@ An unofficial reimplementation of **Lemmings Revolution** (2000) in C++23.
 It uses SDL2 and a software 3D renderer. This project is independent of the
 owners of Lemmings Revolution and has no affiliation with them.
 
+This project was created with a vast amount of help from AI LLMs.
+
 ## Play in your browser
 
 Open the [browser game](https://benjamin-t-brown.github.io/lemmings-webolution/).

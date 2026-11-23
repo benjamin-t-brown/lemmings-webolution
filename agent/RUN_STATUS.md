@@ -13,6 +13,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - web-landscape-001: **ready** — Phones play the web build in landscape (mobile request V1)
 - touch-camera-001: **ready** — Touch drag rotates the camera and pinch toggles zoom (mobile request V2)
 - touch-assign-001: **ready** — Touch assigns at touch start, hold gives a precision cursor, hatch slide sets the rate (mobile request V3)
+- touch-buttons-001: **ready** — Touch buttons for pause, examine, flip and menu at top centre (mobile request V4)
 
 ## Recently completed queue entries
 

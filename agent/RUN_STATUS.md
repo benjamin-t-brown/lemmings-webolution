@@ -13,6 +13,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - level-start-timing-001: **ready** — Level start: first lemming at about 4.08 s with Let’s Go! still showing, as in the original (user request 2026-11-23)
 - language-page-001: **ready** — The main-menu Language button opens a Language page that offers English only (user request 2026-11-23)
 - shortcuts-simplify-001: **ready** — Keyboard Shortcuts screen keeps only the Level Play rows, without their heading (user decision 2026-11-23)
+- level-menu-order-001: **ready** — Level menu: Examine becomes Examine Level and Quit moves to the bottom (user request 2026-11-23)
 
 ## Recently completed queue entries
 

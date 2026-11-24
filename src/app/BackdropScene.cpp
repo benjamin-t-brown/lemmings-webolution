@@ -1117,14 +1117,14 @@ std::optional<PickBox> BackdropScene::exitHoverTarget(
   return std::nullopt;
 }
 
-bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
+bool BackdropScene::prepareSwitchHover(std::vector<HoverFragment>& fragments,
+    const CameraBasis& camera, const Raster& raster,
     const sim::LevelSetup& level, const LeverPresentation* levers,
     const PressurePadPresentation* pads,
     std::span<const GadgetPresentation::TeleportHoverBinding> teleports, int pointerX, int pointerY,
-    const std::function<void(const sim::OccupancySensor&)>& drawSensor) const {
+    const std::function<void(const sim::OccupancySensor&)>& appendSensor) const {
   const auto pixels = raster.highlightPixels();
-  if (pixels.empty() || pixels.size() != image.rgba.size() / 4 ||
-      image.width != camera.width || image.height != camera.height) return false;
+  if (pixels.empty() || pixels.size() != std::size_t(camera.width) * camera.height) return false;
   if ((!levers || levers->bindings.empty()) && (!pads || pads->bindings.empty()) &&
       teleports.empty()) return false;
   if (!pointerOverSceneBounds(pointerX, pointerY, 0, 0, camera.width, camera.height))
@@ -1232,12 +1232,30 @@ bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, con
     const auto& pixel = pixels[p];
     if (pixel.owner.kind != SceneHighlightKind::None &&
         std::ranges::find(targets, pixel.owner) != targets.end())
-      addHoverRgb(image.rgba.data() + p * 4, pixel.rgb.data());
+      fragments.push_back({p, pixel.rgb});
   }
   for (const auto index : sensors)
-    drawSensor(level.occupancySensors[index]);
+    appendSensor(level.occupancySensors[index]);
   return true;
 }
+
+bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
+    const sim::LevelSetup& level, const LeverPresentation* levers, const PressurePadPresentation* pads,
+    std::span<const GadgetPresentation::TeleportHoverBinding> teleports, int x, int y,
+    const std::function<void(const sim::OccupancySensor&)>& drawSensor) const {
+  if (image.width != camera.width || image.height != camera.height ||
+      image.rgba.size() / 4 != image.pixelCount()) return false;
+  std::vector<HoverFragment> fragments;
+  const bool hovered = prepareSwitchHover(fragments, camera, raster, level, levers, pads, teleports, x, y,
+      [&](const sim::OccupancySensor& sensor) {
+        drawHoverFragments(image, fragments);
+        fragments.clear();
+        drawSensor(sensor);
+      });
+  drawHoverFragments(image, fragments);
+  return hovered;
+}
+
 std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
  std::vector<std::size_t> out;
  for(const auto& r:fluidRoots_)out.push_back(r.record.entityIndex);
@@ -1293,16 +1311,15 @@ void BackdropScene::applyFluidState(SceneNode& g,const FluidRecord& rec,const Fl
    for(auto& block:g.meshes)for(auto& triangle:block.records)for(auto& c:triangle.corners)c.a=alpha;
  }
 }
-void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,BackdropStats& stats,SceneRasterObserver* observer) const {
- profile::ScenePass profilePass(profile::FluidRaster);
+namespace {
+const SceneRgbaImage whiteSceneTexture{1,1,{255,255,255,255}};
+}
+
+void BackdropScene::prepareFluid(PreparedStage& prepared, const CameraBasis& camera,
+                                 bool observeCandidates) const {
  if(!hasFluidState_||fluidRoots_.empty())return;
- SceneRgbaFramebuffer fb;fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
- fb.highlights = target.highlightPixels();
- auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
- const auto before = observer ? rgb : std::vector<std::uint8_t>{};
- if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
- const SceneRgbaImage white{1,1,{255,255,255,255}};
- detail::RasterCommandBatch batch(camera.height, !observer);
+ prepared.active = true;
+ auto& stats = prepared.stats;
  const auto context=predicateContext(camera);
  const auto scale=buildBillboardCameraChain(camera).projectionTransform[10];
  // FluidDepthPolicy selects provisional depth behavior. The model+0xF8
@@ -1326,7 +1343,9 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
    if(!records){const auto message=webo::app::context(levelId_,root.source,node.sourceOffset)+records.error();stats.diagnostics.push_back(message);std::fprintf(stderr,"backdrop: %s\n",message.c_str());continue;}
    BackdropStats::FluidSubmission sub;sub.entityIndex=root.record.entityIndex;sub.height=state.height;sub.raw=!state.animated;sub.records=records->size();
    for(const auto& rec:*records){
-     if(observer&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);
+     if (observeCandidates) prepared.candidates.push_back({prepared.draws.size(),
+         rec.recordSourceOffset, rec.nodeSourceOffset, rec.blockSourceOffset,
+         rec.corners.size() > 2 ? rec.corners.size() - 2 : 0});
      if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;++sub.predicateRejected;continue;}
      auto opts=optionsFor(rec.blendSelector==1);
      opts.highlight = {SceneHighlightKind::Fluid, static_cast<std::uint32_t>(root.record.entityIndex)};
@@ -1340,30 +1359,30 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
          v[j]=*adapted;
        }
        if(!valid){++stats.rejected;++stats.projectionRejected;continue;}
-       SceneRasterObserver tagged;
-       if(observer){tagged=*observer;tagged.source=rec.recordSourceOffset;tagged.triangle=k-1;
-         tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;++sub.acceptedColorWrites;sub.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}
-       ++stats.rasterCalls;++sub.rasterCalls;
-       auto r=rasterizeSceneTriangle(fb,depth,white,v,opts,observer?&tagged:nullptr);
-       if(r){++stats.meshTriangles;++sub.triangles;++stats.nullMaterialTriangles;}
-       else{++stats.rejected;++stats.rasterRejected;stats.diagnostics.push_back(webo::app::context(levelId_,root.source,rec.recordSourceOffset)+"raster rejected: "+r.error());}
+       ++stats.rasterCalls;
+       ++sub.rasterCalls;
+       prepared.draws.push_back({{&whiteSceneTexture, v, opts}, &root.source,
+                                 rec.recordSourceOffset, k - 1, stats.fluidSubmissions.size(), true});
      }
    }
    stats.fluidSubmissions.push_back(sub);
  }
- {
-   profile::Scope rasterTime(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
-   for (const auto& error : flushCountingChanges<3>(batch, rgb, camera.width, stats.fluidPixelsChanged)) {
-     --stats.meshTriangles; ++stats.rejected; ++stats.rasterRejected;
-     stats.diagnostics.push_back(error);
-     std::fprintf(stderr, "backdrop: raster rejected: %s\n", error.c_str());
-   }
- }
- if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
- for(std::size_t i=0,n=before.size()/3;i<n;++i)if(rgb[3*i]!=before[3*i]||rgb[3*i+1]!=before[3*i+1]||rgb[3*i+2]!=before[3*i+2])++stats.fluidPixelsChanged;
 }
-void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer,std::vector<double>* depthOutput) const {
- if(stage==Stage::FluidGate){renderFluid(target,camera,stats,observer);return;}
+BackdropScene::PreparedStage BackdropScene::prepareStage(
+    const CameraBasis& camera, const AssetLibrary& lib, Stage stage,
+    bool trackHighlights, bool observeCandidates) const {
+ PreparedStage prepared{};
+ prepared.stage = stage;
+ prepared.levelId = levelId_;
+ if (stage == Stage::FluidGate) {
+   prepareFluid(prepared, camera, observeCandidates);
+   return prepared;
+ }
+ auto& stats = prepared.stats;
+ const auto candidate = [&](std::uint64_t source, std::uint64_t node, std::uint64_t block,
+                            std::uint64_t count) {
+   if (observeCandidates) prepared.candidates.push_back({prepared.draws.size(), source, node, block, count});
+ };
  const bool gadgetEffectPass = stage == Stage::GadgetEffect;
  const bool teleportEffectPass = stage == Stage::TeleportEffect;
  const auto includesRoot = [&](const OwnedRoot& root) {
@@ -1372,13 +1391,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    if (teleportEffectPass) return root.visible && root.source.owner.starts_with("teleport-");
    return root.source.stage == stage;
  };
- if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(), includesRoot)) return;
- // SceneRaster and Raster share linear view-depth units. Effective native D3D state is unresolved.
- SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
- fb.highlights = target.highlightPixels();
- auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
- const auto initialDepth = observer ? depth : std::vector<double>{};
- if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
+ if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(), includesRoot)) return prepared;
+ prepared.active = true;
  // Resolve diagnostic identities through owned-tree ancestry too; offsets
  // identify source records but never select their rendering stage.
  std::map<std::size_t,const OwnedRoot*> nodeOwners;
@@ -1392,7 +1406,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    };own(own,root.node);
  }
  const auto highlightOwner = [&](std::size_t node) -> SceneHighlightId {
-   if (fb.highlights.empty() || (stage != Stage::LegacyUnattributed && !gadgetEffectPass && !teleportEffectPass)) return {};
+   if (!trackHighlights || (stage != Stage::LegacyUnattributed && !gadgetEffectPass && !teleportEffectPass)) return {};
    return {SceneHighlightKind::BackdropRoot,
            static_cast<std::uint32_t>(nodeOwners.at(node) - roots_.data())};
  };
@@ -1403,24 +1417,18 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    stats.diagnostics.push_back(message);
    std::fprintf(stderr,"backdrop: %s\n",message.c_str());
  };
- std::map<std::string,SceneRgbaImage> textures, spriteTextures;
- const auto getTexture=[&](const std::string& name,std::size_t node,std::size_t source)->const SceneRgbaImage*{
-   if(name.empty()) return nullptr;
-   auto it=textures.find(name);if(it!=textures.end())return &it->second;
-   auto img=loadTexture(lib,"TEXTURES\\"+name+".BMP");if(!img){++stats.missingTextures;diagnose(describe(node,source)+"missing texture "+name+": "+img.error());return nullptr;}
-   if ((gadgetEffectPass && name == gravityShaftMaterial) ||
-       (teleportEffectPass && textureNameFlags(name) == 4)) {
-     // The flag-4 alpha surface upload (0x473A8D) sets alpha on nonzero
-     // words. Give the black rows zero alpha before bilinear filtering.
-     for (std::size_t p = 0; p < img->rgba.size(); p += 4) {
-       const bool lit = img->rgba[p] || img->rgba[p + 1] || img->rgba[p + 2];
-       img->rgba[p + 3] = lit ? 255 : 0;
-     }
-   }
-   return &textures.emplace(name,rgba(std::move(*img))).first->second;
+ const auto getTexture = [&](const std::string& name, std::size_t node,
+                             std::size_t source) -> const SceneRgbaImage* {
+   if (name.empty()) return nullptr;
+   // The flag-4 alpha surface upload (0x473A8D) sets alpha on nonzero words.
+   const bool alphaFromRgb = (gadgetEffectPass && name == gravityShaftMaterial) ||
+                             (teleportEffectPass && textureNameFlags(name) == 4);
+   auto texture = stageTexture(lib, "TEXTURES\\" + name + ".BMP", alphaFromRgb);
+   if (texture) return *texture;
+   ++stats.missingTextures;
+   diagnose(describe(node, source) + "missing texture " + name + ": " + texture.error());
+   return nullptr;
  };
- const SceneRgbaImage white{1,1,{255,255,255,255}};
- detail::RasterCommandBatch batch(camera.height, !observer);
   const auto context=predicateContext(camera);
   const auto meshProjectionScale=buildBillboardCameraChain(camera).projectionTransform[10];
   std::map<std::size_t,std::array<double,3>> eyes;
@@ -1473,7 +1481,14 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
       else legacyMeshes.push_back(std::move(rec));
     }
   }
-   const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
+  const auto drawMesh = [&](const SceneMeshRecordSource& rec) {
+    candidate(rec.recordSourceOffset, rec.nodeSourceOffset, rec.blockSourceOffset,
+              rec.corners.size() > 2 ? rec.corners.size() - 2 : 0);
+    const bool isNull = rec.materialName.empty();
+    if (isNull) ++stats.nullMaterials;
+    const auto* tex = isNull ? &whiteSceneTexture :
+        getTexture(rec.materialName, rec.nodeSourceOffset, rec.recordSourceOffset);
+    if (!tex) return;
     const bool gravityEffect = gadgetEffectPass && nodeOwners.at(rec.nodeSourceOffset)->source.owner == "tagged-gravity";
     if(!passesFacingPredicate(rec,eyes,gravityEffect)){++stats.predicateRejected;return;}
     auto state=options(false,rec.blendSelector==1);
@@ -1492,14 +1507,12 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
       // Provisional clone occlusion for additive light. Solids and actor
       // silhouettes can hide it, and the light leaves both depths intact.
       state.depthWrite = false;
-      state.actorDepth = &target.actorDepth();
     } else if (rec.materialName.starts_with(mineBackdropMaterials)) {
       const auto flags = textureNameFlags(rec.materialName);
       state = blendOptions((flags & 3) != 0, rec.blendSelector);
       // 0x47261F: ~ and + modulate alpha. Other mine textures select texture alpha.
       if ((flags & (4 | 16)) == 0) state.alphaOperation = SceneAlphaOperation::SelectTexture;
     }
-    if (depthOutput) state.depthOutput = *depthOutput;
     state.highlight = highlightOwner(rec.nodeSourceOffset);
     state.highlightTextureRgb = !isNull;
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
@@ -1510,7 +1523,14 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
            a[0], a[1], rec.materialUvOffset);
       if(!adapted){diagnose(describe(rec.nodeSourceOffset,rec.recordSourceOffset)+"mesh vertex adapter: "+adapted.error());valid=false;break;}v[j]=*adapted;
     }
-     if(valid){SceneRasterObserver tagged;if(observed){tagged=*observer;tagged.source=rec.recordSourceOffset;tagged.triangle=k-1;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state,observed?&tagged:nullptr);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else {++stats.rejected;++stats.rasterRejected;diagnose(describe(rec.nodeSourceOffset,rec.recordSourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}
+     if (valid) {
+       ++stats.rasterCalls;
+       prepared.draws.push_back({{tex, v, state}, &nodeOwners.at(rec.nodeSourceOffset)->source,
+                                 rec.recordSourceOffset, k - 1, std::nullopt, isNull});
+     } else {
+       ++stats.rejected;
+       ++stats.projectionRejected;
+     }
    }
   };
    const auto& meshes=stage==Stage::Primary?primaryMeshes:legacyMeshes;
@@ -1548,13 +1568,15 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     const auto finish=[&]{stats.spriteSubmissions.push_back(std::move(sub));};
     auto quad=makeSceneSpriteQuad(n,ps.inputs,image,info->second.mirror);
     if(!quad){++stats.rejected;++stats.projectionRejected;sub.reason="geometry: "+quad.error();diagnose(describe(n.sourceOffset,n.sourceOffset)+"sprite geometry: "+quad.error());finish();return;}
-    if(stage!=Stage::Primary&&observer&&observer->candidate)observer->candidate(n.sourceOffset,n.sourceOffset,UINT64_MAX,2);
-    const std::string asset=sheetAssetName(image.sheet);
-    auto cached=spriteTextures.find(asset);
-    if(cached==spriteTextures.end()){
-      auto img=loadTexture(lib,asset);
-      if(!img){++stats.missingTextures;sub.reason="missing texture "+asset;diagnose(describe(n.sourceOffset,n.sourceOffset)+"missing texture "+asset+": "+img.error());finish();return;}
-      cached=spriteTextures.emplace(asset,rgba(std::move(*img))).first;
+    if (stage != Stage::Primary) candidate(n.sourceOffset, n.sourceOffset, UINT64_MAX, 2);
+    const std::string asset = sheetAssetName(image.sheet);
+    const auto texture = stageTexture(lib, asset, false);
+    if (!texture) {
+      ++stats.missingTextures;
+      sub.reason = "missing texture " + asset;
+      diagnose(describe(n.sourceOffset, n.sourceOffset) + "missing texture " + asset + ": " + texture.error());
+      finish();
+      return;
     }
     ++stats.sprites;
     const auto state=spriteOptions(quad->blendSelector);
@@ -1563,19 +1585,23 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
       std::array<SceneRasterVertex,3> vv{};bool ok=true;
       for(int j=0;j<3;++j){const auto& q=quad->vertices[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}
       if(!ok){++stats.rejected;++stats.projectionRejected;++sub.culled;if(sub.reason.empty())sub.reason="culled: non-positive depth";++bi;continue;}
-      SceneRasterObserver tagged;
-      if(observer){tagged=*observer;tagged.source=n.sourceOffset;tagged.triangle=bi;
-        tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;++stats.spriteAcceptedColorWrites;stats.spriteAcceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}
-      ++stats.rasterCalls;++stats.spriteRasterCalls;++sub.rasterCalls;
-      auto r=rasterizeSceneTriangle(fb,depth,cached->second,vv,state,observer?&tagged:nullptr);
-      if(r){++stats.meshTriangles;++stats.spriteTriangles;}
-      else{++stats.rejected;++stats.rasterRejected;++sub.rejected;if(sub.reason.empty())sub.reason="raster rejected: "+r.error();diagnose(describe(n.sourceOffset,n.sourceOffset)+"raster rejected: "+r.error());}
+      ++stats.rasterCalls;
+      ++stats.spriteRasterCalls;
+      ++sub.rasterCalls;
+      prepared.draws.push_back({{*texture, vv, state}, &nodeOwners.at(n.sourceOffset)->source,
+                                n.sourceOffset, bi, stats.spriteSubmissions.size()});
       ++bi;
     }
     finish();
    };
-   if(stage==Stage::Primary&&observer&&observer->candidate)for(const auto& b:primaryBillboards)observer->candidate(b.sourceOffset,b.sourceOffset,UINT64_MAX,2);
-   const auto drawBillboard=[&](const SceneBillboardSource& b){if(stage!=Stage::Primary&&observer&&observer->candidate)observer->candidate(b.sourceOffset,b.sourceOffset,UINT64_MAX,2);const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name,b.sourceOffset,b.sourceOffset);if(!tex){++stats.nullMaterials;return;}++stats.billboards;
+   if (stage == Stage::Primary)
+     for (const auto& b : primaryBillboards) candidate(b.sourceOffset, b.sourceOffset, UINT64_MAX, 2);
+   const auto drawBillboard = [&](const SceneBillboardSource& b) {
+    if (stage != Stage::Primary) candidate(b.sourceOffset, b.sourceOffset, UINT64_MAX, 2);
+    const std::string& name = b.textureName;
+    const auto* tex = name.empty() ? &whiteSceneTexture : getTexture(name, b.sourceOffset, b.sourceOffset);
+    if (!tex) { ++stats.nullMaterials; return; }
+    ++stats.billboards;
     // The plain Light02 bitmap (flags 0) shares the caret texture's alpha row
     // in 0x47261F. The node's independent blend selector reaches 0x414D80,
     // where selector 2 adds the texture RGB to the backdrop with ONE/ONE.
@@ -1583,10 +1609,28 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     // Provisional clone policy: depth-test additive light and retain the
     // underlying scene depth for later scenery and actor clipping.
     if (st.destinationBlend == SceneBlendFactor::One) st.depthWrite = false;
-    if (depthOutput) st.depthOutput = *depthOutput;
     st.highlight = highlightOwner(b.sourceOffset);
     st.highlightTextureRgb = !name.empty();
-      std::uint64_t bi=0;for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){SceneRasterObserver tagged;if(observer){tagged=*observer;tagged.source=b.sourceOffset;tagged.triangle=bi;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st,observer?&tagged:nullptr);if(r)++stats.meshTriangles;else {++stats.rejected;++stats.rasterRejected;diagnose(describe(b.sourceOffset,b.sourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}++bi;}};
+    std::uint64_t bi = 0;
+    for (const auto& tri : {std::array<int,3>{0,3,2}, std::array<int,3>{0,2,1}}) {
+      std::array<SceneRasterVertex,3> vv{};
+      bool valid = true;
+      for (int j = 0; j < 3; ++j) {
+        const auto& q = b.slots[tri[j]];
+        if (!(q.z > 0)) { valid = false; break; }
+        vv[j] = billboardRasterVertex(q, builtChain, {255,255,255,255});
+      }
+      if (valid) {
+        ++stats.rasterCalls;
+        prepared.draws.push_back({{tex, vv, st}, &nodeOwners.at(b.sourceOffset)->source,
+                                  b.sourceOffset, bi, std::nullopt});
+      } else {
+        ++stats.rejected;
+        ++stats.projectionRejected;
+      }
+      ++bi;
+    }
+   };
    const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;
    if(stage==Stage::Primary)stats.stageBillboards+=primaryBillboards.size();
    else if(stage!=Stage::Secondary)stats.stageBillboards+=legacyBillboards.size();
@@ -1597,17 +1641,153 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     else if(item.type==2){auto it=secondaryBillboards.find(item.nodeSourceOffset);if(it!=secondaryBillboards.end())drawBillboard(it->second);
       else{auto sp=pendingSprites.find(item.nodeSourceOffset);if(sp!=pendingSprites.end())drawSprite(sp->second);}}
   },dispatchOptions());
- {
-   profile::Scope rasterTime(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
-   for (const auto& error : flushCountingChanges<1>(batch, depth, camera.width, stats.pixels)) {
-     --stats.meshTriangles; ++stats.rejected; ++stats.rasterRejected;
-     stats.diagnostics.push_back(error);
-     std::fprintf(stderr, "backdrop: raster rejected: %s\n", error.c_str());
-   }
- }
- if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
-  for(std::size_t i=0;i<initialDepth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
+ return prepared;
 }
+std::expected<const SceneRgbaImage*, std::string> BackdropScene::stageTexture(
+    const AssetLibrary& library, const std::string& asset, bool alphaFromRgb) const {
+  auto key = std::tuple{&library, asset, alphaFromRgb};
+  if (const auto found = stageTextures_.find(key); found != stageTextures_.end())
+    return &found->second;
+  auto image = loadTexture(library, asset);
+  if (!image) return std::unexpected(image.error());
+  if (alphaFromRgb) {
+    // Keep the black rows transparent before bilinear filtering.
+    for (std::size_t p = 0; p < image->rgba.size(); p += 4)
+      image->rgba[p + 3] = (image->rgba[p] || image->rgba[p + 1] || image->rgba[p + 2]) ? 255 : 0;
+  }
+  return &stageTextures_.emplace(std::move(key), rgba(std::move(*image))).first->second;
+}
+
+void BackdropScene::drawStage(Raster& target, const PreparedStage& prepared, BackdropStats& stats,
+    const SceneRasterObserver* observer, std::span<double> depthOutput) {
+  if (!prepared.active) return;
+  const auto& prep = prepared.stats;
+  for (const auto field : {&BackdropStats::roots, &BackdropStats::meshRecords,
+      &BackdropStats::stageMeshRecords, &BackdropStats::nullMaterials, &BackdropStats::stageBillboards,
+      &BackdropStats::billboards, &BackdropStats::predicateRejected, &BackdropStats::missingTextures,
+      &BackdropStats::rejected, &BackdropStats::projectionRejected, &BackdropStats::rasterCalls,
+      &BackdropStats::stageSprites, &BackdropStats::sprites, &BackdropStats::spriteRasterCalls})
+    stats.*field += prep.*field;
+  stats.diagnostics.insert(stats.diagnostics.end(), prep.diagnostics.begin(), prep.diagnostics.end());
+  const auto firstSprite = stats.spriteSubmissions.size();
+  const auto firstFluid = stats.fluidSubmissions.size();
+  stats.spriteSubmissions.insert(stats.spriteSubmissions.end(),
+      prep.spriteSubmissions.begin(), prep.spriteSubmissions.end());
+  stats.fluidSubmissions.insert(stats.fluidSubmissions.end(),
+      prep.fluidSubmissions.begin(), prep.fluidSubmissions.end());
+
+  const bool fluid = prepared.stage == Stage::FluidGate;
+  profile::ScenePass pass(fluid ? profile::FluidRaster : profile::BackdropRaster);
+  auto& rgb = target.mutableFramebuffer().rgb;
+  auto& depth = target.mutableDepthBuffer();
+  SceneRgbaFramebuffer fb;
+  fb.width = target.framebuffer().width;
+  fb.height = target.framebuffer().height;
+  fb.highlights = target.highlightPixels();
+  const auto initialDepth = observer && !fluid ? depth : std::vector<double>{};
+  const auto initialRgb = observer && fluid ? rgb : std::vector<std::uint8_t>{};
+  if (observer) {
+    fb.rgba.resize(depth.size() * 4);
+    for (std::size_t i = 0; i < depth.size(); ++i) {
+      std::copy_n(rgb.data() + 3*i, 3, fb.rgba.data() + 4*i);
+      fb.rgba[4*i + 3] = 255;
+    }
+  } else {
+    fb.rgb = rgb;
+  }
+
+  detail::RasterCommandBatch batch(fb.height, !observer);
+  auto candidate = prepared.candidates.begin();
+  const auto reportCandidates = [&](std::size_t beforeDraw) {
+    if (!observer || !observer->candidate) return;
+    while (candidate != prepared.candidates.end() && candidate->beforeDraw == beforeDraw) {
+      observer->candidate(candidate->source, candidate->node, candidate->block, candidate->triangleCount);
+      ++candidate;
+    }
+  };
+  for (std::size_t i = 0; i < prepared.draws.size(); ++i) {
+    reportCandidates(i);
+    const auto& draw = prepared.draws[i];
+    auto material = draw.triangle.material;
+    BackdropStats::SpriteSubmission* sprite = nullptr;
+    BackdropStats::FluidSubmission* receiver = nullptr;
+    if (draw.submission) {
+      if (fluid) receiver = &stats.fluidSubmissions[firstFluid + *draw.submission];
+      else sprite = &stats.spriteSubmissions[firstSprite + *draw.submission];
+    }
+    if (!fluid && !sprite) material.depthOutput = depthOutput;
+    if (prepared.stage == Stage::TeleportEffect) material.actorDepth = &target.actorDepth();
+
+    SceneRasterObserver tagged;
+    if (observer) {
+      tagged.mask = observer->mask;
+      tagged.source = draw.source;
+      tagged.triangle = draw.ordinal;
+      if (receiver || sprite || observer->accepted) {
+        tagged.accepted = [&](const SceneRasterWriteEvent& event) {
+          ++stats.acceptedColorWrites;
+          stats.acceptedDepthWrites += event.depthAssigned;
+          if (receiver) {
+            ++receiver->acceptedColorWrites;
+            receiver->acceptedDepthWrites += event.depthAssigned;
+          }
+          if (sprite) {
+            ++stats.spriteAcceptedColorWrites;
+            stats.spriteAcceptedDepthWrites += event.depthAssigned;
+          }
+          if (observer->accepted) observer->accepted(event);
+        };
+      }
+    }
+    const auto result = rasterizeSceneTriangle(fb, depth, *draw.triangle.texture,
+        draw.triangle.vertices, material, observer ? &tagged : nullptr);
+    if (result) {
+      ++stats.meshTriangles;
+      if (draw.nullMaterial) ++stats.nullMaterialTriangles;
+      if (receiver) ++receiver->triangles;
+      if (sprite) ++stats.spriteTriangles;
+      continue;
+    }
+    ++stats.rejected;
+    ++stats.rasterRejected;
+    const auto reason = "raster rejected: " + result.error();
+    if (sprite) {
+      ++sprite->rejected;
+      if (sprite->reason.empty()) sprite->reason = reason;
+    }
+    stats.diagnostics.push_back(context(prepared.levelId, *draw.root, draw.source) + reason);
+    if (!fluid) std::fprintf(stderr, "backdrop: %s\n", stats.diagnostics.back().c_str());
+  }
+  reportCandidates(prepared.draws.size());
+  {
+    profile::Scope rasterTime(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
+    const auto errors = fluid ? flushCountingChanges<3>(batch, rgb, fb.width, stats.fluidPixelsChanged) :
+                                flushCountingChanges<1>(batch, depth, fb.width, stats.pixels);
+    for (const auto& error : errors) {
+      --stats.meshTriangles;
+      ++stats.rejected;
+      ++stats.rasterRejected;
+      stats.diagnostics.push_back(error);
+      std::fprintf(stderr, "backdrop: raster rejected: %s\n", error.c_str());
+    }
+  }
+  if (observer)
+    for (std::size_t i = 0; i < depth.size(); ++i)
+      std::copy_n(fb.rgba.data() + 4*i, 3, rgb.data() + 3*i);
+  for (std::size_t i = 0; i < initialDepth.size(); ++i)
+    if (depth[i] != initialDepth[i]) ++stats.pixels;
+  for (std::size_t i = 0; i < initialRgb.size(); i += 3)
+    if (rgb[i] != initialRgb[i] || rgb[i+1] != initialRgb[i+1] || rgb[i+2] != initialRgb[i+2])
+      ++stats.fluidPixelsChanged;
+}
+
+void BackdropScene::renderStage(Raster& target, const CameraBasis& camera, const AssetLibrary& lib,
+    BackdropStats& stats, Stage stage, SceneRasterObserver* observer, std::vector<double>* depthOutput) const {
+  const auto prepared = prepareStage(camera, lib, stage, !target.highlightPixels().empty(),
+                                    observer && observer->candidate);
+  drawStage(target, prepared, stats, observer, depthOutput ? std::span(*depthOutput) : std::span<double>{});
+}
+
 void BackdropScene::collectBillboards(const BillboardSourceInputs& chain,
     const std::function<void(const RootSource&,const SceneBillboardSource&)>& visitor,
     const std::function<void(const std::string&)>& error,

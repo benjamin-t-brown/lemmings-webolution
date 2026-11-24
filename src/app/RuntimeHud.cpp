@@ -18,59 +18,72 @@ int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index)
 }
 
 namespace {
-shell::HudLine hoverCountLine(const Image& image, std::span<const shell::GlyphCell> cells,
+shell::HudLine hoverCountLine(int viewportWidth, int viewportHeight, std::span<const shell::GlyphCell> cells,
                              int count, int left, int right, int y) {
   shell::HudLine line{shell::counterText(count), 0, 0, {255,255,255}};
   const int width = shell::textWidth(line.text, cells);
-  line.x = std::clamp((left+right-width)/2, 0, std::max(0, image.width-width));
-  line.y = std::clamp(y, 0, std::max(0, image.height-shell::kLineHeight));
+  line.x = std::clamp((left+right-width)/2, 0, std::max(0, viewportWidth-width));
+  line.y = std::clamp(y, 0, std::max(0, viewportHeight-shell::kLineHeight));
   return line;
 }
 }  // namespace
 
-void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
-                    std::optional<int> adjustingRate) {
+std::vector<shell::HudLine> layoutHatchHover(int width, int height, const HatchHoverTarget& h,
+                                            std::optional<int> adjustingRate) {
   const auto cells = shell::fontCells();
   // The clone displays remaining population. Native 0x454B95 passes release rate.
   // 454C34..454C64 centres text on projected hatch Y - (44 << mode).
   // Provisional 640x480 display uses ^Font, mesh centre and viewport clamping.
-  auto line = hoverCountLine(image, cells, h.remaining, h.left, h.right, (h.top+h.bottom)/2 - 44);
-  shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
+  auto line = hoverCountLine(width, height, cells, h.remaining, h.left, h.right, (h.top+h.bottom)/2 - 44);
+  std::vector<shell::HudLine> lines{line};
   // Keep the rate visible while the player holds a hatch button to adjust it.
   if (adjustingRate) {
     line.text = "RATE " + std::to_string(*adjustingRate);
     const int rateWidth = shell::textWidth(line.text, cells);
-    line.x = std::clamp((h.left+h.right-rateWidth)/2, 0, std::max(0, image.width-rateWidth));
+    line.x = std::clamp((h.left+h.right-rateWidth)/2, 0, std::max(0, width-rateWidth));
     // Put the second label below the count if the upper edge has no room.
     line.y = line.y >= shell::kLineHeight ? line.y - shell::kLineHeight :
-        std::min(line.y + shell::kLineHeight, std::max(0, image.height-shell::kLineHeight));
+        std::min(line.y + shell::kLineHeight, std::max(0, height-shell::kLineHeight));
     line.colour = {255,232,96};
-    shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
+    lines.push_back(std::move(line));
   }
+  return lines;
+}
+
+shell::HudLine layoutExitHover(int width, int height, const PickBox& box, int saveTarget) {
+  // Clone addition. Put the level's save target just above the visible model.
+  const int above = box.top - shell::kLineHeight - 4;
+  return hoverCountLine(width, height, shell::fontCells(), saveTarget, box.left, box.right,
+                        above >= 0 ? above : box.bottom + 4);
+}
+
+void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
+                    std::optional<int> adjustingRate) {
+  shell::drawHud(image, font, layoutHatchHover(image.width, image.height, h, adjustingRate), shell::fontCells());
 }
 
 void drawExitHover(Image& image, const Image& font, const PickBox& box, int saveTarget) {
-  const auto cells = shell::fontCells();
-  // Clone addition. Put the level's save target just above the visible model.
-  const int above = box.top - shell::kLineHeight - 4;
-  const auto line = hoverCountLine(image, cells, saveTarget, box.left, box.right,
-                                   above >= 0 ? above : box.bottom + 4);
-  shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
+  const auto line = layoutExitHover(image.width, image.height, box, saveTarget);
+  shell::drawHud(image, font, std::span(&line, 1), shell::fontCells());
+}
+
+std::optional<NukeFeedback> prepareNukeFeedback(bool requested, bool armed) {
+  if (!armed && !requested) return std::nullopt;
+  // PROVISIONAL control feedback: gold outline and confirmation/status hint.
+  // The large countdown is composed with the level's Let's Go text in main.
+  constexpr shell::Rgb gold{255, 220, 64};
+  return NukeFeedback{{shell::ScreenRect{{18, 372, 90, 374}, gold, false},
+                       shell::ScreenRect{{18, 402, 90, 404}, gold, false},
+                       shell::ScreenRect{{18, 374, 20, 402}, gold, false},
+                       shell::ScreenRect{{88, 374, 90, 402}, gold, false}},
+                      {requested ? "NUKE" : "CLICK AGAIN", 100, 380, gold}};
 }
 
 void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world, bool armed) {
-  if (!armed && !world.nukeRequested()) return;
-  // PROVISIONAL control feedback: gold outline and confirmation/status hint.
-  // The large countdown is composed with the level's Let's Go text in main.
-  for (int y = 372; y < std::min(404, image.height); ++y)
-    for (int x = 18; x < std::min(90, image.width); ++x)
-      if (x < 20 || x >= 88 || y < 374 || y >= 402) {
-        const auto p = (std::size_t(y) * image.width + x) * 4;
-        image.rgba[p] = 255; image.rgba[p+1] = 220; image.rgba[p+2] = 64;
-      }
-  const std::string text = !world.nukeRequested() ? "CLICK AGAIN" : "NUKE";
-  const shell::HudLine line{text, 100, 380, {255,220,64}};
-  shell::drawHud(image, font, std::span(&line, 1), shell::fontCells());
+  if (const auto prepared = prepareNukeFeedback(world.nukeRequested(), armed)) {
+    for (const auto& rect : prepared->outline) shell::drawScreenRect(image, rect);
+    shell::drawHud(image, font, std::span(&prepared->hint, 1), shell::fontCells());
+  }
 }
 
 shell::HudValues runtimeHudValues(const sim::World& world) {

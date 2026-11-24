@@ -21,3 +21,8 @@ Queued in dependency order (phase 2 split in two):
 
 Held: phase 8 (W1 clipping) until the user reports a level and camera pose; phase 9 (measurement,
 context recovery, default switch) until the user's hardware runs.
+
+User decision (2026-11-24, after phase 2a): delay the browser until the native GL renderer works.
+gl-presenter-web-001 is parked unreviewed (its WebGL2 presenter code stays in the tree; the lead's
+browser run in build/gl-presenter-web-001/lead-browser-evidence.md passed), phases 3 to 7 are native
+only, and gl-web-001 brings the finished renderer to WebGL2 after gl-2d-play-001.

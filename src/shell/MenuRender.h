@@ -3,6 +3,7 @@
 #pragma once
 
 #include "assets/Bitmap.h"
+#include "shell/GlyphDraw.h"
 
 #include <array>
 #include <cstdint>
@@ -79,6 +80,24 @@ int textWidth(std::string_view text, std::span<const GlyphCell> cells);
 int labelLeft(std::string_view text, std::span<const GlyphCell> cells, int xWord);
 
 std::array<int, 4> menuPlateBounds(int textX, int textY, int width, const MenuParams& params);
+struct ScreenRect {
+  std::array<int, 4> bounds;
+  std::array<std::uint8_t, 3> colour;
+  bool opaqueAlpha = true;
+};
+void drawScreenRect(Image&, const ScreenRect&);
+
+struct PreparedMenuRows {
+  struct Row {
+    ScreenRect border, fill;
+    std::vector<HudGlyph> glyphs;
+  };
+  const Image* font;
+  std::vector<Row> rows;
+};
+PreparedMenuRows prepareMenuRows(const Image& font, std::span<const std::string> labels,
+                                 const MenuParams&, std::span<const GlyphCell>);
+void drawMenuRows(Image&, const PreparedMenuRows&);
 void drawMenuRows(webo::Image& frame, const webo::Image& sheet, std::span<const std::string> labels,
                   const MenuParams& params, std::span<const GlyphCell> cells);
 
@@ -94,5 +113,6 @@ int menuPanelAt(std::span<const std::array<int, 4>> boxes, int x, int y);
 inline constexpr std::array<int, 5> kLabelIndices{125, 126, 120, 3, 43};  // READ 0x4C4214
 
 void drawVolumeMeter(Image& frame, int top, int percent);
+std::array<ScreenRect, 16> prepareVolumeMeter(int width, int top, int percent);
 
 }  // namespace webo::shell

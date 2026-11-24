@@ -8,6 +8,7 @@
 
 #include "assets/Bitmap.h"
 #include "assets/Sprite.h"
+#include "shell/GlyphDraw.h"
 
 #include <array>
 #include <cstddef>
@@ -37,7 +38,17 @@ struct SkillIconPlacement {
 // the sibling .ALF plane and can supply intermediate alpha.
 std::size_t compositeIconRegion(Image& dest, const Image& source, const SkillIconPlacement& placement);
 
+struct PreparedIconRegion {
+  const Image* texture;
+  SkillIconPlacement placement;
+};
+
 struct SkillPanelRect { double left = 0, top = 0, right = 0, bottom = 0; };
+struct PreparedSkillIcon {
+  const Image* texture;
+  SpriteFrame frame;
+  SkillPanelRect rect;
+};
 // At 0x47A75D (0x47AA12/59), mirror=0 uses x-dx*scale and y-dy-height*scale.
 // Scale is 1 for mode S=0 and 0.5 for S=-1.
 SkillPanelRect skillPanelRect(const webo::SpriteFrame& frame, double x, double y, int scaleDelta);
@@ -55,6 +66,16 @@ webo::Image resizeSkillPlatePatch(const webo::Image& source);
 void drawSkillPanelPlates(webo::Image& dest, const webo::Image& plate);
 // Loads and owns the panel resources. draw() accepts selection [0,9] or nullopt.
 class SkillPanelIconAnimation;
+struct PreparedSkillPanel {
+  // Destination rectangle in logical pixels. Each plate uses the full texture.
+  struct Plate { const Image* texture; int left, top, width, height; };
+  std::vector<Plate> plates;
+  const Image* font;
+  std::vector<shell::HudGlyph> digits;
+  std::vector<PreparedSkillIcon> icons;
+  void draw(Image&) const;
+};
+
 class RetailSkillPanel {
  public:
   static std::expected<RetailSkillPanel, std::string> create(
@@ -69,6 +90,8 @@ class RetailSkillPanel {
   void draw(webo::Image& dest, const std::array<int, 9>& counts,
             std::optional<int> selectedIndex, bool fastForward,
             const SkillPanelIconAnimation* animation) const;
+  PreparedSkillPanel prepare(const std::array<int, 9>& counts, std::optional<int> selectedIndex,
+                             bool fastForward, const SkillPanelIconAnimation*) const;
 
  private:
   RetailSkillPanel() = default;
@@ -89,6 +112,7 @@ class SkillPanelIconAnimation {
   // Original 45AF0E advances selection; hover animation is provisional feedback.
   void advanceIcons(double seconds, std::optional<int> selectedIndex, int hoveredIndex);
   void drawIcon(Image& dest, std::size_t index) const;
+  std::optional<PreparedSkillIcon> prepareIcon(std::size_t index) const;
  private:
   struct Icon {
     struct Pose { SpriteFrame frame; std::size_t texture; };

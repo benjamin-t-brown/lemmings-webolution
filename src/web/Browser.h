@@ -1,6 +1,8 @@
 #pragma once
 
 namespace webo::web {
+bool hasBrowserCanvas();
+bool requestedWebGl();
 void setCanvasScale(int scale);
 void canvasFillSize(int& width, int& height);
 void nextFrame();

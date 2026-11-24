@@ -2,6 +2,7 @@
 
 #include "app/Pick.h"
 #include "assets/Bitmap.h"
+#include "shell/HudText.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -18,6 +19,14 @@ inline bool pointerOverSceneBounds(int x, int y, int left, int top, int right, i
 inline void addHoverRgb(std::uint8_t* destination, const std::uint8_t* source) {
   for (int c = 0; c < 3; ++c)
     destination[c] = std::min(255, destination[c] + source[c]);
+}
+struct HoverFragment {
+  std::size_t pixel;
+  std::array<std::uint8_t, 3> rgb;
+};
+inline void drawHoverFragments(Image& target, std::span<const HoverFragment> fragments) {
+  for (const auto& fragment : fragments)
+    addHoverRgb(target.rgba.data() + fragment.pixel * 4, fragment.rgb.data());
 }
 
 // Displayed hatch geometry, in framebuffer pixels; index is the serialized
@@ -41,5 +50,8 @@ inline std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget>
 void drawHatchHover(Image&, const Image& font, const HatchHoverTarget&,
                     std::optional<int> adjustingRate = std::nullopt);
 void drawExitHover(Image&, const Image& font, const PickBox&, int saveTarget);
+std::vector<shell::HudLine> layoutHatchHover(int width, int height, const HatchHoverTarget&,
+                                            std::optional<int> adjustingRate);
+shell::HudLine layoutExitHover(int width, int height, const PickBox&, int saveTarget);
 
 } // namespace webo::app

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/FrontendWindow.h"
+#include "app/PresentationBackend.h"
 #include "audio/CuePlayback.h"
 #include "app/ActorSprite.h"
 #include "app/CursorPolicy.h"
@@ -19,6 +20,8 @@
 namespace webo::sim { class World; }
 
 namespace webo::app {
+
+class DisplayedFrameQueries;
 
 struct LevelActorView {
   std::size_t index;
@@ -67,6 +70,8 @@ struct LevelFrameView {
   std::optional<std::size_t> markedActor = std::nullopt;
   std::optional<std::size_t> hoveredHatch = std::nullopt;
   std::span<const HatchHoverTarget> hatches{};
+  // The token is populated when this observer inspects a deferred frame.
+  const DisplayedFrameQueries* queries = nullptr;
 };
 using LevelFrameObserver = std::function<void(const LevelFrameView&)>;
 
@@ -85,6 +90,7 @@ struct ApplicationRunOptions {
   audio::CueObserver cueObserver;
   // Optional level-start seed for source tests that compare scenery frames.
   std::optional<std::uint32_t> scenerySeed = std::nullopt;
+  GlFrameComparison glComparison = {};
 };
 
 // The optional observer can inspect each frontend frame and enqueue SDL events.

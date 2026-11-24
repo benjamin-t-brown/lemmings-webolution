@@ -37765,7 +37765,7 @@
     {
       "id": "gl-boundary-001",
       "title": "OpenGL phase 1: prepared-frame boundary with software as its first consumer",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "level-menu-order-001"
       ],
@@ -37780,12 +37780,227 @@
         "Clone frames of Just Climb, Kriss Kross, Introducing - Water Lemmings, Lems at Loggerheads, One Way Ticket and Just Bomb at rest and while rotating are byte-identical before and after the change, shown by frames and a comparison log under build/.",
         "Materializing a prepared frame again does not advance the world, consume a random value, age a particle or play a cue, and hatch hover, skill assignment and zoom picks give the same results through the displayed-frame query token, shown by a log under build/ and a legacy test.",
         "Kriss Kross rotation frame cost is reported before and after, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261124T182912-57984-a803642f",
+      "started": "2026-11-24T18:29:13.477073+00:00",
+      "finished": "2026-11-24T18:40:50.890680+00:00",
+      "last_run": "build/agent-runs/20261124T182912-57984-a803642f",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The 12 frame pairs are byte-identical, all 32 replays reproduced their recorded outcomes, and the supervisor smoke and recovery suites passed. Put scene pass order and resolved skill-panel plate placement in the prepared frame, and extend the legacy evidence to cover the actual displayed-frame input results.",
+        "checks": [
+          {
+            "criterion": "A prepared frame carries the ordered scene passes and level 2D layers with their draws, and the software backend renders every connected level frame from it, with the call path from runApplicationLeg through preparation to Raster cited in the report.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/gl-boundary-001.md",
+                "detail": "The report cites the connected path from runApplicationLeg through prepareScene and prepareLevelScene into SoftwareLevelRaster, then through Raster::triangle and rasterizeSceneTriangle. It also identifies where the level overlays are prepared and composed."
+              },
+              {
+                "path": "src/app/PreparedLevelFrame.h",
+                "detail": "PreparedLevelScene stores named pass payloads. SoftwareLevelRaster::draw and drawTubePass define their execution order and the early actor insertion. A second backend would have to recover that order from the software consumer because the prepared frame exposes no ordered scene submission."
+              },
+              {
+                "path": "src/app/PreparedLevelLayers.h",
+                "detail": "The 2D layer vector preserves insertion order and dispatches to the existing software compositors."
+              },
+              {
+                "path": "src/app/SkillPanel.cpp",
+                "detail": "The prepared skill-panel plates carry a texture and an index. drawSkillPanelPlateQuad derives their destination at draw time, leaving plate placement outside the prepared layer."
+              },
+              {
+                "path": "build/gl-boundary-001/rea-static.json",
+                "detail": "The retained instructions identify the tube call at 0x00441884, pipe call at 0x004418C2, and indirect base-fluid call at 0x0044190D. These support the pass ordering reported for those calls."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone frames of Just Climb, Kriss Kross, Introducing - Water Lemmings, Lems at Loggerheads, One Way Ticket and Just Bomb at rest and while rotating are byte-identical before and after the change, shown by frames and a comparison log under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-boundary-001/frame-comparison.tsv",
+                "detail": "The log lists all 12 before-and-after PNG pairs and reports equal bytes for each. A read-only comparison of the retained files independently found every pair identical."
+              },
+              {
+                "path": "build/gl-boundary-001/sample.cpp",
+                "detail": "The driver obtains the logical image from the clone application observer, fixes the scenery seed and update interval, and supplies right-drag SDL events for the rotating cases."
+              },
+              {
+                "path": "build/gl-boundary-001/before/E19_KF_2-rotate.png",
+                "detail": "The retained baseline Kriss Kross rotation image shows the composited scene, water, actors, HUD and cursor."
+              },
+              {
+                "path": "build/gl-boundary-001/after/E19_KF_2-rotate.png",
+                "detail": "The corresponding post-change image was inspected and matched the baseline file byte for byte."
+              }
+            ]
+          },
+          {
+            "criterion": "Materializing a prepared frame again does not advance the world, consume a random value, age a particle or play a cue, and hatch hover, skill assignment and zoom picks give the same results through the displayed-frame query token, shown by a log under build/ and a legacy test.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/gl-boundary-001/prepared-frame-test.log",
+                "detail": "The passing legacy run records equal images and depth across independent consumers and a cached redraw, preserved world and particle state, preserved RNG and scenery latches, and a one-shot cue request during preparation."
+              },
+              {
+                "path": "src/__test__/test_prepared_frame.cpp",
+                "detail": "The test constructs the token directly. It compares actor placement boxes, checks a hatch rectangle and click precedence, and compares point depth to the raster buffers. It leaves actual hover selection, skill assignment, and the resulting zoom anchor outside the logged legacy assertions."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The live code uses ensureDisplayedScene for hatch targets, actor picking and zoom depth. A production-path legacy assertion can verify the hovered hatch, the actor that receives the skill, and the zoom anchor from that displayed frame."
+              },
+              {
+                "path": "build/agent-runs/20261124T174821-57984-707b7db4/verification.log",
+                "detail": "The passing levelinteraction, levelcursor and leveloverlap smoke tests provide application-level assignment coverage. The retained verification still leaves the requested legacy evidence for hatch hover and the resulting zoom choice open."
+              }
+            ]
+          },
+          {
+            "criterion": "Kriss Kross rotation frame cost is reported before and after, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-boundary-001/rotation-summary.tsv",
+                "detail": "The Release profile contains 200 steady Kriss Kross rotation samples per build. Mean frame cost rose from 6.995 ms to 7.039 ms and p95 from 7.520 ms to 7.598 ms."
+              },
+              {
+                "path": "build/gl-boundary-001/replays.tsv",
+                "detail": "All 32 recordings reproduced their expected outcomes with exit 0. The 31 wins remained wins, and the playtest 29 Lone Ranger recording reproduced its recorded return to the map at step 12893."
+              },
+              {
+                "path": "build/gl-boundary-001/frame-comparison.tsv",
+                "detail": "The sampled world and pick-box records agree across all 12 frame pairs, including the observed level clocks and spawn counts."
+              },
+              {
+                "path": "build/agent-runs/20261124T174821-57984-707b7db4/verification.log",
+                "detail": "The supervisor reports 95 passing main smoke tests, including the installed-level sweep, and 84 passing recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-boundary-001.md",
+                "detail": "The report gives the timing and replay results and ends with a Kriss Kross playtest note specifying rotation, hatch hover, zoom, skill assignment and the expected feedback."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The 12 frame pairs are byte-identical, all 32 replays reproduced their recorded outcomes, and the supervisor smoke and recovery suites passed. Put scene pass order and resolved skill-panel plate placement in the prepared frame, and extend the legacy evidence to cover the actual displayed-frame input results.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision records scene pass order and skill-panel placement before drawing, and the legacy test verifies hatch hover, skill assignment, and zoom through the application input path. All 12 clone frame pairs are byte-identical, all 32 recordings reproduce their prior outcomes, and the supervisor smoke and recovery suites pass.",
+        "checks": [
+          {
+            "criterion": "A prepared frame carries the ordered scene passes and level 2D layers with their draws, and the software backend renders every connected level frame from it, with the call path from runApplicationLeg through preparation to Raster cited in the report.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/gl-boundary-001.md",
+                "detail": "The report traces runApplicationLeg through prepareScene, prepareLevelScene, and renderLevelScene to SoftwareLevelRaster and the existing Raster and rasterizeSceneTriangle paths. It also identifies where the level layers are prepared and composed."
+              },
+              {
+                "path": "src/app/PreparedLevelFrame.h",
+                "detail": "The frame stores the viewport and camera, an ordered pass list, and the corresponding draw payloads. The software consumer iterates that list, including the diagnostic tube split around the early actor pass."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level window path prepares the scene and sends it to the software raster before resolving hover and appending the ordered 2D layers. The headless path uses the same scene preparation and raster consumer."
+              },
+              {
+                "path": "src/app/SkillPanel.cpp",
+                "detail": "Preparation resolves the texture and destination rectangle for each base, selected, and fast-forward plate. The compositor uses those rectangles directly."
+              },
+              {
+                "path": "build/gl-boundary-001/review-headless.log",
+                "detail": "The revised Just Climb headless PNG and ordered C3 diagnostic CSV match the retained outputs byte for byte."
+              },
+              {
+                "path": "build/gl-boundary-001/rea-static.json",
+                "detail": "Retained Ghidra instructions for the registered x86 reference show the tube call at 0x00441884, the pipe call at 0x004418C2, and the indirect base-fluid call through [EDX+0x10] at 0x0044190D. These instructions corroborate the relative order of those calls."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone frames of Just Climb, Kriss Kross, Introducing - Water Lemmings, Lems at Loggerheads, One Way Ticket and Just Bomb at rest and while rotating are byte-identical before and after the change, shown by frames and a comparison log under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-boundary-001/review-frame-comparison.tsv",
+                "detail": "The log lists the baseline and revised PNGs for all six levels at rest and in rotation. A read-only comparison of all 12 retained pairs found no byte differences, and their SHA-256 values match the log."
+              },
+              {
+                "path": "build/gl-boundary-001/sample.cpp",
+                "detail": "The driver captures the composed clone image through the application observer, uses a fixed scenery seed and simulation interval, and supplies SDL right-drag events for rotation."
+              },
+              {
+                "path": "build/gl-boundary-001/review-after/E19_KF_2-rotate.png",
+                "detail": "The inspected Kriss Kross rotation frame shows the composed scenery, actors, water, HUD, and cursor. Its baseline and revised files are byte-identical."
+              }
+            ]
+          },
+          {
+            "criterion": "Materializing a prepared frame again does not advance the world, consume a random value, age a particle or play a cue, and hatch hover, skill assignment and zoom picks give the same results through the displayed-frame query token, shown by a log under build/ and a legacy test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_prepared_frame.cpp",
+                "detail": "The test redraws one frame through independent and cached consumers, checks world and RNG state, and redraws its debris after the producer has expired it. It also drives SDL input through runApplication and asserts the hovered hatch, the actor that receives Blocker, the stock decrement, and the zoom pose derived from displayed depth."
+              },
+              {
+                "path": "build/gl-boundary-001/review-prepared-frame-test.log",
+                "detail": "The legacy test passed in 1.01 s. It records equal redraw pixels and depth, preserved world and RNG state, retained debris, and a one-shot cue request. SDL input hovered hatch 0 at (121, 39), assigned Blocker to actor 2 with stock dropping from 40 to 39, and applied the expected zoom anchor at (513, 285)."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Hatch targeting, actor picking, and zoom read from the displayed-frame token. The cue is requested during layer preparation and particle aging stays in the simulation update."
+              },
+              {
+                "path": "build/gl-boundary-001/rea-static.json",
+                "detail": "The retained scenery instructions read the latch at 0x0047D391, call 0x004040A0 at 0x0047D39B, and set the latch at 0x0047D3FE. These instructions support the ordering preserved by the clone's first-draw preparation."
+              }
+            ]
+          },
+          {
+            "criterion": "Kriss Kross rotation frame cost is reported before and after, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-boundary-001/review-rotation-summary.tsv",
+                "detail": "Across 200 steady Release rotation frames per build, mean cost rose from 6.995 to 7.112 ms and p95 rose from 7.520 to 7.551 ms."
+              },
+              {
+                "path": "build/gl-boundary-001/review-replays.tsv",
+                "detail": "All 32 installed recordings returned exit 0. Comparing the recording, exit code, and result with the prior submission found no differences. Thirty-one reproduced wins, and playtest 29 Lone Ranger reproduced its recorded return to the map at step 12893."
+              },
+              {
+                "path": "build/gl-boundary-001/review-frame-comparison.tsv",
+                "detail": "The sampled simulation clocks, spawn counts, camera angles, actor boxes, and hatch bounds agree for all 12 before-and-after frame pairs."
+              },
+              {
+                "path": "build/agent-runs/20261124T182912-57984-a803642f/verification.log",
+                "detail": "The supervisor built smoke_tests and logged 95 passing main smoke tests, including all installed-level sweep chunks and the aggregate report, plus 84 passing recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-boundary-001.md",
+                "detail": "The report records the before-and-after frame costs and ends with a Kriss Kross playtest note specifying rotation, hatch hover, zoom, skill assignment, and the expected result. The linked run's supervisor log resolves the gate that was pending when the report was written."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T18:43:48.254285+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T182912-57984-a803642f\\verification.log",
+        "verified_content": "6703e59dbc57bc3ed85464ea38a32d1e34a5e25ae92c819466c58d74190e9216"
+      }
     },
     {
       "id": "gl-presenter-native-001",
       "title": "OpenGL phase 2a: renderer selector and the native OpenGL 3.3 presenter with readback",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "gl-boundary-001"
       ],
@@ -37800,12 +38015,271 @@
         "With --renderer gl on this machine the menu, map, a level and results are presented through an OpenGL 3.3 core context, and the unscaled GL readback of each presented image is byte-identical to the software image, shown by frames and a comparison log under build/.",
         "At window scales 1, 2 and 3 the same map node, hatch and actor are picked under both renderers, the GL path makes its GL calls on the main thread without the raster worker pool, a failed GL start leaves no partial resources, and the report cites the context, version and framebuffer checks.",
         "The software path is unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261124T190704-57984-548dcb21",
+      "started": "2026-11-24T19:07:05.500844+00:00",
+      "finished": "2026-11-24T19:16:01.949869+00:00",
+      "last_run": "build/agent-runs/20261124T190704-57984-548dcb21",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The GL level path can start the raster worker pool during its initial scene draw. It sets the serial raster policy only afterward, and the retained probe checks the policy only once the interactive frame loop is running. Apply the policy before the first draw on the selected GL path and verify that the initial draw also bypasses the pool.",
+        "checks": [
+          {
+            "criterion": "webolution accepts --renderer software, gl or auto, enters the ordinary frontend with each, logs the requested and actual backend once, keeps software as the default, and falls back to software under auto when no OpenGL 3.3 core context can be created, shown by logs under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-presenter-native-001/probe-support.cpp",
+                "detail": "The startup probe calls production runApplication with the renderer selector as the sole option and requires exactly one ordinary Menu callback before closing."
+              },
+              {
+                "path": "build/gl-presenter-native-001/startup-default-1x-windows.log",
+                "detail": "Startup without a selector passes the menu check and logs requested=software actual=software once."
+              },
+              {
+                "path": "build/gl-presenter-native-001/startup-software-1x-windows.log",
+                "detail": "Explicit software passes the menu check and emits one software backend line."
+              },
+              {
+                "path": "build/gl-presenter-native-001/startup-gl-1x-windows.log",
+                "detail": "Explicit GL passes the menu check and emits one line identifying the real OpenGL 3.3 core backend."
+              },
+              {
+                "path": "build/gl-presenter-native-001/startup-auto-1x-windows.log",
+                "detail": "Auto passes the menu check on the Windows GL context and emits one auto-to-GL backend line."
+              },
+              {
+                "path": "build/gl-presenter-native-001/startup-auto-1x-dummy.log",
+                "detail": "The dummy driver rejects the OpenGL window. Auto creates a software window, reaches the menu and emits one auto-to-software backend line with the failure reason."
+              }
+            ]
+          },
+          {
+            "criterion": "With --renderer gl on this machine the menu, map, a level and results are presented through an OpenGL 3.3 core context, and the unscaled GL readback of each presented image is byte-identical to the software image, shown by frames and a comparison log under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-presenter-native-001/levelreturn-gl-1x-windows.log",
+                "detail": "The Just Climb route reports OpenGL 3.3 core on the AMD Radeon RX 9070 XT, 689 GL swaps and zero SDL renderer presents across the connected runs. Menu, map, level and results checkpoints each report zero differing pixels and channels across the 640\u00d7480 CPU and GL RGBA images."
+              },
+              {
+                "path": "build/gl-presenter-native-001/frames/levelreturn-gl-1x-windows/menu-gl.png",
+                "detail": "The inspected logical readback shows the ordinary main menu upright."
+              },
+              {
+                "path": "build/gl-presenter-native-001/frames/levelreturn-gl-1x-windows/map-gl.png",
+                "detail": "The inspected logical readback shows the level selection map and its unlocked nodes."
+              },
+              {
+                "path": "build/gl-presenter-native-001/frames/levelreturn-gl-1x-windows/level-gl.png",
+                "detail": "The inspected logical readback shows the Just Climb entry frame with the gameplay HUD and cursor."
+              },
+              {
+                "path": "build/gl-presenter-native-001/frames/levelreturn-gl-1x-windows/results-gl.png",
+                "detail": "The inspected logical readback shows the Just Climb win results with 10 saved and 1 required."
+              }
+            ]
+          },
+          {
+            "criterion": "At window scales 1, 2 and 3 the same map node, hatch and actor are picked under both renderers, the GL path makes its GL calls on the main thread without the raster worker pool, a failed GL start leaves no partial resources, and the report cites the context, version and framebuffer checks.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg renders the initial level scene at line 906. It reads the actual backend and constructs ScopedSerialRaster at lines 1027\u20131029, after that draw. This ordering applies when entering a level from an already active GL frontend as well as in direct level mode."
+              },
+              {
+                "path": "src/app/PreparedLevelFrame.h",
+                "detail": "The initial uncached tube draw can enter drawTubeBatch, which submits geometry and flushes a RasterCommandBatch."
+              },
+              {
+                "path": "src/app/RasterRows.h",
+                "detail": "The serial flag defaults to false. A nonempty batch flushed before the GL scope calls rasterRows().run(), which initializes the thread-local worker pool when needed."
+              },
+              {
+                "path": "build/gl-presenter-native-001/probe-support.cpp",
+                "detail": "The probe checks that swap runs on the context-owning main thread. Its raster assertion first runs in the level frame observer, after the initial scene draw and after the serial scope begins."
+              },
+              {
+                "path": "build/gl-presenter-native-001/prepared-input-gl-3x-windows.log",
+                "detail": "The 1920\u00d71440 drawable has zero sampled RGB differences and the route resolves hatch 0 at (121,39) and assigns Blocker to actor 2. The serial_raster=1 entry describes the observed interactive frame."
+              },
+              {
+                "path": "build/gl-presenter-native-001/prepared-input-software-3x-windows.log",
+                "detail": "The 3\u00d7 software run resolves the same hatch and actor with the same stock change from 40 to 39."
+              },
+              {
+                "path": "build/gl-presenter-native-001/late-failure-auto-1x-windows.log",
+                "detail": "A forced comparison framebuffer failure deletes the real GL context and window before software window creation."
+              },
+              {
+                "path": "docs/scratch/gl-presenter-native-001.md",
+                "detail": "The report cites the requested and actual core profile, version, drawable and RGBA8 framebuffer checks and records matching map, hatch and actor picks at all three scales. Its serial-raster description needs to account for the initial draw."
+              }
+            ]
+          },
+          {
+            "criterion": "The software path is unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261124T184348-57984-b53ba214/after-diff.txt",
+                "detail": "Relative to the retained before-diff snapshot, the task adds renderer selection, GL presentation and capture. The software branches retain SDL texture upload and presentation, and the replay dispatch still occurs before presentation setup."
+              },
+              {
+                "path": "build/gl-presenter-native-001/replays.tsv",
+                "detail": "All 32 promoted recordings reproduced their recorded outcomes. Thirty-one recorded wins passed, and the November 22 MM_TELE_003 recording reproduced its return to map at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261124T184348-57984-b53ba214/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-presenter-native-001.md",
+                "detail": "The report ends with a Just Climb playtest note covering first-node selection, hatch hover, Climber assignment and results in the same window."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The GL level path can start the raster worker pool during its initial scene draw. It sets the serial raster policy only afterward, and the retained probe checks the policy only once the interactive frame loop is running. Apply the policy before the first draw on the selected GL path and verify that the initial draw also bypasses the pool.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision applies the actual backend\u2019s raster policy before the first level draw. Retained probes confirm zero raster worker-pool accesses on GL for both map entry and direct level entry. Startup, frame parity, input, cleanup, replays and the supervisor smoke gate all passed. The 3\u00d7 probe enlarged the reported desktop bounds to exercise a real 1920\u00d71440 drawable on this host.",
+        "checks": [
+          {
+            "criterion": "webolution accepts --renderer software, gl or auto, enters the ordinary frontend with each, logs the requested and actual backend once, keeps software as the default, and falls back to software under auto when no OpenGL 3.3 core context can be created, shown by logs under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-presenter-native-001/probe-support.cpp",
+                "detail": "The startup probe calls production runApplication with the selector as the sole option and requires exactly one ordinary Menu callback."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/startup-default-1x-windows.log",
+                "detail": "Startup without a selector passed and emitted one requested=software actual=software line."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/startup-software-1x-windows.log",
+                "detail": "Explicit software passed the Menu check and emitted one software-to-software backend line."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/startup-gl-1x-windows.log",
+                "detail": "Explicit GL passed the Menu check and emitted one backend line identifying OpenGL 3.3 core on the AMD Radeon RX 9070 XT."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/startup-auto-1x-windows.log",
+                "detail": "Auto passed the Menu check and emitted one auto-to-GL backend line."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/startup-auto-1x-dummy.log",
+                "detail": "SDL dummy video rejected GL window creation. Auto opened a software window, reached the Menu and emitted one auto-to-software line with the failure reason."
+              }
+            ]
+          },
+          {
+            "criterion": "With --renderer gl on this machine the menu, map, a level and results are presented through an OpenGL 3.3 core context, and the unscaled GL readback of each presented image is byte-identical to the software image, shown by frames and a comparison log under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/levelreturn-gl-1x-windows.log",
+                "detail": "The Just Climb route reports OpenGL 3.3 core, 689 GL swaps and zero SDL renderer presents across the probe runs. The 640\u00d7480 menu, map, level and results checkpoints each report zero differing pixels and channels against the CPU-composed RGBA bytes."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/frames/levelreturn-gl-1x-windows/menu-gl.png",
+                "detail": "The inspected logical readback shows the ordinary menu upright."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/frames/levelreturn-gl-1x-windows/map-gl.png",
+                "detail": "The inspected logical readback shows the level selection map and its unlocked nodes."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/frames/levelreturn-gl-1x-windows/level-gl.png",
+                "detail": "The inspected logical readback shows the Just Climb entry transition with the gameplay HUD, timer and cursor."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/frames/levelreturn-gl-1x-windows/results-gl.png",
+                "detail": "The inspected logical readback shows the Just Climb win results with 10 saved and 1 required."
+              }
+            ]
+          },
+          {
+            "criterion": "At window scales 1, 2 and 3 the same map node, hatch and actor are picked under both renderers, the GL path makes its GL calls on the main thread without the raster worker pool, a failed GL start leaves no partial resources, and the report cites the context, version and framebuffer checks.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg resolves GL or auto and applies ScopedSerialRaster from the actual backend before prepareScene and the first renderLevelScene call. The scope covers subsequent level draws."
+              },
+              {
+                "path": "build/gl-presenter-native-001/probe-support.cpp",
+                "detail": "The probe checks each GL swap on the context-owning main thread, checks the first nonempty raster batch before the level observer, and counts worker-pool accesses independently."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/levelreturn-gl-1x-windows.log",
+                "detail": "Connected Just Climb entry records a serial first batch on the context-owning main thread before the level observer and zero pool accesses across 1,388 nonempty batches."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/run-probe.log",
+                "detail": "Both renderers passed the connected map route and the direct input route at 1\u00d7, 2\u00d7 and 3\u00d7. The map route clicks node 0 and requires the resulting level to be Just Climb."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/prepared-input-gl-3x-windows.log",
+                "detail": "Direct Kriss Kross entry at 1920\u00d71440 records a serial first batch on the main thread, zero pool accesses across 28 batches, hatch 0 at (121,39) and a Blocker assignment to actor 2."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/prepared-input-software-3x-windows.log",
+                "detail": "The matching software control resolves the same hatch and actor, reduces Blocker stock from 40 to 39 and accesses the pool for all 28 batches."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/late-failure-auto-1x-windows.log",
+                "detail": "An injected failure after comparison framebuffer allocation deletes the GL context and destroys its window before opening the software window."
+              },
+              {
+                "path": "src/app/NativeGlPresenter.cpp",
+                "detail": "The factory\u2019s local presenter owns partial allocations. Its destructor releases the framebuffer, textures, vertex array and program before deleting the current context and destroying the window."
+              },
+              {
+                "path": "docs/scratch/gl-presenter-native-001.md",
+                "detail": "The report records matching node, hatch and actor picks at all three scales and cites the OpenGL 3.3 core profile, double-buffered RGB drawable and logical RGBA8 framebuffer checks."
+              }
+            ]
+          },
+          {
+            "criterion": "The software path is unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261124T190704-57984-548dcb21/after-diff.txt",
+                "detail": "The revised level path keeps default software window setup after the initial draw and retains SDL texture upload and presentation. The ordinary replay command still dispatches before window setup."
+              },
+              {
+                "path": "build/gl-presenter-native-001/initial-raster/replays.tsv",
+                "detail": "All 32 promoted recordings reproduced their outcomes. Thirty-one reproduced wins, and the November 22 MM_TELE_003 recording reproduced its return to the map at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261124T190704-57984-548dcb21/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests on the revised run."
+              },
+              {
+                "path": "docs/scratch/gl-presenter-native-001.md",
+                "detail": "The final what-to-check note names Just Climb, gives the first-node selection, hatch hover and Climber assignment steps, and describes the expected feedback and results in the same window."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T19:18:16.428641+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T190704-57984-548dcb21\\verification.log",
+        "verified_content": "1d7b16e206d73b1cd39f635b9dd351cf6993c43c9c35e7e425a2af19431daa2a"
+      }
     },
     {
       "id": "gl-presenter-web-001",
       "title": "OpenGL phase 2b: WebGL2 presenter, Start-page renderer choice and software fallback",
-      "status": "ready",
+      "status": "blocked",
       "depends_on": [
         "gl-presenter-native-001"
       ],
@@ -37819,23 +38293,116 @@
         "The Emscripten build links WebGL2 and its Start page offers the renderer choice with software as default, and with GL chosen a headless browser run of the build creates a WebGL2 context, logs the confirmed ES 3.0 version and presents the menu, map and a level, shown by logs and canvas frames under build/.",
         "In the headless run the unscaled GL readback matches the software image byte for byte, and when WebGL2 creation fails or the context is lost the page presents through software without losing the session, save lock or selected level, shown by logs under build/.",
         "Node stays a software target, Start, audio, IDBFS and animation-frame behaviour are unchanged, the desktop build and smoke profile pass, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261124T191816-57984-345b0a98",
+      "started": "2026-11-24T19:18:17.009661+00:00",
+      "finished": "2026-11-24T19:38:33.103054+00:00",
+      "last_run": "build/agent-runs/20261124T191816-57984-345b0a98",
+      "blocker": "Parked by the user (2026-11-24): browser work waits until the native GL renderer works. Its code stays in the tree unreviewed; gl-web-001 takes it over after gl-2d-play-001.",
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261124T191816-57984-345b0a98",
+          "review": {
+            "decision": "blocked",
+            "reason": "The retained headless browser attempts stopped before the game page ran. Acceptance still requires browser frames for the menu, map and Just Climb, a byte-for-byte logical readback comparison, and logs showing session, save lock and selected level continuity through both fallback cases. The desktop build, 95 smoke tests and 84 recovery tests passed.",
+            "checks": [
+              {
+                "criterion": "The Emscripten build links WebGL2 and its Start page offers the renderer choice with software as default, and with GL chosen a headless browser run of the build creates a WebGL2 context, logs the confirmed ES 3.0 version and presents the menu, map and a level, shown by logs and canvas frames under build/.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/cmake/emscripten-release/build.ninja",
+                    "detail": "The generated link rule includes WebGlPresenter.cpp.o and -sMAX_WEBGL_VERSION=2."
+                  },
+                  {
+                    "path": "build/gl-presenter-web-001/web-final-build.log",
+                    "detail": "The final Emscripten build compiled WebGlPresenter.cpp and linked webolution.js."
+                  },
+                  {
+                    "path": "build/cmake/emscripten-release/webolution.html",
+                    "detail": "The built Start page selects Software by default, offers WebGL2 and passes the choice to the Wasm runtime on Start."
+                  },
+                  {
+                    "path": "build/gl-presenter-web-001/chrome-gpu-process.log",
+                    "detail": "Chrome repeatedly exited its GPU subprocess with Windows access denied and terminated after declaring the GPU process unusable."
+                  },
+                  {
+                    "path": "build/gl-presenter-web-001/browser-check.log",
+                    "detail": "Edge exposed the initial data tab, then timed out at Runtime.enable before navigation. The log contains no live ES version confirmation or browser frame results."
+                  }
+                ]
+              },
+              {
+                "criterion": "In the headless run the unscaled GL readback matches the software image byte for byte, and when WebGL2 creation fails or the context is lost the page presents through software without losing the session, save lock or selected level, shown by logs under build/.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "src/web/WebGlPresenter.cpp",
+                    "detail": "Source inspection confirms a logical 640\u00d7480 RGBA8 readback with row reversal. The presenter uses a separate GL canvas and attempts to submit the same CPU frame through SDL software on the existing input window after context loss."
+                  },
+                  {
+                    "path": "build/gl-presenter-web-001/browser-check.mjs",
+                    "detail": "The harness defines the logical readback comparison and checks software rendering on initialization failure. Its context-loss route checks that paused Just Climb survives with the same focused canvas and held save lock, then resumes in software."
+                  },
+                  {
+                    "path": "build/gl-presenter-web-001/browser-check.log",
+                    "detail": "The browser timed out before the test page loaded, leaving no observed readback, startup fallback or context-loss result."
+                  }
+                ]
+              },
+              {
+                "criterion": "Node stays a software target, Start, audio, IDBFS and animation-frame behaviour are unchanged, the desktop build and smoke profile pass, and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "src/app/main.cpp",
+                    "detail": "Software remains the default and the Wasm GL factory is registered only when a browser canvas is present. The connected route still starts one audio playback instance before entering the frontend and shares it across frontend and level legs."
+                  },
+                  {
+                    "path": "build/gl-presenter-web-001/node-just-climb.png",
+                    "detail": "The retained Node software diagnostic image shows Just Climb rendered at 1280\u00d7720."
+                  },
+                  {
+                    "path": "src/web/webolution.html",
+                    "detail": "Source inspection confirms that Start still calls Asyncify main in the click handler so audio opens within the gesture. IDBFS still loads under the save lock before Start, and the handler releases the lock when main finishes."
+                  },
+                  {
+                    "path": "src/web/Browser.cpp",
+                    "detail": "Source inspection confirms the existing requestAnimationFrame yield and click-or-frame wait are intact. Browser timing was assessed from source because the retained browser run stopped before navigation."
+                  },
+                  {
+                    "path": "build/agent-runs/20261124T191816-57984-345b0a98/verification.log",
+                    "detail": "The supervisor linked webolution.exe, passed all 95 smoke tests including the installed-level sweep, and passed all 84 recovery tests."
+                  },
+                  {
+                    "path": "docs/scratch/gl-presenter-web-001.md",
+                    "detail": "The report ends with a what-to-check note covering startup with WebGL2 unavailable and context loss while Just Climb is paused, with the expected software frame, focus, save lock and resume behavior."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "The retained headless browser attempts stopped before the game page ran. Acceptance still requires browser frames for the menu, map and Just Climb, a byte-for-byte logical readback comparison, and logs showing session, save lock and selected level continuity through both fallback cases. The desktop build, 95 smoke tests and 84 recovery tests passed."
+        }
+      ],
+      "lead_note": " 2026-11-24: the review blocked only on missing browser evidence; the worker sandbox denied headless Chrome its GPU process. The lead ran the worker's retained harness from the interactive session on the same Emscripten build: software, readback, unavailable and incomplete modes pass; gl mode passes with the two paused comparisons masking only the selected skill icon, which animates while paused (127 pixels, identical in GL and CPU frames). Logs, frames and the summary are in build/gl-presenter-web-001/lead-browser-evidence.md. The work is unchanged. Returned to needs_review. 2026-11-24: parked by the user before review; superseded by gl-web-001."
     },
     {
       "id": "gl-opaque-meshes-001",
       "title": "OpenGL phase 3: tube and backdrop opaque meshes in comparison mode",
       "status": "ready",
       "depends_on": [
-        "gl-presenter-web-001"
+        "gl-presenter-native-001"
       ],
       "requires_original_execution": false,
       "verification": "smoke",
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Phase 3 of docs/OPENGL_PLAN.md (rows 1 and 2 of One frame, GPU contracts 1 and 4, How to decide parity). Port the primary and LegacyUnattributed backdrop meshes and the tube to the GL backend from the prepared frame: resident vertex and index buffers for the leg, updates to changed tube blocks and moving nodes, bank order, seams, per-corner data and ordered material state. Follow contract 1: CPU-projected vertices and the clone's submit and reject decisions, clip W of 1, q = RHW with uv*q and diffuse*q interpolated affinely then divided by q, flat colour preselected, and the separate comparison Z interpolated affinely and mapped monotonically into a logged depth interval with a reserved clear value for infinity and an out-of-range count. Add an opt-in comparison mode that renders the ported passes on both backends from one application update and saves per-pass CPU, GPU and heatmap images with level, camera, viewport, clock, backend, driver, pass and frame. While only part of a frame renders on GL, normal play presents the complete software frame. Apply the parity rules and trace any larger difference to its material or rounding step. Difficulty: difficult. Recommended model: Opus. Reason: two triangle paths and depth precision. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "scope": "Phase 3 of docs/OPENGL_PLAN.md (rows 1 and 2 of One frame, GPU contracts 1 and 4, How to decide parity). Port the primary and LegacyUnattributed backdrop meshes and the tube to the GL backend from the prepared frame: resident vertex and index buffers for the leg, updates to changed tube blocks and moving nodes, bank order, seams, per-corner data and ordered material state. Follow contract 1: CPU-projected vertices and the clone's submit and reject decisions, clip W of 1, q = RHW with uv*q and diffuse*q interpolated affinely then divided by q, flat colour preselected, and the separate comparison Z interpolated affinely and mapped monotonically into a logged depth interval with a reserved clear value for infinity and an out-of-range count. Add an opt-in comparison mode that renders the ported passes on both backends from one application update and saves per-pass CPU, GPU and heatmap images with level, camera, viewport, clock, backend, driver, pass and frame. While only part of a frame renders on GL, normal play presents the complete software frame. Apply the parity rules and trace any larger difference to its material or rounding step. Difficulty: difficult. Recommended model: Opus. Reason: two triangle paths and depth precision. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames. Lead 2026-11-24: the worker sandbox cannot start headless Chrome's GPU process; the lead runs the retained browser harness from the interactive session, as for gl-presenter-web-001 (build/gl-presenter-web-001/lead-browser-check.mjs and lead-browser-evidence.md). User decision (2026-11-24): browser work is delayed until the native GL renderer works; this task is native only. The parked WebGL2 presenter code of gl-presenter-web-001 stays in the tree unchanged and unreviewed; keep it and the Emscripten software build compiling, and do no WebGL2 work. Browser comparisons move to gl-web-001.",
       "acceptance": [
-        "In comparison mode the GL backend draws the backdrop and tube opaque passes from the same prepared frame as software, with the depth interval, clear value and out-of-range count logged, and per-pass CPU, GPU and heatmap images saved under build/ for Just Climb at rest and through a full rotation, for Just Dig before and after a dig, and for Just Climb at rest in a headless browser run.",
+        "In comparison mode the GL backend draws the backdrop and tube opaque passes from the same prepared frame as software, with the depth interval, clear value and out-of-range count logged, and per-pass CPU, GPU and heatmap images saved under build/ for Just Climb at rest and through a full rotation, for Just Dig before and after a dig.",
         "Opaque coverage matches exactly, filtered interiors differ by at most one per channel per pixel, every edge-band mismatch is listed with its pass, competing depths and winner, and the maximum, histogram and pixel count are reported per pass, with any larger difference traced to its material or rounding step.",
         "Terrain edits update only the changed mesh blocks and the first edited frame shows the new hole in both backends, normal play still presents the software frame, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
       ]
@@ -37852,7 +38419,7 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Phase 4 of docs/OPENGL_PLAN.md (rows 3 and 4 of One frame, GPU contracts 2 and 4). Port billboards, the interleaved secondary mesh and sprite dispatch, pipe depth, fluid, counter gates and the One Way Ticket sky fill to the GL backend in comparison mode. Preserve the composed camera, source and projection chain, winding, UV slots, mirror and material selector; use the sprite first-draw latch recorded once in preparation. Upload the CPU-evaluated fluid vertices and colours; keep accepted pipe depth, pre-water scenery and post-water results as separate targets where needed, with each shader that reads a previous attachment in its own pass, framebuffer completeness checked, and the blend selectors of contract 4 (0 off, 1 SRC_ALPHA and ONE_MINUS_SRC_ALPHA, 2 ONE and ONE, 3 SRC_ALPHA and ONE). Keep keyed cutouts distinct from the caret billboard policy. The sky fill touches only untouched black sky pixels after water. Difficulty: difficult. Recommended model: Opus. Reason: interleaved animated passes and material state. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "scope": "Phase 4 of docs/OPENGL_PLAN.md (rows 3 and 4 of One frame, GPU contracts 2 and 4). Port billboards, the interleaved secondary mesh and sprite dispatch, pipe depth, fluid, counter gates and the One Way Ticket sky fill to the GL backend in comparison mode. Preserve the composed camera, source and projection chain, winding, UV slots, mirror and material selector; use the sprite first-draw latch recorded once in preparation. Upload the CPU-evaluated fluid vertices and colours; keep accepted pipe depth, pre-water scenery and post-water results as separate targets where needed, with each shader that reads a previous attachment in its own pass, framebuffer completeness checked, and the blend selectors of contract 4 (0 off, 1 SRC_ALPHA and ONE_MINUS_SRC_ALPHA, 2 ONE and ONE, 3 SRC_ALPHA and ONE). Keep keyed cutouts distinct from the caret billboard policy. The sky fill touches only untouched black sky pixels after water. Difficulty: difficult. Recommended model: Opus. Reason: interleaved animated passes and material state. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames. User decision (2026-11-24): browser work is delayed until the native GL renderer works; this task is native only. The parked WebGL2 presenter code of gl-presenter-web-001 stays in the tree unchanged and unreviewed; keep it and the Emscripten software build compiling, and do no WebGL2 work. Browser comparisons move to gl-web-001.",
       "acceptance": [
         "In comparison mode the billboard, secondary, pipe, fluid, counter gate and sky passes render on GL from the same prepared frame, with per-pass CPU, GPU and heatmap images under build/ for Introducing - Water Lemmings and Kriss Kross while turning and for One Way Ticket at rest.",
         "Each pass meets the parity rules or has every difference traced to its material or rounding step, latched sprites show the same frame in both backends, water and pipes sit on the same side of terrain, and pre-water depth is not overwritten, shown by the comparison logs.",
@@ -37871,7 +38438,7 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Phase 5 of docs/OPENGL_PLAN.md (row 5 of One frame, Actor colour and coverage, GPU contract 3, Frame queries). Port actor bodies and carried attachments: CPU light tint passed once per actor, point lookup within the SPR frame with frame-local clamp and mirroring, alpha strictly above 0xEF, integer tex*tint/255, the upright occlusion plane at fragment centres (x + 0.5, y + 0.5), the collision footprint from cylinder ring data and an integer grid texture, far-to-near order, and a separate actor depth and stable owner target with the nearest finite fragment and the lower owner on exact ties. Keep body, brick and decal depth policies independent. Implement the GL displayed-frame queries: actor placement boxes on the CPU as today, visible hatch bounds from the same depth comparison with its 0.5 world-unit tolerance (a GPU mask reduced to each hatch's minimum and maximum, not an ID under the cursor), zoom point depth from actor depth then scene, and a small synchronous query for a click; measure any stall. Where quantization changes a winner, report it against the CPU owner and depth. Difficulty: exceptional. Recommended model: Opus. Reason: fragment ownership and synchronous input share one frame. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "scope": "Phase 5 of docs/OPENGL_PLAN.md (row 5 of One frame, Actor colour and coverage, GPU contract 3, Frame queries). Port actor bodies and carried attachments: CPU light tint passed once per actor, point lookup within the SPR frame with frame-local clamp and mirroring, alpha strictly above 0xEF, integer tex*tint/255, the upright occlusion plane at fragment centres (x + 0.5, y + 0.5), the collision footprint from cylinder ring data and an integer grid texture, far-to-near order, and a separate actor depth and stable owner target with the nearest finite fragment and the lower owner on exact ties. Keep body, brick and decal depth policies independent. Implement the GL displayed-frame queries: actor placement boxes on the CPU as today, visible hatch bounds from the same depth comparison with its 0.5 world-unit tolerance (a GPU mask reduced to each hatch's minimum and maximum, not an ID under the cursor), zoom point depth from actor depth then scene, and a small synchronous query for a click; measure any stall. Where quantization changes a winner, report it against the CPU owner and depth. Difficulty: exceptional. Recommended model: Opus. Reason: fragment ownership and synchronous input share one frame. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames. User decision (2026-11-24): browser work is delayed until the native GL renderer works; this task is native only. The parked WebGL2 presenter code of gl-presenter-web-001 stays in the tree unchanged and unreviewed; keep it and the Emscripten software build compiling, and do no WebGL2 work. Browser comparisons move to gl-web-001.",
       "acceptance": [
         "In comparison mode actor bodies and attachments render on GL with per-pass images under build/ for Lems at Loggerheads rotating at the round object and Just Build across a bridge, including front and rear actors, bricks and feet, meeting the parity rules or with each difference traced.",
         "GL and software give the same actor boxes, owners, hatch rectangles and zoom point depths for those views, a skill assignment, a hatch hover and a zoom at the pointer pick the same targets under both backends, and query stalls are measured, shown by logs under build/.",
@@ -37890,7 +38457,7 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Phase 6 of docs/OPENGL_PLAN.md (row 5 of One frame, GPU contracts 2 and 3). Port the ordered effects: explosion marks below actors (linear clamp, ONE and ONE, strict less, no depth write, the provisional view-Z offset), drowning body and bubbles with the pre-fluid scenery patch and pipe plane clipping, bomber body pieces, miner axes, chips and tumbling terrain chunks against scenery and actor coverage. Emission, materials, spin, lifetimes, pose and fallbacks stay on the CPU and are prepared once. Difficulty: difficult. Recommended model: Opus. Reason: several physical-depth and blending rules. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "scope": "Phase 6 of docs/OPENGL_PLAN.md (row 5 of One frame, GPU contracts 2 and 3). Port the ordered effects: explosion marks below actors (linear clamp, ONE and ONE, strict less, no depth write, the provisional view-Z offset), drowning body and bubbles with the pre-fluid scenery patch and pipe plane clipping, bomber body pieces, miner axes, chips and tumbling terrain chunks against scenery and actor coverage. Emission, materials, spin, lifetimes, pose and fallbacks stay on the CPU and are prepared once. Difficulty: difficult. Recommended model: Opus. Reason: several physical-depth and blending rules. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames. User decision (2026-11-24): browser work is delayed until the native GL renderer works; this task is native only. The parked WebGL2 presenter code of gl-presenter-web-001 stays in the tree unchanged and unreviewed; keep it and the Emscripten software build compiling, and do no WebGL2 work. Browser comparisons move to gl-web-001.",
       "acceptance": [
         "In comparison mode explosion marks, drowning, debris and particles render on GL with per-pass images under build/ for a blast in Just Bomb, debris in Just Dig and a drowning in Kriss Kross, meeting the parity rules or with each difference traced.",
         "A blast mark stays behind later actors, debris crosses the same surfaces, and a drowning body shows through the intended fluid and is hidden by intervening scenery in both backends, shown by the comparison logs.",
@@ -37909,11 +38476,30 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Phase 7 of docs/OPENGL_PLAN.md (2D composition and presentation, When pixels exist). Port the 2D compositor: cached frontend, map and results pages reused by revision, and the dynamic level HUD, skill panel, bomber countdowns with their depth test, entry cue, level menu, sound and option overlays, touch Menu plate, cursor and paused caption as ordered draws at logical coordinates, preserving keyed pixels, additive text, the integer blend rounding of each path, hotspots and ordering. Then connect ordinary play: with --renderer gl the whole session (frontend, map, level, results) renders and presents on GL with no software scene frame, and --shot, --window-shot and image consumers receive the displayed logical frame on demand. Keep the indexed map pick mask and availability logic on the CPU. Software stays the default. Difficulty: difficult. Recommended model: Opus. Reason: destination-dependent blends and frontend and level transitions. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "scope": "Phase 7 of docs/OPENGL_PLAN.md (2D composition and presentation, When pixels exist). Port the 2D compositor: cached frontend, map and results pages reused by revision, and the dynamic level HUD, skill panel, bomber countdowns with their depth test, entry cue, level menu, sound and option overlays, touch Menu plate, cursor and paused caption as ordered draws at logical coordinates, preserving keyed pixels, additive text, the integer blend rounding of each path, hotspots and ordering. Then connect ordinary play: with --renderer gl the whole session (frontend, map, level, results) renders natively and presents on GL with no software scene frame, and --shot, --window-shot and image consumers receive the displayed logical frame on demand. Keep the indexed map pick mask and availability logic on the CPU. Software stays the default. Difficulty: difficult. Recommended model: Opus. Reason: destination-dependent blends and frontend and level transitions. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames. Lead 2026-11-24: the worker sandbox cannot start headless Chrome's GPU process; the lead runs the retained browser harness from the interactive session, as for gl-presenter-web-001 (build/gl-presenter-web-001/lead-browser-check.mjs and lead-browser-evidence.md). User decision (2026-11-24): browser work is delayed until the native GL renderer works; this task is native only. The parked WebGL2 presenter code of gl-presenter-web-001 stays in the tree unchanged and unreviewed; keep it and the Emscripten software build compiling, and do no WebGL2 work. Browser comparisons move to gl-web-001.",
       "acceptance": [
-        "With --renderer gl the menu, map, Just Climb, results and the return to the map run through one GL presenter with no software scene frame, and the 2D layers meet the parity rules against software at window scales 1, 2 and 3, shown by frames and comparison logs under build/ in native and headless browser runs.",
+        "With --renderer gl the menu, map, Just Climb, results and the return to the map run through one GL presenter with no software scene frame, and the 2D layers meet the parity rules against software at window scales 1, 2 and 3, shown by frames and comparison logs under build/ from native runs.",
         "Selecting a skill, pausing, opening sound options, Examine Level and Retry give the same text, hotspots and ordering as software, and a requested PNG under GL contains the displayed logical frame, shown by logs and frames under build/.",
         "Software remains the default and unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "gl-web-001",
+      "title": "OpenGL web: the finished GL renderer on WebGL2, with the parked presenter of gl-presenter-web-001",
+      "status": "ready",
+      "depends_on": [
+        "gl-2d-play-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User decision (2026-11-24): the browser follows once the native GL renderer works. Bring the renderer of phases 1 to 7 (gl-boundary-001 to gl-2d-play-001) to WebGL2 (ES 3.0), completing phase 2b of docs/OPENGL_PLAN.md and the browser halves of phases 3 to 7. Start from the parked presenter of gl-presenter-web-001, already in the tree and never reviewed (src/web/WebGlPresenter.cpp, src/web/webolution.html Start-page renderer choice, -sMAX_WEBGL_VERSION=2, its report docs/scratch/gl-presenter-web-001.md and the lead browser run in build/gl-presenter-web-001/lead-browser-evidence.md); bring it up to date with the native renderer and replace or retire whatever the native work superseded. Every GL pass shares the native shader bodies with the 300 es preamble and precision declarations. With GL chosen at Start the whole session (menu, map, level, results) renders and presents on WebGL2 with no software scene frame; software stays the default. Keep the plan's fallback and context-loss behaviour (software presentation without losing the session, save lock, selected level, focus or pause state), GL calls on the thread that owns the canvas, no GL worker threads, and the existing Start, audio, IDBFS and animation-frame lifetimes; Node stays a software target. Use the retained harness build/gl-presenter-web-001/lead-browser-check.mjs as the starting point (it masks the selected skill icon, which animates while paused). The worker sandbox has not been able to start headless Chrome's GPU process; if it still cannot, retain the harness and say so, and the lead runs it from the interactive session. Difficulty: difficult. Recommended model: Opus. Reason: porting a finished renderer to WebGL2 with fallback and context loss. OpenGL renderer work pulled forward by the user on 2026-11-24 ahead of playable v1 (docs/playtest/2026-11-24-opengl-request.md), following docs/OPENGL_PLAN.md: its renderer boundary, GPU contracts and parity rules (exact, one byte per channel, and boundary review; user accepted 2026-11-18). This is clone software versus clone GPU parity: it does not reopen the parked original depth-test or clipping fidelity, and a matched software defect is a parity success. User decisions (2026-11-18): the renderer must not rely on threads, so all GL work runs on the thread that owns the context and the GL path adds no worker threads; GL becomes the default on both platforms only after the later qualification task, so software stays the default and the reference here. Keep the software smoke and recovery gate working with dummy drivers. Native GL uses SDL2 and the system opengl32 with the registered MinGW toolchain (OpenGL 3.3 core); the browser uses WebGL2 (ES 3.0); one shader body per operation with a generated version preamble. Real GL runs use a source-built clone on this machine; browser runs use a headless browser already on this machine, with a private profile and save root. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "acceptance": [
+        "With GL chosen at Start, a headless browser run of the Emscripten build creates a WebGL2 context, logs the confirmed ES 3.0 version, and runs the menu, map, Just Climb with a skill assignment, results and the return to the map with no software scene frame, shown by logs and canvas frames under build/.",
+        "In that run the GL frames meet the plan parity rules against software for the menu, map, Just Climb at rest and while rotating, and Just Dig after a dig, and when WebGL2 creation fails or the context is lost the page presents through software without losing the session, save lock, selected level or pause state, shown by comparison logs under build/.",
+        "Software stays the default, Node stays a software target, Start, audio, IDBFS and animation-frame behaviour are unchanged, the native build and smoke profile pass, and the report ends with a what-to-check note."
       ]
     }
   ]

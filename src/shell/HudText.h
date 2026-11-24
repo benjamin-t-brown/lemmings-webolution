@@ -16,6 +16,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <string>
 #include <vector>
@@ -65,6 +66,9 @@ struct HudBox {
   int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
 };
 HudBox lineBox(const HudLine& line, std::span<const GlyphCell> cells);
+
+void appendHudGlyphs(std::vector<HudGlyph>&, std::span<const HudLine>, std::span<const GlyphCell>,
+                     std::optional<double> comparisonDepth = std::nullopt);
 
 // Alpha-only blit of ^Font glyphs over `target`, same blend as renderMainMenu.
 void drawHud(webo::Image& target, const webo::Image& sheet, std::span<const HudLine> lines,

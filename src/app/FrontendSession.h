@@ -77,6 +77,7 @@ class FrontendSession {
   bool adjustSound(int direction);
   void hoverSound(int x, int y);
   Image renderSoundOptions(const Image& backdrop) const;
+  SoundMenu::Prepared prepareSoundOptions(int viewportWidth) const;
   bool click(int x, int y);
   bool clickMap(int x, int y);
   const std::optional<std::string>& selectedLevel() const { return selectedLevel_; }

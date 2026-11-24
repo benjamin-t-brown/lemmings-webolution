@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <utility>
 
 namespace webo::app {
 namespace {
@@ -103,22 +104,32 @@ std::vector<std::array<int, 4>> entryCueGlyphRects(std::string_view text, const 
   return rects;
 }
 
-void drawEntryStartCue(webo::Image& target, const webo::Image& font, std::string_view text,
-                       const EntryCueFrame& cue, std::span<const shell::GlyphCell> cells) {
+PreparedEntryCue prepareEntryCue(const Image& font, std::string_view text, const EntryCueFrame& cue,
+                                std::span<const shell::GlyphCell> cells) {
+  PreparedEntryCue prepared{&font, {}, cue.additive};
+  const auto glyphs = glyphRun(text, cells);
+  const auto rects = entryCueGlyphRects(text, cue, cells);
+  if (rects.size() == glyphs.size()) {
+    prepared.glyphs.reserve(glyphs.size());
+    for (std::size_t i = 0; i < glyphs.size(); ++i)
+      prepared.glyphs.push_back({*glyphs[i], rects[i]});
+  }
+  return prepared;
+}
+
+EntryStartCue::Presentation EntryStartCue::preparePresentation(
+    const Image& font, std::string_view text, const EntryCueFrame& cue) {
+  return {prepareEntryCue(font, text, cue), std::exchange(voicePending_, false)};
+}
+
+void drawEntryStartCue(Image& target, const PreparedEntryCue& cue) {
+  const auto& font = *cue.font;
   const std::size_t targetBytes = byteCount(target), fontBytes = byteCount(font);
   if (targetBytes == 0 || fontBytes == 0 || target.rgba.size() < targetBytes || font.rgba.size() < fontBytes)
     return;
-
-  const auto glyphs = glyphRun(text, cells);
-  if (glyphs.empty())
-    return;
-  const auto rects = entryCueGlyphRects(text, cue, cells);
-  if (rects.size() != glyphs.size())
-    return;
-
-  for (std::size_t i = 0; i < glyphs.size(); ++i) {
-    const auto& glyph = *glyphs[i];
-    const auto& r = rects[i];
+  for (const auto& entry : cue.glyphs) {
+    const auto& glyph = entry.source;
+    const auto& r = entry.destination;
     const int x0 = std::max(0, r[0]), y0 = std::max(0, r[1]);
     const int x1 = std::min(target.width, r[2]), y1 = std::min(target.height, r[3]);
     const auto glyphWidth = static_cast<std::int64_t>(r[2]) - r[0];
@@ -151,6 +162,11 @@ void drawEntryStartCue(webo::Image& target, const webo::Image& font, std::string
       }
     }
   }
+}
+
+void drawEntryStartCue(Image& target, const Image& font, std::string_view text,
+    const EntryCueFrame& cue, std::span<const shell::GlyphCell> cells) {
+  drawEntryStartCue(target, prepareEntryCue(font, text, cue, cells));
 }
 
 }  // namespace webo::app

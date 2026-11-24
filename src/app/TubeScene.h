@@ -11,9 +11,11 @@
 #include "app/Camera.h"
 #include "app/CrtRand.h"
 #include "app/DeathParticles.h"
+#include "app/HoverFeedback.h"
 #include "app/Raster.h"
 #include "app/SceneRaster.h"
 #include "assets/CellMesh.h"
+#include "assets/Bitmap.h"
 #include "assets/CollisionGrid.h"
 #include "assets/Cylinder.h"
 #include "assets/LightMap.h"
@@ -24,9 +26,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace webo {
@@ -117,6 +121,26 @@ struct SceneOptions {
   double composeActorPhase = 0.0;
 };
 
+// SPR atlas placement and colour are resolved before any silhouette is drawn.
+struct PreparedActorSprite {
+  SpriteFrame frame;
+  Image ownedTexture;  // For diagnostic calls outside the leg's texture cache.
+  const Image* texture = nullptr;
+  const Image& sheet() const { return texture ? *texture : ownedTexture; }
+  ActorSpritePlacement placement{};
+  bool mirrored = false;
+  bool inverted = false;
+  std::array<std::uint8_t, 3> tint{255, 255, 255};
+  std::array<double, 3> worldPosition{};
+};
+
+struct ActorFootprint {
+  // The footprint uses the tube's rings, with no editable surface pool.
+  CylinderMesh lattice;
+  CollisionGrid collision;
+  std::vector<double> gateThickness;
+};
+
 class TubeScene {
  public:
   // Same cylinder interpolation used by visible actors. Input is the event's
@@ -124,6 +148,8 @@ class TubeScene {
   std::array<double, 3> soundWorldPosition(const std::array<double, 3>& position,
                                            int terrainHeight) const;
   void drawHoveredSensor(Image&, const CameraBasis&, const Raster&, const sim::OccupancySensor&) const;
+  void prepareHoveredSensor(std::vector<HoverFragment>&, const CameraBasis&, const Raster&,
+                            const sim::OccupancySensor&) const;
   static std::expected<TubeScene, std::string> build(const AssetLibrary& lib,
                                                      const CylinderMesh& mesh,
                                                      std::span<const std::byte> levelBytes,
@@ -132,16 +158,51 @@ class TubeScene {
 
   void render(Raster& raster, const CameraBasis& camera, const SceneOptions& options,
               const AssetLibrary* composeAssets = nullptr) const;
+  struct PreparedTube {
+    std::vector<PreparedRasterTriangle> triangles;
+    // Diagnostic actors can be inserted before the cell route.
+    std::size_t beforeRoute = 0;
+    bool depthTest = true;
+  };
+  PreparedTube prepareTube(const CameraBasis&, const SceneOptions&, bool trackHighlights) const;
+  static void drawTube(Raster&, const PreparedTube&);
 
   // Draw after scenery, terrain and fluid. Reset the actor coverage
   // shared by bodies, particles and highlights.
   void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
                            const SceneOptions& options, const AssetLibrary& lib) const;
+  struct PreparedActors {
+    struct Bubble { PreparedActorSprite sprite; double strength; };
+    struct Actor {
+      std::size_t owner;
+      PreparedActorSprite body;
+      ActorSpritePlacement bounds;
+      std::vector<PreparedRasterTriangle> attachment;
+      std::vector<Bubble> bubbles;
+      std::array<double, 3> drowningPosition{};
+      double drowningBrightness = 1.0;
+      bool hasAttachment = false;
+      bool drowning = false;
+    };
+    std::vector<Actor> draws;
+    std::vector<std::optional<ActorSpritePlacement>> boxes;
+    std::shared_ptr<const ActorFootprint> footprint;
+    bool enabled = false;
+    bool physical = true;
+    bool legacyNonZero = false;
+  };
+  PreparedActors prepareActors(const CameraBasis&, const SceneOptions&, const AssetLibrary&,
+                               bool prepareBoxes = false) const;
+  static void drawActors(Raster&, const CameraBasis&, const PreparedActors&,
+                         std::span<const double> drowningDepth = {}, std::span<const double> pipeDepth = {});
 
   // Add the selected body sprite only where it owns the completed actor layer.
   bool drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis& camera,
                          const SceneOptions& options, const AssetLibrary& lib,
                          const Raster& sceneRaster) const;
+  bool prepareHoveredWalker(std::vector<HoverFragment>&, std::size_t walker, const CameraBasis&,
+      const PreparedActors&, const Raster&, std::span<const double> drowningDepth,
+      std::span<const double> pipeDepth) const;
 
   void emitDeathParticles(const sim::Lemming&, bool explosion,
       std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
@@ -154,9 +215,25 @@ class TubeScene {
   void advanceDeathParticles(std::uint64_t clockMs);
   void drawDeathParticles(Raster&, const CameraBasis&, const AssetLibrary&,
                           std::span<const double> pipeDepth = {}) const;
+  struct PreparedParticles {
+    struct Sprite {
+      PreparedActorSprite sprite;
+      std::size_t owner;
+      enum class Depth { Origin, AxePlane, FlightPlane } depth;
+    };
+    using Draw = std::variant<PreparedRasterTriangle, Sprite>;
+    std::vector<Draw> draws;
+    std::shared_ptr<const ActorFootprint> footprint;
+    bool active = false;
+  };
+  PreparedParticles prepareDeathParticles(const CameraBasis&, const AssetLibrary&) const;
+  static void drawParticles(Raster&, const CameraBasis&, const PreparedParticles&,
+                            std::span<const double> pipeDepth = {});
   std::size_t deathParticleCount() const { return deathParticles_.size(); }
   // Draw moving fluid after scenery and before actors, on level time.
   void drawExplosionDecals(Raster&, const CameraBasis&) const;
+  std::vector<PreparedSceneTriangle> prepareExplosionDecals(const CameraBasis&) const;
+  static void drawSceneTriangles(Raster&, std::span<const PreparedSceneTriangle>);
   std::size_t explosionDecalCount() const { return explosionDecals_.size(); }
 
   // Project one box per injected walker, in vector order. nullopt indicates
@@ -179,6 +256,8 @@ class TubeScene {
   void syncCounterGates(std::span<const sim::CounterGate> gates);
   void renderCounterGates(Raster&, const CameraBasis&, const AssetLibrary&,
                          std::span<const sim::CounterGate> gates);
+  std::vector<PreparedSceneTriangle> prepareCounterGates(
+      const CameraBasis&, const AssetLibrary&, std::span<const sim::CounterGate>);
   std::uint64_t counterGateRevision() const { return counterGateRevision_; }
   std::size_t terrainCellsChanged() const { return terrainCellsChanged_; }
   std::size_t terrainBlocksRebuilt() const { return terrainBlocksRebuilt_; }
@@ -215,6 +294,10 @@ class TubeScene {
 
   const Tile* findTile(bool outer, int column, int row) const;
   const Texture* builderBrickTexture(const SceneOptions::InjectedNativeWalker&) const;
+  static bool prepareBodyHighlight(std::vector<HoverFragment>&, std::size_t walker, const CameraBasis&,
+      const PreparedActorSprite&, const Raster&, std::span<const double> depth,
+      std::span<const double> pipeDepth, const ActorFootprint*);
+  std::shared_ptr<const ActorFootprint> actorFootprint() const;
   std::uint32_t terrainDebrisMaterial(const std::array<int, 2>& cell,
                                     int terrainHeight) const;
   void rewirePoseLevel() const;
@@ -262,6 +345,7 @@ class TubeScene {
 
   bool haveCollision_ = false;
   CollisionGrid collision_;
+  mutable std::shared_ptr<const ActorFootprint> footprint_;
   std::vector<Tile> outer_;
   std::vector<Tile> inner_;
   std::size_t outerTileCount_ = 0;

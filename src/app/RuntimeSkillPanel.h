@@ -63,6 +63,11 @@ class RuntimeNukeInput {
 };
 void drawRuntimeNukeFeedback(Image& image, const Image& font,
                              const sim::World& world, bool armed);
+struct NukeFeedback {
+  std::array<shell::ScreenRect, 4> outline;
+  shell::HudLine hint;
+};
+std::optional<NukeFeedback> prepareNukeFeedback(bool requested, bool armed);
 
 // A skill needs positive stock for plate selection. Keyboard input and
 // click geometry use clone mappings.

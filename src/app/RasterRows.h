@@ -88,6 +88,21 @@ inline RasterRows& rasterRows() {
   return rows;
 }
 
+// The GL presenter uses the same CPU raster rules during the image-upload
+// phase. Run those row bands on the context owner without starting the pool.
+inline thread_local bool serialRasterBands = false;
+class ScopedSerialRaster {
+ public:
+  explicit ScopedSerialRaster(bool serial) : previous_(serialRasterBands) {
+    serialRasterBands = serial || previous_;
+  }
+  ~ScopedSerialRaster() { serialRasterBands = previous_; }
+  ScopedSerialRaster(const ScopedSerialRaster&) = delete;
+  ScopedSerialRaster& operator=(const ScopedSerialRaster&) = delete;
+ private:
+  bool previous_;
+};
+
 // Deferred triangles borrow texture storage. Bin by clipped Y extent
 // while preserving submission order within each band. The caller reduces
 // counters and errors after all bands finish.
@@ -133,7 +148,7 @@ class RasterCommandBatch {
         bands[b].entries.push_back({i});
     }
     std::atomic<int> next{};
-    rasterRows().run([&](unsigned) {
+    const auto drawBands = [&](unsigned) {
       for (;;) {
         const int b = next.fetch_add(1, std::memory_order_relaxed);
         if (b >= count) break;
@@ -150,7 +165,9 @@ class RasterCommandBatch {
           }
         });
       }
-    });
+    };
+    if (serialRasterBands) drawBands(0);
+    else rasterRows().run(drawBands);
     for (const auto& band : bands) {
       for (const auto& entry : band.entries) commands_[entry.command].pixels += entry.pixels;
       for (const auto& [i, error] : band.errors)

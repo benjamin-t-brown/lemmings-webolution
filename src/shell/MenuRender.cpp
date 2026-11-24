@@ -29,23 +29,6 @@ constexpr std::array<GlyphCell, kGlyphCount> kCells{{
     {84, 120, 10}, {94, 120, 8}, {102, 120, 14}, {116, 120, 8}, {124, 120, 9},
 }};
 
-void put(webo::Image& img, int x, int y, const std::array<std::uint8_t, 3>& c) {
-  if (x < 0 || y < 0 || x >= img.width || y >= img.height)
-    return;
-  std::uint8_t* p = img.rgba.data() + (static_cast<std::size_t>(y) * img.width + x) * 4;
-  p[0] = c[0];
-  p[1] = c[1];
-  p[2] = c[2];
-  p[3] = 255;
-}
-
-void fillRect(webo::Image& img, int x0, int y0, int x1, int y1,
-              const std::array<std::uint8_t, 3>& c) {
-  for (int y = y0; y < y1; ++y)
-    for (int x = x0; x < x1; ++x)
-      put(img, x, y, c);
-}
-
 const GlyphCell* cellFor(unsigned char ch, std::span<const GlyphCell> cells) {
   const unsigned idx = (static_cast<unsigned>(ch) - kFirstChar) & 0xff;
   return idx < cells.size() ? &cells[idx] : nullptr;
@@ -87,9 +70,20 @@ std::array<int, 4> menuPlateBounds(int textX, int textY, int width, const MenuPa
           top + params.panelHeight};
 }
 
-void drawMenuRows(webo::Image& out, const webo::Image& sheet, std::span<const std::string> labels,
-                  const MenuParams& params, std::span<const GlyphCell> cells) {
-  out.alpha = webo::AlphaMode::Opaque;
+void drawScreenRect(Image& image, const ScreenRect& draw) {
+  const auto& [x0, y0, x1, y1] = draw.bounds;
+  for (int y = std::max(0, y0); y < std::min(image.height, y1); ++y)
+    for (int x = std::max(0, x0); x < std::min(image.width, x1); ++x) {
+      auto* px = image.rgba.data() + (static_cast<std::size_t>(y) * image.width + x) * 4;
+      std::copy_n(draw.colour.data(), 3, px);
+      if (draw.opaqueAlpha) px[3] = 255;
+    }
+}
+
+PreparedMenuRows prepareMenuRows(const Image& font, std::span<const std::string> labels,
+    const MenuParams& params, std::span<const GlyphCell> cells) {
+  PreparedMenuRows prepared{&font, {}};
+  prepared.rows.reserve(labels.size());
   for (std::size_t row = 0; row < labels.size(); ++row) {
     const std::string_view text = labels[row];
     const int textY = params.baseY + static_cast<int>(row) * params.rowStep;
@@ -100,9 +94,10 @@ void drawMenuRows(webo::Image& out, const webo::Image& sheet, std::span<const st
     const auto [px0, py0, px1, py1] = menuPlateBounds(left, textY, width, params);
     const auto& fill = static_cast<int>(row) == params.highlight ? params.panelHighlight
                                                                  : params.panelNormal;
-    fillRect(out, px0, py0, px1, py1, params.panelBorder);
-    fillRect(out, px0 + kPanelFillInset, py0 + kPanelFillInset, px1 - kPanelFillInset,
-             py1 - kPanelFillInset, fill);
+    PreparedMenuRows::Row draw{
+        {{px0, py0, px1, py1}, params.panelBorder},
+        {{px0 + kPanelFillInset, py0 + kPanelFillInset,
+          px1 - kPanelFillInset, py1 - kPanelFillInset}, fill}, {}};
 
     // glyphs: quad [x, x+w) x [textY, textY+lineHeight) from the cell, 1:1, alpha only
     int x = left;
@@ -113,24 +108,27 @@ void drawMenuRows(webo::Image& out, const webo::Image& sheet, std::span<const st
       const GlyphCell* c = cellFor(ch, cells);
       if (!c)
         continue;
-      for (int dy = 0; dy < kLineHeight; ++dy) {
-        for (int dx = 0; dx < c->width; ++dx) {
-          const int sx = c->x + dx, sy = c->y + dy;
-          if (sx >= sheet.width || sy >= sheet.height)
-            continue;
-          const int a = sheet.rgba[(static_cast<std::size_t>(sy) * sheet.width + sx) * 4 + 3];
-          const int ox = x + dx, oy = textY + dy;
-          if (a == 0 || ox < 0 || oy < 0 || ox >= out.width || oy >= out.height)
-            continue;
-          std::uint8_t* p = out.rgba.data() + (static_cast<std::size_t>(oy) * out.width + ox) * 4;
-          for (int k = 0; k < 3; ++k)
-            p[k] = static_cast<std::uint8_t>((p[k] * (255 - a) + params.textColour[k] * a + 127) / 255);
-        }
-      }
+      draw.glyphs.push_back({{c->x, c->y, c->width}, x, textY, params.textColour, kLineHeight, std::nullopt});
       if (!(i == 0 && ch == ' '))
         x += c->width;
     }
+    prepared.rows.push_back(std::move(draw));
   }
+  return prepared;
+}
+
+void drawMenuRows(Image& target, const PreparedMenuRows& prepared) {
+  target.alpha = AlphaMode::Opaque;
+  for (const auto& row : prepared.rows) {
+    drawScreenRect(target, row.border);
+    drawScreenRect(target, row.fill);
+    drawHudGlyphs(target, *prepared.font, row.glyphs);
+  }
+}
+
+void drawMenuRows(Image& target, const Image& sheet, std::span<const std::string> labels,
+    const MenuParams& params, std::span<const GlyphCell> cells) {
+  drawMenuRows(target, prepareMenuRows(sheet, labels, params, cells));
 }
 
 webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet,
@@ -141,15 +139,21 @@ webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet
   return out;
 }
 
-void drawVolumeMeter(Image& frame, int top, int percent) {
+std::array<ScreenRect, 16> prepareVolumeMeter(int width, int top, int percent) {
   // 48E84C / 490D46: truncate gain * 255, then round to a 16-segment count.
   const int lit = (std::clamp(percent, 0, 100) * 255 / 100 + 8) / 16;
+  std::array<ScreenRect, 16> rects;
   for (int i = 0; i < 16; ++i) {
-    const int left = (frame.width - 16 * 11) / 2 + i * 11;
-    fillRect(frame, left, top, left + 8, top + 10,
-             i < lit ? std::array<std::uint8_t, 3>{0, 255, 0}
-                     : std::array<std::uint8_t, 3>{255, 0, 0});
+    const int left = (width - 16 * 11) / 2 + i * 11;
+    rects[i] = {{left, top, left + 8, top + 10},
+        i < lit ? std::array<std::uint8_t, 3>{0, 255, 0} : std::array<std::uint8_t, 3>{255, 0, 0}};
   }
+  return rects;
+}
+
+void drawVolumeMeter(Image& frame, int top, int percent) {
+  for (const auto& rect : prepareVolumeMeter(frame.width, top, percent))
+    drawScreenRect(frame, rect);
 }
 
 }  // namespace webo::shell

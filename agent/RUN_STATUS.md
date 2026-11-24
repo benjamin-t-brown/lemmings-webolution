@@ -10,25 +10,16 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- gl-boundary-001: **ready** — OpenGL phase 1: prepared-frame boundary with software as its first consumer
-- gl-presenter-native-001: **ready** — OpenGL phase 2a: renderer selector and the native OpenGL 3.3 presenter with readback
-- gl-presenter-web-001: **ready** — OpenGL phase 2b: WebGL2 presenter, Start-page renderer choice and software fallback
+- gl-presenter-web-001: **blocked** — OpenGL phase 2b: WebGL2 presenter, Start-page renderer choice and software fallback
 - gl-opaque-meshes-001: **ready** — OpenGL phase 3: tube and backdrop opaque meshes in comparison mode
 - gl-scene-passes-001: **ready** — OpenGL phase 4: billboards, secondary sprites, pipes, fluid, counter gates and sky fill
 - gl-actors-001: **ready** — OpenGL phase 5: actor bodies, attachments and displayed-frame queries on GL
 - gl-effects-001: **ready** — OpenGL phase 6: explosion marks, drowning, debris and particles on GL
 - gl-2d-play-001: **ready** — OpenGL phase 7: 2D compositor and ordinary play on the GL renderer
+- gl-web-001: **ready** — OpenGL web: the finished GL renderer on WebGL2, with the parked presenter of gl-presenter-web-001
 
 ## Recently completed queue entries
 
-- miner-one-way-001: Make the Miner respect one-way terrain on One Way Ticket
-  Accepted: 2026-11-23T20:45:22.795097+00:00
-  Verification evidence: `build/agent-runs/20261123T204010-60576-fcac5e4f/verification.log`
-  Verification evidence: `build\agent-runs\20261123T204010-60576-fcac5e4f\verification.log`
-- level-start-timing-001: Level start: first lemming at about 4.08 s with Let’s Go! still showing, as in the original (user request 2026-11-23)
-  Accepted: 2026-11-23T22:16:51.117659+00:00
-  Verification evidence: `build/agent-runs/20261123T220259-17640-d029ee2e/verification.log`
-  Verification evidence: `build\agent-runs\20261123T220259-17640-d029ee2e\verification.log`
 - language-page-001: The main-menu Language button opens a Language page that offers English only (user request 2026-11-23)
   Accepted: 2026-11-24T16:44:01.937910+00:00
   Verification evidence: `build/agent-runs/loop-d9c559c67410437aacac3a3d93c3b841/0001-verify-ae4b2a/verification.log`
@@ -39,14 +30,22 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - level-menu-order-001: Level menu: Examine becomes Examine Level and Quit moves to the bottom (user request 2026-11-23)
   Accepted: 2026-11-24T17:25:18.214961+00:00
   Verification evidence: `build/agent-runs/loop-caa7257efdfe48258024b3a04cc7a5e7/0001-verify-9d6933/verification.log`
+- gl-boundary-001: OpenGL phase 1: prepared-frame boundary with software as its first consumer
+  Accepted: 2026-11-24T18:43:48.254285+00:00
+  Verification evidence: `build/agent-runs/20261124T182912-57984-a803642f/verification.log`
+  Verification evidence: `build\agent-runs\20261124T182912-57984-a803642f\verification.log`
+- gl-presenter-native-001: OpenGL phase 2a: renderer selector and the native OpenGL 3.3 presenter with readback
+  Accepted: 2026-11-24T19:18:16.428641+00:00
+  Verification evidence: `build/agent-runs/20261124T190704-57984-548dcb21/verification.log`
+  Verification evidence: `build\agent-runs\20261124T190704-57984-548dcb21\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-caa7257efdfe48258024b3a04cc7a5e7/result.json`
+- Result: `build/agent-runs/loop-3fa3669915584fa8a8e71df056d44ed5/result.json`
 - Status: **blocked**
-- Duration: 0h 05m 43s
-- Completed in this invocation: level-menu-order-001
-- Reason: No new production task is supported by the current playtest evidence. Playtest 30 W1–W7 and the phone requests have accepted dispositions. The five recorded attempts on Build 'em up ....then bring em down (E17_KF_1, node 40) reached play and ended in Retry or return to map, with a best of 1/45 saved. They identify no failed skill, gadget, or rendering transition to fix. The next human playtest on that level needs to identify the exact action and expected behavior if a defect recurs. How do we ge
+- Duration: 1h 53m 03s
+- Completed in this invocation: gl-boundary-001, gl-presenter-native-001
+- Reason: The retained headless browser attempts stopped before the game page ran. Acceptance still requires browser frames for the menu, map and Just Climb, a byte-for-byte logical readback comparison, and logs showing session, save lock and selected level continuity through both fallback cases. The desktop build, 95 smoke tests and 84 recovery tests passed.
 
 ## Documentation handoff
 

@@ -14,6 +14,7 @@
     align-items: center; justify-content: center; gap: 1rem;
   }
   button { padding: .6rem 1rem; font: inherit; cursor: pointer; }
+  select { padding: .35rem; font: inherit; }
   button:disabled { cursor: wait; }
   #mobile-warning, #setup, #status, #data-notes {
     width: min(40rem, calc(100vw - 2rem)); overflow-wrap: anywhere;
@@ -37,16 +38,21 @@
   #data-notes { margin: 0; color: #e4d3ad; }
   #change-data { font-size: .875rem; padding: .35rem .65rem; }
   /* Clone addition. Preset canvas widths use CSS pixels and may require scrolling. */
-  canvas {
+  #game-display { position: relative; }
+  #canvas {
     display: block;
     width: min(100vw, calc(100vh * 4 / 3));
     width: min(100dvw, calc(100dvh * 4 / 3));
     height: auto; aspect-ratio: 4 / 3; image-rendering: pixelated;
   }
-  canvas[data-window-scale="1"] { width: 640px; }
-  canvas[data-window-scale="2"] { width: 1280px; }
-  canvas[data-window-scale="3"] { width: 1920px; }
-  canvas:focus { outline: none; }
+  #canvas[data-window-scale="1"] { width: 640px; }
+  #canvas[data-window-scale="2"] { width: 1280px; }
+  #canvas[data-window-scale="3"] { width: 1920px; }
+  #canvas:focus { outline: none; }
+  #webgl-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    image-rendering: pixelated; pointer-events: none;
+  }
   html.phone-play, .phone-play body {
     overflow: hidden; overscroll-behavior: none;
   }
@@ -56,7 +62,7 @@
     touch-action: none; -webkit-user-select: none; user-select: none;
     -webkit-touch-callout: none;
   }
-  .phone-play main > :not(#canvas, #rotate-phone) { display: none; }
+  .phone-play main > :not(#game-display, #rotate-phone) { display: none; }
   .phone-play #canvas {
     width: min(100vw, calc(100vh * 4 / 3));
     width: min(100dvw, calc(100dvh * 4 / 3));
@@ -114,8 +120,16 @@
   </section>
   <output id="status" role="status">Loading game…</output>
   <p id="data-notes" role="status" hidden></p>
+  <label id="renderer-choice" hidden>Renderer
+    <select id="renderer">
+      <option value="software" selected>Software</option>
+      <option value="gl">WebGL2</option>
+    </select>
+  </label>
   <button id="start" type="button" hidden>Start game</button>
-  <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Lemmings Webolution" hidden></canvas>
+  <div id="game-display" hidden>
+    <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Lemmings Webolution"></canvas>
+  </div>
   <p id="rotate-phone" role="status" hidden>Turn your phone sideways to play. The game keeps running.</p>
   <button id="change-data" type="button" hidden>Change game data</button>
 </main>
@@ -123,6 +137,9 @@
   const mobileWarning = document.querySelector('#mobile-warning');
   const statusLine = document.querySelector('#status');
   const startButton = document.querySelector('#start');
+  const rendererChoice = document.querySelector('#renderer-choice');
+  const renderer = document.querySelector('#renderer');
+  const gameDisplay = document.querySelector('#game-display');
   const canvas = document.querySelector('#canvas');
   const setup = document.querySelector('#setup');
   const setupOptions = document.querySelector('#setup-options');
@@ -241,6 +258,8 @@
     notesLine.textContent = notes.join(' ');
     notesLine.hidden = notes.length === 0;
     changeButton.hidden = false;
+    renderer.value = 'software';
+    rendererChoice.hidden = false;
     startButton.hidden = false;
     startButton.focus({preventScroll: !mobileWarning.hidden});
   }
@@ -248,9 +267,11 @@
   startButton.onclick = async () => {
     mobileWarning.hidden = true;
     startButton.hidden = true;
+    rendererChoice.hidden = true;
     changeButton.hidden = true;
     notesLine.hidden = true;
-    canvas.hidden = false;
+    gameDisplay.hidden = false;
+    Module['preferredRenderer'] = renderer.value;
     if (phone) {
       phonePlaying = true;
       document.documentElement.classList.add('phone-play');
@@ -270,7 +291,7 @@
       message('Game stopped. ' + error);
     } finally {
       releaseStore();
-      canvas.hidden = true;
+      gameDisplay.hidden = true;
       if (phone) {
         phonePlaying = false;
         updatePhoneOrientation();

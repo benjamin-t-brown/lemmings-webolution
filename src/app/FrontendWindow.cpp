@@ -77,11 +77,14 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
   if (auto ready = presentation.ensure(); !ready) return std::unexpected(ready.error());
   auto* renderer = presentation.renderer();
   std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> texture(
-      SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 640, 480),
-      SDL_DestroyTexture);
-  if (!texture) return std::unexpected(sdlError("SDL_CreateTexture"));
-  if (SDL_SetTextureScaleMode(texture.get(), SDL_ScaleModeNearest) != 0)
-    return std::unexpected(sdlError("SDL_SetTextureScaleMode"));
+      nullptr, SDL_DestroyTexture);
+  if (renderer) {
+    texture.reset(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32,
+                                    SDL_TEXTUREACCESS_STREAMING, 640, 480));
+    if (!texture) return std::unexpected(sdlError("SDL_CreateTexture"));
+    if (SDL_SetTextureScaleMode(texture.get(), SDL_ScaleModeNearest) != 0)
+      return std::unexpected(sdlError("SDL_SetTextureScaleMode"));
+  }
 
   CursorVisibility cursorVisibility;
 
@@ -149,13 +152,20 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     const Image image = session.composeFrame();
     if (image.width != 640 || image.height != 480 || image.rgba.size() != 640u * 480u * 4u)
       return std::unexpected("frontend image must be tightly packed 640x480 RGBA");
-    if (SDL_UpdateTexture(texture.get(), nullptr, image.rgba.data(), 640 * 4) != 0)
-      return std::unexpected(sdlError("SDL_UpdateTexture"));
-    if (SDL_RenderClear(renderer) != 0 ||
-        SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr) != 0)
-      return std::unexpected(sdlError("SDL_RenderCopy"));
-    SDL_RenderPresent(renderer);
-    if (!options.finalFramePath.empty()) lastPresented = image;
+    const bool finalShot = !options.finalFramePath.empty() && frames + 1 == options.maxFrames;
+    if (presentation.usesGl()) {
+      Image* shot = finalShot ? &lastPresented.emplace() : nullptr;
+      if (auto presented = presentation.presentGl(image, session.screen(), frames, shot); !presented)
+        return std::unexpected(presented.error());
+    } else {
+      if (SDL_UpdateTexture(texture.get(), nullptr, image.rgba.data(), 640 * 4) != 0)
+        return std::unexpected(sdlError("SDL_UpdateTexture"));
+      if (SDL_RenderClear(renderer) != 0 ||
+          SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr) != 0)
+        return std::unexpected(sdlError("SDL_RenderCopy"));
+      SDL_RenderPresent(renderer);
+      if (finalShot) lastPresented = image;
+    }
     const int frame = frames++;
     if (observer) observer(session, frame);
     if (options.maxFrames > 0 && frames >= options.maxFrames) break;

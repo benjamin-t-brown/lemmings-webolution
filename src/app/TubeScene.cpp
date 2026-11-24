@@ -301,9 +301,11 @@ std::array<double, 3> TubeScene::soundWorldPosition(
       {position[0], terrainHeight - 1.0 - position[1], position[2]}, 1).modelPosition;
 }
 
-void TubeScene::drawHoveredSensor(Image& image, const CameraBasis& camera, const Raster& raster,
+void TubeScene::prepareHoveredSensor(std::vector<HoverFragment>& fragments,
+    const CameraBasis& camera, const Raster& raster,
     const sim::OccupancySensor& sensor) const {
-  if (!havePoseLevel_ || image.width != camera.width || image.height != camera.height) return;
+  if (!havePoseLevel_ || raster.framebuffer().width != camera.width ||
+      raster.framebuffer().height != camera.height) return;
   // Provisional clone contact marker for a tagged occupancy volume. It has no
   // normal draw path. Place the ring at the volume's centre in world space.
   const auto& low = sensor.min;
@@ -318,21 +320,29 @@ void TubeScene::drawHoveredSensor(Image& image, const CameraBasis& camera, const
   std::array<double, 4> p;
   if (!project(camera, {at[0], at[1], at[2]}, p)) return;
   constexpr int radius = 5;
-  if (!(p[0] >= -radius && p[0] < image.width + radius &&
-        p[1] >= -radius && p[1] < image.height + radius)) return;
+  if (!(p[0] >= -radius && p[0] < camera.width + radius &&
+        p[1] >= -radius && p[1] < camera.height + radius)) return;
   const ActorOcclusionPlane plane(camera, at);
   constexpr std::array<std::uint8_t, 3> light{128, 96, 48};
   const int cx = int(std::floor(p[0])), cy = int(std::floor(p[1]));
-  for (int py = std::max(0, cy - radius); py < std::min(image.height, cy + radius + 1); ++py)
-    for (int px = std::max(0, cx - radius); px < std::min(image.width, cx + radius + 1); ++px) {
+  for (int py = std::max(0, cy - radius); py < std::min(camera.height, cy + radius + 1); ++py)
+    for (int px = std::max(0, cx - radius); px < std::min(camera.width, cx + radius + 1); ++px) {
       const double dx = px + 0.5 - p[0], dy = py + 0.5 - p[1];
       const double r2 = dx * dx + dy * dy;
       if (r2 > radius * radius || r2 < 9.0) continue;
-      const auto pixel = std::size_t(py) * image.width + px;
+      const auto pixel = std::size_t(py) * camera.width + px;
       const double z = plane.depthAt(px + 0.5, py + 0.5);
       if (z < raster.depthBuffer()[pixel] && z < raster.actorDepth().depthAt(pixel))
-        addHoverRgb(image.rgba.data() + pixel * 4, light.data());
+        fragments.push_back({pixel, light});
     }
+}
+
+void TubeScene::drawHoveredSensor(Image& image, const CameraBasis& camera, const Raster& raster,
+    const sim::OccupancySensor& sensor) const {
+  if (image.width != camera.width || image.height != camera.height) return;
+  std::vector<HoverFragment> fragments;
+  prepareHoveredSensor(fragments, camera, raster, sensor);
+  drawHoverFragments(image, fragments);
 }
 
 const TubeScene::Tile* TubeScene::findTile(bool outer, int column, int row) const {
@@ -385,23 +395,6 @@ void compositeActorOverlay(app::Raster& raster, const Image& overlay,
   }
 }
 
-// Prepare pose, view, sheet, placement and tint for one submitted actor.
-// Drawing depth-tests body pixels. Picking keeps the box even when fully covered.
-struct PreparedInjectedWalker {
-  webo::SpriteFrame frame;
-  webo::Image texture;
-  // Borrow images only for the draw/pick call. Cache insertions preserve references.
-  const webo::Image* borrowedTexture = nullptr;
-  const webo::Image& sheet() const { return borrowedTexture ? *borrowedTexture : texture; }
-  ActorSpritePlacement placement{};
-  ActorSpritePlacement composedPlacement{}; // body plus render-only attachment
-  bool mirrored = false;
-  bool inverted = false;
-  std::array<std::uint8_t, 3> tint{255, 255, 255};
-  std::array<double, 3> worldPosition{};
-  std::vector<double> attachmentDepth;
-};
-
 // Provisional brick anchor follows the red pack's top edge in the selected
 // SPR image, mirrored with the body. Art without a red pack uses a body-relative anchor.
 std::array<double, 2> builderPackAnchor(const SpriteFrame& frame, const Image& sheet,
@@ -430,11 +423,10 @@ std::array<double, 2> builderPackAnchor(const SpriteFrame& frame, const Image& s
 // Rasterize the brick before the body so the hands cover it. Native
 // 410C0E/410E78 build a terrain-textured mesh. The provisional clone cuboid
 // grows at the pack and turns into the target cells in a scratch raster.
-void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
+void prepareBuilderBrick(std::vector<PreparedRasterTriangle>& triangles, ActorSpritePlacement& bounds,
     const ActorPoseLevel& level, const CameraBasis& camera,
     const SceneOptions::InjectedNativeWalker& w, const Texture& texture,
-    const std::array<std::uint8_t, 3>& tint, const std::array<double, 2>& pack,
-    std::vector<double>& attachmentDepth) {
+    const std::array<std::uint8_t, 3>& tint, const std::array<double, 2>& pack) {
   profile::Scope profileBrick(profile::BuilderBrick);
   const auto shape = builderBrickShape(w.builderPhase);
   if (shape.scale <= 0.0 || w.builderLength <= 0) return;
@@ -498,7 +490,6 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
   constexpr std::array<double, 6> terrainShade{1, 1, 1, 1, 0.85, 0.65};
   constexpr int faces[6][4]{{0,2,3,1},{4,6,7,5},{0,4,5,1},
                            {2,6,7,3},{0,2,6,4},{1,3,7,5}};
-  Raster brick(image.width, image.height);
   for (int face = 0; face < 6; ++face) {
     std::array<double, 3> light;
     for (int channel = 0; channel < 3; ++channel)
@@ -510,7 +501,7 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
         p[i] = vertices[faces[face][tri[i]]];
         t[i] = uvs[face][tri[i]];
       }
-      brick.triangle(p, t, texture, light);
+      triangles.push_back({p, t, &texture, light});
     }
   }
   for (const auto& v : vertices) {
@@ -519,6 +510,14 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
     bounds.top = std::min(bounds.top, std::floor(v[1]));
     bounds.bottom = std::max(bounds.bottom, std::ceil(v[1]));
   }
+}
+
+void drawBuilderBrick(Image& image, const ActorSpritePlacement& bounds,
+    std::span<const PreparedRasterTriangle> triangles, std::vector<double>& attachmentDepth) {
+  if (triangles.empty()) return;
+  profile::Scope profileBrick(profile::BuilderBrick);
+  Raster brick(image.width, image.height);
+  for (const auto& triangle : triangles) triangle.draw(brick);
   const auto& rgb = brick.framebuffer().rgb;
   attachmentDepth = brick.depthBuffer();
   for (int y = std::max(0, int(std::floor(bounds.top)));
@@ -533,8 +532,7 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
 }
 
 void clipBodyFootprint(Image& body, const ActorSpritePlacement& p,
-    const ActorOcclusionPlane& plane, const CameraBasis& camera,
-    const CylinderMesh& mesh, const CollisionGrid& collision, std::span<const double> gateThickness) {
+    const ActorOcclusionPlane& plane, const CameraBasis& camera, const ActorFootprint& footprint) {
   profile::Scope profileFootprint(profile::BodyFootprint);
   for (int y = std::max(0, int(std::ceil(p.top)));
        y < std::min(body.height, int(std::ceil(p.bottom))); ++y)
@@ -542,7 +540,8 @@ void clipBodyFootprint(Image& body, const ActorSpritePlacement& p,
          x < std::min(body.width, int(std::ceil(p.right))); ++x) {
       auto& alpha = body.rgba[(std::size_t(y) * body.width + x) * 4 + 3];
       if (actorSpriteAlphaTestPasses(alpha) &&
-          actorTexelInsideTerrain(mesh, collision, plane.worldAt(camera,x+.5,y+.5), gateThickness)) alpha = 0;
+          actorTexelInsideTerrain(footprint.lattice, footprint.collision,
+              plane.worldAt(camera,x+.5,y+.5), footprint.gateThickness)) alpha = 0;
     }
 }
 
@@ -586,16 +585,26 @@ void clearSpriteRect(Image& image, const SpriteRect& rect) {
   }
 }
 
-std::optional<PreparedInjectedWalker> prepareInjectedWalker(
+// Pull the stable atlas handle from the leg cache when it already exists.
+bool prepareSpriteTexture(PreparedActorSprite& prepared, const AssetLibrary& lib, const std::string& asset) {
+  if (auto* cache = activeTextureCache; cache && cache->library == &lib) {
+    if (const auto found = cache->images.find(asset); found != cache->images.end()) {
+      prepared.texture = &found->second;
+      ++cache->hits;
+      return true;
+    }
+  }
+  auto image = loadTexture(lib, asset);
+  if (!image) return false;
+  prepared.ownedTexture = std::move(*image);
+  return true;
+}
+
+std::optional<PreparedActorSprite> prepareInjectedWalker(
     const ActorPoseLevel& poseLevel, const SpriteSheet& sprites, const ActorLightMap& light,
     const CameraBasis& camera, const SceneOptions& options,
     const SceneOptions::InjectedNativeWalker& injected, const AssetLibrary& lib,
-    const TubePassBounds& bounds, std::span<const double> depth,
-    Image* spriteTarget = nullptr,
-    const Texture* brickTexture = nullptr,
-    const CylinderMesh* footprintMesh = nullptr, const CollisionGrid* footprintGrid = nullptr,
-    std::span<const double> gateThickness = {},
-    const ActorPoseResult* airbornePose = nullptr) {
+    const TubePassBounds& bounds, bool forDrawing, const ActorPoseResult* airbornePose = nullptr) {
   if (!airbornePose && !options.composeSkipActorVisibility &&
       !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
     return std::nullopt;
@@ -633,7 +642,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     // Centre the front view on the outward normal. Half its 33.75 degree sector is 3/64 turn.
     phase += 3.0 / 64.0;
     // Face leftward diggers into the cylinder. Keep the body rectangle for picking.
-    if (spriteTarget && injected.facing == static_cast<int>(sim::Facing::Left))
+    if (forDrawing && injected.facing == static_cast<int>(sim::Facing::Left))
       phase += 0.5;
   }
   std::size_t temporalIndex = static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
@@ -668,20 +677,9 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     return std::nullopt;
 
   const auto& frame = temporal.frames[selection.index];
-  const auto asset = sheetAssetName(frame.sheet);
-  const Image* borrowedTexture = nullptr;
-  if (auto* cache = activeTextureCache; cache && cache->library == &lib) {
-    if (const auto found = cache->images.find(asset); found != cache->images.end()) {
-      borrowedTexture = &found->second;
-      ++cache->hits;
-    }
-  }
-  Image texture;
-  if (!borrowedTexture) {
-    auto loaded = loadTexture(lib, asset);
-    if (!loaded) return std::nullopt;
-    texture = std::move(*loaded);
-  }
+  PreparedActorSprite prepared;
+  prepared.frame = frame;
+  if (!prepareSpriteTexture(prepared, lib, sheetAssetName(frame.sheet))) return std::nullopt;
 
   const std::array<double, 3> worldPosition{pose.modelPosition[0], pose.modelPosition[1],
                                             pose.modelPosition[2]};
@@ -709,93 +707,90 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
       tint = *looked;
   }
 
-  PreparedInjectedWalker prepared;
-  prepared.frame = frame;
-  prepared.texture = std::move(texture);
-  prepared.borrowedTexture = borrowedTexture;
   prepared.placement = *placement;
-  prepared.composedPlacement = *placement;
   prepared.mirrored = selection.mirrored;
   prepared.inverted = spriteGravity < 0;
   prepared.tint = tint;
   prepared.worldPosition = worldPosition;
-  // The visibility diagnostic bypasses both submission and scene-depth rejection.
-  const bool sceneClip = !options.composeSkipActorVisibility && !options.composeSkipActorPose;
-  if (spriteTarget && (sceneClip || brickTexture)) {
-    auto& sprite = *spriteTarget;
-    sprite.width = camera.width;
-    sprite.height = camera.height;
-    sprite.alpha = AlphaMode::Embedded;
-    sprite.rgba.resize(std::size_t(sprite.width) * sprite.height * 4);
-    if (brickTexture) {
-      // The attachment can expand the bounds beyond the body.
-      std::fill(sprite.rgba.begin(), sprite.rgba.end(), 0);
-    } else {
-      // Share the half-open screen rectangle across sampling, clipping and composition.
-      clearSpriteRect(sprite, spriteRect(sprite, *placement));
-    }
-    const ActorOcclusionPlane plane(camera, worldPosition);
-    if (brickTexture)
-      drawBuilderBrick(sprite, prepared.composedPlacement, poseLevel, camera, injected,
-          *brickTexture, tint, builderPackAnchor(frame, prepared.sheet(), *placement,
-                                                selection.mirrored, prepared.inverted),
-          prepared.attachmentDepth);
-    // The brick depth-tests independently of the hands and the body footprint.
-    Image body;
-    if (brickTexture) {
-      body = sprite;
-      std::fill(body.rgba.begin(), body.rgba.end(), 0);
-    }
-    auto& bodyTarget = brickTexture ? body : sprite;
-    if (!drawActorSprite(bodyTarget, frame, prepared.sheet(), *placement, selection.mirrored, tint,
-                         true, prepared.inverted)) return std::nullopt;
-    if (sceneClip && footprintMesh && footprintGrid)
-      clipBodyFootprint(bodyTarget, *placement, plane, camera, *footprintMesh, *footprintGrid, gateThickness);
-    if (brickTexture) {
-      for (int y = std::max(0,int(std::ceil(placement->top)));
-           y < std::min(body.height,int(std::ceil(placement->bottom))); ++y)
-        for (int x = std::max(0,int(std::ceil(placement->left)));
-             x < std::min(body.width,int(std::ceil(placement->right))); ++x) {
-          const auto at = std::size_t(y)*body.width+x;
-          if (!actorSpriteAlphaTestPasses(body.rgba[at*4+3])) continue;
-          std::copy_n(body.rgba.begin()+at*4,4,sprite.rgba.begin()+at*4);
-          if (!prepared.attachmentDepth.empty())
-            prepared.attachmentDepth[at] = plane.depthAt(x+.5,y+.5);
-        }
-    }
-    if (sceneClip && !clipActorToScene(sprite, prepared.composedPlacement,
-            injected.drownFluidKind >= 0 && !options.fluidDrownSceneDepth.empty() ?
-                options.fluidDrownSceneDepth : depth,
-            &plane, options.pipeSceneDepth)) return std::nullopt;
-  }
   return prepared;
+}
+
+bool rasterizeActorBody(Image& sprite, const PreparedActorSprite& prepared,
+    const ActorSpritePlacement& bounds, const CameraBasis& camera, bool sceneClip,
+    bool hasAttachment, std::span<const PreparedRasterTriangle> attachment,
+    std::vector<double>& attachmentDepth, std::span<const double> depth,
+    std::span<const double> pipeDepth, const ActorFootprint* footprint,
+    const std::array<std::uint8_t, 3>* overrideTint = nullptr) {
+  const auto* placement = &prepared.placement;
+  const auto& frame = prepared.frame;
+  sprite.width = camera.width;
+  sprite.height = camera.height;
+  sprite.alpha = AlphaMode::Embedded;
+  sprite.rgba.resize(std::size_t(sprite.width) * sprite.height * 4);
+  if (hasAttachment)
+    std::fill(sprite.rgba.begin(), sprite.rgba.end(), 0);
+  else
+    clearSpriteRect(sprite, spriteRect(sprite, *placement));
+  const ActorOcclusionPlane plane(camera, prepared.worldPosition);
+  drawBuilderBrick(sprite, bounds, attachment, attachmentDepth);
+  // The brick depth-tests independently of the hands and the body footprint.
+  Image body;
+  if (hasAttachment) {
+    body = sprite;
+    std::fill(body.rgba.begin(), body.rgba.end(), 0);
+  }
+  auto& bodyTarget = hasAttachment ? body : sprite;
+  if (!drawActorSprite(bodyTarget, frame, prepared.sheet(), *placement, prepared.mirrored,
+                       overrideTint ? *overrideTint : prepared.tint,
+                       true, prepared.inverted)) return false;
+  if (sceneClip && footprint)
+    clipBodyFootprint(bodyTarget, *placement, plane, camera, *footprint);
+  if (hasAttachment) {
+    for (int y = std::max(0,int(std::ceil(placement->top)));
+         y < std::min(body.height,int(std::ceil(placement->bottom))); ++y)
+      for (int x = std::max(0,int(std::ceil(placement->left)));
+           x < std::min(body.width,int(std::ceil(placement->right))); ++x) {
+        const auto at = std::size_t(y)*body.width+x;
+        if (!actorSpriteAlphaTestPasses(body.rgba[at*4+3])) continue;
+        std::copy_n(body.rgba.begin()+at*4,4,sprite.rgba.begin()+at*4);
+        if (!attachmentDepth.empty())
+          attachmentDepth[at] = plane.depthAt(x+.5,y+.5);
+      }
+  }
+  return !sceneClip || clipActorToScene(sprite, bounds, depth, &plane, pipeDepth);
 }
 
 }  // namespace
 
-void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
-                                    const SceneOptions& options,
-                                    const AssetLibrary& lib) const {
-  profile::Scope profileActors(profile::Actors);
-  if (options.injectedWalkers.empty() || !havePoseLevel_) {
-    raster.mutableActorDepth().clear();
-    return;
+std::shared_ptr<const ActorFootprint> TubeScene::actorFootprint() const {
+  if (haveCollision_ && !footprint_) {
+    CylinderMesh lattice;
+    lattice.angularSteps = mesh_.angularSteps;
+    lattice.ringCount = mesh_.ringCount;
+    lattice.vertices = mesh_.vertices;
+    footprint_ = std::make_shared<ActorFootprint>(
+        ActorFootprint{std::move(lattice), collision_, gateThickness_});
   }
-  raster.mutableActorDepth().reset(raster.framebuffer().rgb.size() / 3);
-  rewirePoseLevel();
+  return footprint_;
+}
 
-  const bool physicalActors = !options.composeSkipActorVisibility && !options.composeSkipActorPose;
-  Image sprite, overlay;
-  overlay.width = raster.framebuffer().width;
-  overlay.height = raster.framebuffer().height;
-  overlay.alpha = AlphaMode::Embedded;
-  if (!physicalActors)
-    overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
+TubeScene::PreparedActors TubeScene::prepareActors(
+    const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib,
+    bool prepareBoxes) const {
+  profile::Scope profileActors(profile::Actors);
+  PreparedActors prepared;
+  if (prepareBoxes) prepared.boxes.resize(options.injectedWalkers.size());
+  if (options.injectedWalkers.empty() || !havePoseLevel_) return prepared;
+  prepared.enabled = true;
+  prepared.physical = !options.composeSkipActorVisibility && !options.composeSkipActorPose;
+  prepared.legacyNonZero = options.overlayCompositeLegacyNonZero;
+  if (prepared.physical) prepared.footprint = actorFootprint();
+  rewirePoseLevel();
 
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
   std::vector<std::size_t> order(options.injectedWalkers.size());
   std::iota(order.rbegin(), order.rend(), 0);
-  if (physicalActors) {
+  if (prepared.physical) {
     // Sort parallel upright body planes far to near in horizontal view depth.
     // That order also blends additive drowning over bodies behind it.
     std::vector<double> distance(order.size());
@@ -810,22 +805,110 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
       return distance[a] != distance[b] ? distance[a] > distance[b] : a > b;
     });
   }
+  prepared.draws.reserve(order.size());
   for (const auto owner : order) {
-    const auto it = options.injectedWalkers.begin() + owner;
-    const auto* sprites = lemmingSprites(it->sheetType);
+    const auto& sampled = options.injectedWalkers[owner];
+    const auto* sprites = lemmingSprites(sampled.sheetType);
     if (!sprites) continue;
-    const auto* brickTexture = builderBrickTexture(*it);
-    const bool clipped = physicalActors || brickTexture;
-    auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
-        options, *it, lib, bounds, raster.depthBuffer(), &sprite,
-        brickTexture, &mesh_, haveCollision_ ? &collision_ : nullptr, gateThickness_);
-    if (!prepared)
-      continue;
-    if (it->drownFluidKind >= 0 && clipped) {
+    auto body = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
+        options, sampled, lib, bounds, true);
+    if (prepareBoxes) {
+      // Leftward diggers draw the opposite view but keep the ordinary pick box.
+      if (sampled.facing == static_cast<int>(sim::Facing::Left) &&
+          std::string_view(sampled.clip ? sampled.clip : "") == "dig") {
+        if (const auto pick = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
+                options, sampled, lib, bounds, false))
+          prepared.boxes[owner] = pick->placement;
+      } else if (body) {
+        prepared.boxes[owner] = body->placement;
+      }
+    }
+    if (!body) continue;
+    PreparedActors::Actor actor{};
+    actor.owner = owner;
+    actor.bounds = body->placement;
+    actor.body = std::move(*body);
+    if (const auto* texture = builderBrickTexture(sampled)) {
+      actor.hasAttachment = true;
+      prepareBuilderBrick(actor.attachment, actor.bounds, poseLevel_, camera, sampled,
+          *texture, actor.body.tint, builderPackAnchor(actor.body.frame, actor.body.sheet(),
+              actor.body.placement, actor.body.mirrored, actor.body.inverted));
+    }
+    actor.drowning = sampled.drownFluidKind >= 0 && (prepared.physical || actor.hasAttachment);
+    if (actor.drowning) {
+      actor.drowningBrightness = sampled.drownBrightness;
+      actor.drowningPosition = actorPoseFromCylinderSample(poseLevel_,
+          {sampled.plus8X, sampled.plus8Y, sampled.plus8Z}, sampled.facing).modelPosition;
+    }
+    if (actor.drowning && sampled.drownFluidKind == 0) {
+      const Sprite* bubbles = bubbleSprites_.find("bubbles");
+      if (bubbles && !bubbles->animations.empty()) {
+        const double t = sampled.drownSeconds;
+        for (int b = 0; b < 2; ++b) {
+          const bool splash = t < 0.6;
+          const double phase = std::fmod(std::max(0.0, t - 0.5) + b * 0.21, 0.48);
+          const std::size_t n = std::min(bubbles->animations.size() - 1,
+              std::size_t(phase / 0.06));
+          if (bubbles->animations[n].frames.empty()) continue;
+          const auto& frame = bubbles->animations[n].frames[0];
+          PreparedActorSprite sprite;
+          sprite.frame = frame;
+          if (!prepareSpriteTexture(sprite, lib, sheetAssetName(frame.sheet))) continue;
+          ActorTerrainSample sample{sampled.plus8X + (b ? 1.5 : -1.5),
+              splash ? sampled.drownSurfaceY + 2.0 + 5.0 * std::sin(t / 0.6 * std::numbers::pi) :
+                  std::min(sampled.drownSurfaceY, sampled.plus8Y + 5.0 + phase * 12.0), sampled.plus8Z};
+          const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, sampled.facing);
+          auto box = actorSpritePlacement(frame, pose.modelPosition, camera, false, -1);
+          if (!box) continue;
+          const double scale = splash ? 0.45 : 0.8;
+          box->left = box->originX + (box->left - box->originX) * scale;
+          box->right = box->originX + (box->right - box->originX) * scale;
+          box->top = box->originY + (box->top - box->originY) * scale;
+          box->bottom = box->originY + (box->bottom - box->originY) * scale;
+          sprite.placement = *box;
+          actor.bubbles.push_back({std::move(sprite), splash ? 0.8 : sampled.drownBrightness});
+        }
+      }
+    }
+
+    prepared.draws.push_back(std::move(actor));
+  }
+  return prepared;
+}
+
+void TubeScene::drawActors(Raster& raster, const CameraBasis& camera, const PreparedActors& actors,
+    std::span<const double> drowningDepth, std::span<const double> pipeDepth) {
+  profile::Scope profileActors(profile::Actors);
+  if (!actors.enabled) {
+    raster.mutableActorDepth().clear();
+    return;
+  }
+  raster.mutableActorDepth().reset(raster.framebuffer().rgb.size() / 3);
+
+  const bool physicalActors = actors.physical;
+  Image sprite, overlay;
+  overlay.width = raster.framebuffer().width;
+  overlay.height = raster.framebuffer().height;
+  overlay.alpha = AlphaMode::Embedded;
+  if (!physicalActors)
+    overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
+
+  std::vector<double> attachmentDepth;
+  for (const auto& actor : actors.draws) {
+    const auto owner = actor.owner;
+    const auto* prepared = &actor.body;
+    const bool clipped = physicalActors || actor.hasAttachment;
+    const auto sceneDepth = actor.drowning && !drowningDepth.empty() ?
+        drowningDepth : std::span<const double>(raster.depthBuffer());
+    attachmentDepth.clear();
+    if (clipped && !rasterizeActorBody(sprite, *prepared, actor.bounds, camera, physicalActors,
+          actor.hasAttachment, actor.attachment, attachmentDepth, sceneDepth, pipeDepth,
+          actors.footprint.get())) continue;
+    if (actor.drowning) {
       // 4043F3..404434 selects ONE/ONE with neutral brightness proportional to
       // height above the fluid bottom. Flush pending actor coverage before blending it.
       if (!physicalActors) {
-        compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
+        compositeActorOverlay(raster, overlay, actors.legacyNonZero);
         std::fill(overlay.rgba.begin(), overlay.rgba.end(), 0);
       }
       auto add = [&](const SpriteRect& rect, double strength, const ActorOcclusionPlane* plane,
@@ -849,59 +932,30 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
       // The fluid state supplies neutral brightness rather than the light map.
       const auto bodyRect = spriteRect(sprite, prepared->placement);
       clearSpriteRect(sprite, bodyRect);
-      const auto grey = std::uint8_t(std::clamp(it->drownBrightness, 0.0, 1.0) * 255.0);
+      const auto grey = std::uint8_t(std::clamp(actor.drowningBrightness, 0.0, 1.0) * 255.0);
       if (!drawActorSprite(sprite, prepared->frame, prepared->sheet(), prepared->placement,
           prepared->mirrored, {grey, grey, grey}, true, prepared->inverted)) continue;
-      const auto pose = actorPoseFromCylinderSample(poseLevel_,
-          {it->plus8X, it->plus8Y, it->plus8Z}, it->facing);
-      const ActorOcclusionPlane plane(camera, pose.modelPosition);
-      if (physicalActors && haveCollision_)
-        clipBodyFootprint(sprite,prepared->placement,plane,camera,mesh_,collision_,gateThickness_);
+      const ActorOcclusionPlane plane(camera, actor.drowningPosition);
+      if (actors.footprint)
+        clipBodyFootprint(sprite, prepared->placement, plane, camera, *actors.footprint);
       clipActorToScene(sprite, prepared->placement,
-          options.fluidDrownSceneDepth.empty() ? raster.depthBuffer() : options.fluidDrownSceneDepth,
-          &plane, options.pipeSceneDepth);
+          sceneDepth, &plane, pipeDepth);
       add(bodyRect, 1.0, &plane, 0);
 
       // 404372 creates Bubbles FX at 5..10 units submerged. Provisional clone
       // feedback uses two rising bubble sprites and smaller early splashes.
-      if (it->drownFluidKind == 0) {
-        const Sprite* bubbles = bubbleSprites_.find("bubbles");
-        if (bubbles && !bubbles->animations.empty()) {
-          const double t = it->drownSeconds;
-          for (int b = 0; b < 2; ++b) {
-            const bool splash = t < 0.6;
-            const double phase = std::fmod(std::max(0.0, t - 0.5) + b * 0.21, 0.48);
-            const std::size_t n = std::min(bubbles->animations.size() - 1,
-                std::size_t(phase / 0.06));
-            if (bubbles->animations[n].frames.empty()) continue;
-            const auto& frame = bubbles->animations[n].frames[0];
-            auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
-            if (!texture) continue;
-            ActorTerrainSample sample{it->plus8X + (b ? 1.5 : -1.5),
-                splash ? it->drownSurfaceY + 2.0 + 5.0 * std::sin(t / 0.6 * std::numbers::pi) :
-                    std::min(it->drownSurfaceY, it->plus8Y + 5.0 + phase * 12.0), it->plus8Z};
-            const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, it->facing);
-            auto box = actorSpritePlacement(frame, pose.modelPosition, camera, false, -1);
-            if (!box) continue;
-            const double scale = splash ? 0.45 : 0.8;
-            box->left = box->originX + (box->left - box->originX) * scale;
-            box->right = box->originX + (box->right - box->originX) * scale;
-            box->top = box->originY + (box->top - box->originY) * scale;
-            box->bottom = box->originY + (box->bottom - box->originY) * scale;
-            const auto effectRect = spriteRect(sprite, *box);
-            clearSpriteRect(sprite, effectRect);
-            if (!drawActorSprite(sprite, frame, *texture, *box, false)) continue;
-            clipActorToScene(sprite, *box, options.fluidDrownSceneDepth.empty() ?
-                raster.depthBuffer() : options.fluidDrownSceneDepth);
-            add(effectRect, splash ? 0.8 : it->drownBrightness, nullptr,
-                actorPhysicalDepth(*box,camera.width));
-          }
-        }
+      for (const auto& bubble : actor.bubbles) {
+        const auto& effect = bubble.sprite;
+        const auto effectRect = spriteRect(sprite, effect.placement);
+        clearSpriteRect(sprite, effectRect);
+        if (!drawActorSprite(sprite, effect.frame, effect.sheet(), effect.placement, false)) continue;
+        clipActorToScene(sprite, effect.placement, sceneDepth);
+        add(effectRect, bubble.strength, nullptr, actorPhysicalDepth(effect.placement, camera.width));
       }
       continue;
     }
     if (clipped) {
-      const auto& p = prepared->composedPlacement;
+      const auto& p = actor.bounds;
       const ActorOcclusionPlane plane(camera, prepared->worldPosition);
       for (int y = std::max(0, int(std::ceil(p.top)));
            y < std::min({overlay.height, sprite.height, int(std::ceil(p.bottom))}); ++y)
@@ -911,8 +965,8 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
           const auto pixel = std::size_t(y) * sprite.width + x;
           const auto source = pixel * 4;
           if (!actorSpriteAlphaTestPasses(sprite.rgba[source + 3])) continue;
-          const double z = prepared->attachmentDepth.empty() ? plane.depthAt(x+.5,y+.5) :
-              prepared->attachmentDepth[pixel];
+          const double z = attachmentDepth.empty() ? plane.depthAt(x+.5,y+.5) :
+              attachmentDepth[pixel];
           if (!physicalActors) {
             std::copy_n(sprite.rgba.begin()+source, 4, overlay.rgba.begin()+targetPixel*4);
           } else if (raster.mutableActorDepth().submit(pixel,z,owner)) {
@@ -930,7 +984,13 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   }
 
   if (!physicalActors)
-    compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
+    compositeActorOverlay(raster, overlay, actors.legacyNonZero);
+}
+
+void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
+                                    const SceneOptions& options, const AssetLibrary& lib) const {
+  drawActors(raster, camera, prepareActors(camera, options, lib),
+             options.fluidDrownSceneDepth, options.pipeSceneDepth);
 }
 
 void TubeScene::advanceDeathParticles(std::uint64_t clockMs) {
@@ -1015,13 +1075,9 @@ void TubeScene::emitExplosionDecal(const sim::Lemming& lemming,
   explosionDecals_.push_back(decal);
 }
 
-void TubeScene::drawExplosionDecals(Raster& raster, const CameraBasis& camera) const {
-  if (explosionDecals_.empty()) return;
-  SceneRgbaFramebuffer fb;
-  fb.width = camera.width;
-  fb.height = camera.height;
-  fb.rgb = raster.mutableFramebuffer().rgb;
-  fb.highlights = raster.highlightPixels();
+std::vector<PreparedSceneTriangle> TubeScene::prepareExplosionDecals(
+    const CameraBasis& camera) const {
+  std::vector<PreparedSceneTriangle> draws;
   // 424290 mode 2 -> 44026F -> 414D80: ONE/ONE. ~ texture flags disable
   // alpha test (47261F). PROVISIONAL clone Less/no-write surface policy:
   // scenery occludes the mark; faded/black texels never occlude later actors.
@@ -1051,10 +1107,25 @@ void TubeScene::drawExplosionDecals(Raster& raster, const CameraBasis& camera) c
       }
       if (!visible) continue;
       for (const auto ids : {std::array<int,3>{0,1,2}, std::array<int,3>{0,2,3}})
-        (void)rasterizeSceneTriangle(fb, raster.mutableDepthBuffer(), explosionTexture_,
-            {v[ids[0]],v[ids[1]],v[ids[2]]}, options);
+        draws.push_back({&explosionTexture_, {v[ids[0]], v[ids[1]], v[ids[2]]}, options});
     }
   }
+  return draws;
+}
+
+void TubeScene::drawSceneTriangles(Raster& raster, std::span<const PreparedSceneTriangle> draws) {
+  SceneRgbaFramebuffer fb;
+  fb.width = raster.framebuffer().width;
+  fb.height = raster.framebuffer().height;
+  fb.rgb = raster.mutableFramebuffer().rgb;
+  fb.highlights = raster.highlightPixels();
+  for (const auto& draw : draws)
+    (void)rasterizeSceneTriangle(fb, raster.mutableDepthBuffer(), *draw.texture,
+                                draw.vertices, draw.material);
+}
+
+void TubeScene::drawExplosionDecals(Raster& raster, const CameraBasis& camera) const {
+  drawSceneTriangles(raster, prepareExplosionDecals(camera));
 }
 
 void TubeScene::emitMinerAxe(const sim::Lemming& lemming,
@@ -1259,21 +1330,15 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
   if (!emitted) debris(removedCells.front());
 }
 
-void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
-                                   const AssetLibrary& lib, std::span<const double> pipeDepth) const {
+TubeScene::PreparedParticles TubeScene::prepareDeathParticles(
+    const CameraBasis& camera, const AssetLibrary& lib) const {
   profile::Scope profileParticles(profile::Particles);
-  // No allocations, asset reads, depth copies or scans on an empty frame.
-  if ((deathParticles_.empty() && forcedDeathFlights_.empty()) || !havePoseLevel_) return;
+  PreparedParticles prepared;
+  if ((deathParticles_.empty() && forcedDeathFlights_.empty()) || !havePoseLevel_) return prepared;
+  prepared.active = true;
+  prepared.footprint = actorFootprint();
   rewirePoseLevel();
-  auto& buffer = raster.mutableFramebuffer();
-  const auto& depth = raster.depthBuffer();
-  auto& actors = raster.mutableActorDepth();
-  if (actors.size() != depth.size()) actors.reset(depth.size());
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
-  Image overlay;
-  overlay.width = buffer.width; overlay.height = buffer.height;
-  overlay.alpha = AlphaMode::Embedded;
-  overlay.rgba.resize(std::size_t(buffer.width) * buffer.height * 4);
   for (std::size_t i = 0; i < deathParticles_.size(); ++i) {
     const auto& p = deathParticles_[i];
     const auto owner = ActorDepth::noOwner / 2 + i;
@@ -1308,43 +1373,33 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
           }
           if (selection.index >= entry.frames.size()) continue;
           auto frame = entry.frames[selection.index];
-          auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
+          PreparedActorSprite sprite;
+          const bool hasTexture = prepareSpriteTexture(sprite, lib, sheetAssetName(frame.sheet));
           auto box = actorSpritePlacement(frame, pose.modelPosition, camera, selection.mirrored, -1);
-          if (texture && box) {
+          if (hasTexture && box) {
             *box = actorSpriteGravityPlacement(*box, p.verticalDir);
             if (p.minerAxe && (frame.uRight > 1.0 || frame.uBottom > 1.0)) {
               // Convert the 16 pixel-UV records in AXE.SPR using atlas dimensions.
               // The other 24 records are normalized.
-              frame.uLeft = double(frame.left) / texture->width;
-              frame.uRight = double(frame.right) / texture->width;
-              frame.uTop = double(frame.top) / texture->height;
-              frame.uBottom = double(frame.bottom) / texture->height;
+              frame.uLeft = double(frame.left) / sprite.sheet().width;
+              frame.uRight = double(frame.right) / sprite.sheet().width;
+              frame.uTop = double(frame.top) / sprite.sheet().height;
+              frame.uBottom = double(frame.bottom) / sprite.sheet().height;
             }
-            std::fill(overlay.rgba.begin(), overlay.rgba.end(), 0);
             auto colour = p.colour;
             if (p.minerAxe) {
               if (auto light = actorLightTintAt(actorLight_, sample.x, sample.y))
                 colour = *light;
             }
-            const ActorOcclusionPlane plane(camera,pose.modelPosition);
-            const auto drawn = drawActorSprite(overlay, frame, *texture, *box,
-                selection.mirrored, colour, true, p.verticalDir < 0);
-            if (drawn &&
-                clipActorToScene(overlay, *box, depth, p.minerAxe ? &plane : nullptr)) {
-              if (p.minerAxe && haveCollision_)
-                clipBodyFootprint(overlay,*box,plane,camera,mesh_,collision_,gateThickness_);
-              const double z = actorPhysicalDepth(*box,camera.width);
-              for (int y = std::max(0,int(std::ceil(box->top)));
-                   y < std::min(buffer.height,int(std::ceil(box->bottom))); ++y)
-                for (int x = std::max(0,int(std::ceil(box->left)));
-                     x < std::min(buffer.width,int(std::ceil(box->right))); ++x) {
-                  const auto at = std::size_t(y)*buffer.width+x;
-                  auto& alpha = overlay.rgba[at*4+3];
-                  const double pixelZ = p.minerAxe ? plane.depthAt(x+.5,y+.5) : z;
-                  if (actorSpriteAlphaTestPasses(alpha) && !actors.submit(at,pixelZ,owner)) alpha=0;
-                }
-              compositeActorOverlay(raster, overlay, false);
-            }
+            sprite.frame = frame;
+            sprite.placement = *box;
+            sprite.mirrored = selection.mirrored;
+            sprite.inverted = p.verticalDir < 0;
+            sprite.tint = colour;
+            sprite.worldPosition = pose.modelPosition;
+            prepared.draws.emplace_back(PreparedParticles::Sprite{std::move(sprite), owner,
+                p.minerAxe ? PreparedParticles::Sprite::Depth::AxePlane :
+                             PreparedParticles::Sprite::Depth::Origin});
             continue;
           }
         }
@@ -1398,14 +1453,13 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
           triangle[k] = projected[face[ids[k]]];
           texcoords[k] = uv[ids[k]];
         }
-        raster.triangle(triangle, texcoords, texture,
-                        {shade * tint[0], shade * tint[1], shade * tint[2]}, owner);
+        prepared.draws.emplace_back(PreparedRasterTriangle{triangle, texcoords, &texture,
+            {shade * tint[0], shade * tint[1], shade * tint[2]}, owner});
       }
     }
   }
 
   SceneOptions flightOptions;
-  flightOptions.pipeSceneDepth = pipeDepth;
   for (std::size_t i = 0; i < forcedDeathFlights_.size(); ++i) {
     const auto& flight = forcedDeathFlights_[i];
     const auto* sprites = lemmingSprites(flight.sheetType);
@@ -1429,24 +1483,78 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
     sprite.clipLoops = true;
     const double phase = flight.spinTurnsPerSecond * seconds;
     sprite.rotationPhase = phase - std::floor(phase);
-    const auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
-        flightOptions, sprite, lib, bounds, depth, &overlay,
-        nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr, gateThickness_, &pose);
-    if (!prepared) continue;
-    const ActorOcclusionPlane plane(camera, pose.modelPosition);
-    const auto rect = spriteRect(overlay, prepared->placement);
+    auto body = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
+        flightOptions, sprite, lib, bounds, true, &pose);
+    if (!body) continue;
     const auto owner = ActorDepth::noOwner / 2 + deathParticles_.size() + i;
+    prepared.draws.emplace_back(PreparedParticles::Sprite{std::move(*body), owner,
+        PreparedParticles::Sprite::Depth::FlightPlane});
+  }
+  return prepared;
+}
+
+void TubeScene::drawParticles(Raster& raster, const CameraBasis& camera, const PreparedParticles& prepared,
+    std::span<const double> pipeDepth) {
+  profile::Scope profileParticles(profile::Particles);
+  if (!prepared.active) return;
+  auto& buffer = raster.mutableFramebuffer();
+  const auto& depth = raster.depthBuffer();
+  auto& actors = raster.mutableActorDepth();
+  if (actors.size() != depth.size()) actors.reset(depth.size());
+  Image overlay;
+  overlay.width = buffer.width;
+  overlay.height = buffer.height;
+  overlay.alpha = AlphaMode::Embedded;
+  for (const auto& draw : prepared.draws) {
+    if (const auto* triangle = std::get_if<PreparedRasterTriangle>(&draw)) {
+      triangle->draw(raster);
+      continue;
+    }
+    const auto& particle = std::get<PreparedParticles::Sprite>(draw);
+    const auto& sprite = particle.sprite;
+    const ActorOcclusionPlane plane(camera, sprite.worldPosition);
+    if (particle.depth == PreparedParticles::Sprite::Depth::FlightPlane) {
+      std::vector<double> unusedAttachmentDepth;
+      if (!rasterizeActorBody(overlay, sprite, sprite.placement, camera, true,
+              false, {}, unusedAttachmentDepth, depth, pipeDepth, prepared.footprint.get())) continue;
+      const auto rect = spriteRect(overlay, sprite.placement);
+      for (int y = rect.top; y < rect.bottom; ++y)
+        for (int x = rect.left; x < rect.right; ++x) {
+          const auto pixel = std::size_t(y) * buffer.width + x;
+          const auto* rgba = overlay.rgba.data() + pixel * 4;
+          if (actorSpriteAlphaTestPasses(rgba[3]) &&
+              actors.submit(pixel, plane.depthAt(x + .5, y + .5), particle.owner)) {
+            raster.coverSceneHighlight(pixel);
+            std::copy_n(rgba, 3, buffer.rgb.data() + pixel * 3);
+          }
+        }
+      continue;
+    }
+
+    const bool axe = particle.depth == PreparedParticles::Sprite::Depth::AxePlane;
+    overlay.rgba.resize(depth.size() * 4);
+    std::fill(overlay.rgba.begin(), overlay.rgba.end(), 0);
+    if (!drawActorSprite(overlay, sprite.frame, sprite.sheet(), sprite.placement,
+            sprite.mirrored, sprite.tint, true, sprite.inverted) ||
+        !clipActorToScene(overlay, sprite.placement, depth, axe ? &plane : nullptr)) continue;
+    if (axe && prepared.footprint)
+      clipBodyFootprint(overlay, sprite.placement, plane, camera, *prepared.footprint);
+    const double z = actorPhysicalDepth(sprite.placement, camera.width);
+    const auto rect = spriteRect(overlay, sprite.placement);
     for (int y = rect.top; y < rect.bottom; ++y)
       for (int x = rect.left; x < rect.right; ++x) {
-        const auto pixel = std::size_t(y) * buffer.width + x;
-        const auto* rgba = overlay.rgba.data() + pixel * 4;
-        if (actorSpriteAlphaTestPasses(rgba[3]) &&
-            actors.submit(pixel, plane.depthAt(x + .5, y + .5), owner)) {
-          raster.coverSceneHighlight(pixel);
-          std::copy_n(rgba, 3, buffer.rgb.data() + pixel * 3);
-        }
+        const auto at = std::size_t(y) * buffer.width + x;
+        auto& alpha = overlay.rgba[at*4+3];
+        const double pixelZ = axe ? plane.depthAt(x+.5,y+.5) : z;
+        if (actorSpriteAlphaTestPasses(alpha) && !actors.submit(at, pixelZ, particle.owner)) alpha = 0;
       }
+    compositeActorOverlay(raster, overlay, false);
   }
+}
+
+void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
+    const AssetLibrary& lib, std::span<const double> pipeDepth) const {
+  drawParticles(raster, camera, prepareDeathParticles(camera, lib), pipeDepth);
 }
 
 bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis& camera,
@@ -1459,19 +1567,44 @@ bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker, const Camer
   if (!sprites) return false;
   rewirePoseLevel();
 
-  // 454ACA..454B5C copies the body quad and uses ONE/ONE with neutral RGB 255.
-  // Keep the clone's physical depth and body mask for the late redraw.
-  Image sprite;
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
   const auto prepared = prepareInjectedWalker(poseLevel_, *sprites, ActorLightMap{}, camera,
-      options, injected, lib, bounds, sceneRaster.depthBuffer(), &sprite,
-      nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr, gateThickness_);
-  if (!prepared || sprite.rgba.empty()) return false;
+      options, injected, lib, bounds, true);
+  if (!prepared || options.composeSkipActorVisibility || options.composeSkipActorPose) return false;
+  std::vector<HoverFragment> fragments;
+  const bool marked = prepareBodyHighlight(fragments, walker, camera, *prepared, sceneRaster,
+        injected.drownFluidKind >= 0 && !options.fluidDrownSceneDepth.empty() ?
+            options.fluidDrownSceneDepth : std::span<const double>(sceneRaster.depthBuffer()),
+        options.pipeSceneDepth, actorFootprint().get());
+  drawHoverFragments(target, fragments);
+  return marked;
+}
 
-  const ActorOcclusionPlane plane(camera, prepared->worldPosition);
+bool TubeScene::prepareHoveredWalker(std::vector<HoverFragment>& fragments, std::size_t walker,
+    const CameraBasis& camera, const PreparedActors& actors, const Raster& raster,
+    std::span<const double> drowningDepth, std::span<const double> pipeDepth) const {
+  if (!actors.physical) return false;
+  const auto actor = std::ranges::find(actors.draws, walker, &PreparedActors::Actor::owner);
+  if (actor == actors.draws.end()) return false;
+  return prepareBodyHighlight(fragments, walker, camera, actor->body, raster,
+      actor->drowning && !drowningDepth.empty() ? drowningDepth : std::span<const double>(raster.depthBuffer()),
+      pipeDepth, actors.footprint.get());
+}
+
+bool TubeScene::prepareBodyHighlight(std::vector<HoverFragment>& fragments, std::size_t walker,
+    const CameraBasis& camera, const PreparedActorSprite& prepared, const Raster& sceneRaster,
+    std::span<const double> depth, std::span<const double> pipeDepth, const ActorFootprint* footprint) {
+  // 454ACA..454B5C copies the body quad and uses ONE/ONE with neutral RGB 255.
+  // Keep the physical depth and body mask for the late redraw.
+  Image sprite;
+  std::vector<double> unusedAttachmentDepth;
+  constexpr std::array<std::uint8_t, 3> white{255, 255, 255};
+  if (!rasterizeActorBody(sprite, prepared, prepared.placement, camera,
+        true, false, {}, unusedAttachmentDepth, depth, pipeDepth, footprint, &white)) return false;
+  const ActorOcclusionPlane plane(camera, prepared.worldPosition);
   const auto& actorDepth = sceneRaster.actorDepth();
-  const auto rect = spriteRect(sprite, prepared->placement);
-  bool marked = false;
+  const auto rect = spriteRect(sprite, prepared.placement);
+  const auto first = fragments.size();
   for (int y = rect.top; y < rect.bottom; ++y) {
     for (int x = rect.left; x < rect.right; ++x) {
       const auto pixel = std::size_t(y) * sprite.width + x;
@@ -1479,11 +1612,10 @@ bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker, const Camer
       if (!actorSpriteAlphaTestPasses(sprite.rgba[at + 3]) ||
           !actorDepth.owns(pixel, walker) ||
           actorDepth.depthAt(pixel) != plane.depthAt(x + .5, y + .5)) continue;
-      addHoverRgb(target.rgba.data() + at, sprite.rgba.data() + at);
-      marked = true;
+      fragments.push_back({pixel, {sprite.rgba[at], sprite.rgba[at + 1], sprite.rgba[at + 2]}});
     }
   }
-  return marked;
+  return fragments.size() != first;
 }
 
 std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreenBoxes(
@@ -1508,15 +1640,16 @@ std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreen
     const auto* sprites = lemmingSprites(options.injectedWalkers[i].sheetType);
     if (!sprites) continue;
     if (auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
-          options, options.injectedWalkers[i], lib, bounds, sceneRaster.depthBuffer()))
+          options, options.injectedWalkers[i], lib, bounds, false))
       boxes[i] = prepared->placement;
   }
   return boxes;
 }
 
-void TubeScene::render(Raster& raster, const CameraBasis& camera,
-                       const SceneOptions& options, const AssetLibrary* composeAssets) const {
-  raster.setDepthEnabled(options.depthTest);
+TubeScene::PreparedTube TubeScene::prepareTube(const CameraBasis& camera,
+    const SceneOptions& options, bool trackHighlights) const {
+  PreparedTube prepared;
+  prepared.depthTest = options.depthTest;
   const int steps = static_cast<int>(mesh_.angularSteps);
   const int bands = static_cast<int>(mesh_.bandCount());
   const int cols = static_cast<int>(CylinderMesh::kTileColumns);
@@ -1545,14 +1678,14 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
         std::array<std::array<double, 4>, 3> p = {
             {{x0, y0, 0, 1}, {x0, y0 + cellH, 0, 1}, {x0 + cellW, y0 + cellH, 0, 1}}};
         std::array<std::array<double, 2>, 3> uv = {{{u0, v0}, {u0, v1}, {u1, v1}}};
-        raster.triangle(p, uv, tile->texture, {1.0, 1.0, 1.0});
+        prepared.triangles.push_back({p, uv, &tile->texture, {1.0, 1.0, 1.0}});
         std::array<std::array<double, 4>, 3> p2 = {
             {{x0, y0, 0, 1}, {x0 + cellW, y0 + cellH, 0, 1}, {x0 + cellW, y0, 0, 1}}};
         std::array<std::array<double, 2>, 3> uv2 = {{{u0, v0}, {u1, v1}, {u1, v0}}};
-        raster.triangle(p2, uv2, tile->texture, {1.0, 1.0, 1.0});
+        prepared.triangles.push_back({p2, uv2, &tile->texture, {1.0, 1.0, 1.0}});
       }
     }
-    return;
+    return prepared;
   }
 
   const auto drawQuad = [&](const Vec3 corners[4], const Tile* tile, double context,
@@ -1573,7 +1706,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
         p[i] = projected[ids[i]];
         t[i] = uv[ids[i]];
       }
-      raster.triangle(p, t, tile->texture, modulate);
+      prepared.triangles.push_back({p, t, &tile->texture, modulate});
     }
   };
 
@@ -1607,7 +1740,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
           t[i] = uv[ids[i]];
         }
         // Deferred raster commands borrow this scene-owned texture through flush.
-        raster.triangle(p, t, tile->texture, mod);
+        prepared.triangles.push_back({p, t, &tile->texture, mod});
       }
     }
   };
@@ -1701,7 +1834,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
               p[i] = projected[ids[i]];
               t[i] = quad.uv[ids[i]];
             }
-            raster.triangle(p, t, tile->texture, modulate);
+            prepared.triangles.push_back({p, t, &tile->texture, modulate});
           }
         }
       };
@@ -1710,14 +1843,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
     }
   }
 
-  const auto maybeCompose = [&]() {
-    if (!options.drawCellRoute || options.injectedWalkers.empty() || composeAssets == nullptr)
-      return;
-    drawInjectedWalkers(raster, camera, options, *composeAssets);
-  };
-
-  if (options.drawCellRoute && options.composeActorsBeforeRoute)
-    maybeCompose();
+  prepared.beforeRoute = prepared.triangles.size();
 
   if (options.drawCellRoute && cellMesh_.buckets > 0 && cellMesh_.bands > 0) {
     // 0x43A4EC centres the bucket range from the camera turn fraction
@@ -1753,7 +1879,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       const double cc = std::clamp(quad.colour / 255.0, 0.0, 1.0);
       const std::array<double, 3> modulate = {cc, cc, cc};
       SceneHighlightId highlight;
-      if (quad.gate && !raster.highlightPixels().empty()) {
+      if (quad.gate && trackHighlights) {
         for (const auto vertex : quad.index) {
           if (vertex < counterGateVertexOwners_.size() &&
               counterGateVertexOwners_[vertex].kind == SceneHighlightKind::CounterGate) {
@@ -1769,7 +1895,8 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
           p[i] = projected[ids[i]];
           t[i] = quad.uv[ids[i]];
         }
-        raster.triangle(p, t, tile->texture, modulate, ActorDepth::noOwner, tile->routeAddress, highlight);
+        prepared.triangles.push_back({p, t, &tile->texture, modulate,
+                                      ActorDepth::noOwner, tile->routeAddress, highlight});
       }
     };
 
@@ -1851,11 +1978,30 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       if (tile == nullptr)
         continue;
       std::array<std::array<double, 2>, 3> t = {{{0, 0}, {0.5, 1}, {1, 0}}};
-      raster.triangle(p, t, tile->texture, face.modulate);
+      prepared.triangles.push_back({p, t, &tile->texture, face.modulate});
     }
   }
-  if (options.drawCellRoute && !options.composeActorsBeforeRoute)
-    maybeCompose();
+  return prepared;
+}
+
+void TubeScene::drawTube(Raster& raster, const PreparedTube& prepared) {
+  raster.setDepthEnabled(prepared.depthTest);
+  for (const auto& triangle : prepared.triangles) triangle.draw(raster);
+}
+
+void TubeScene::render(Raster& raster, const CameraBasis& camera,
+                       const SceneOptions& options, const AssetLibrary* composeAssets) const {
+  const auto prepared = prepareTube(camera, options, !raster.highlightPixels().empty());
+  if (!options.drawCellRoute || options.flat || options.injectedWalkers.empty() || !composeAssets) {
+    drawTube(raster, prepared);
+    return;
+  }
+  raster.setDepthEnabled(prepared.depthTest);
+  const auto triangles = std::span(prepared.triangles);
+  const auto split = options.composeActorsBeforeRoute ? prepared.beforeRoute : triangles.size();
+  for (const auto& triangle : triangles.first(split)) triangle.draw(raster);
+  drawInjectedWalkers(raster, camera, options, *composeAssets);
+  for (const auto& triangle : triangles.subspan(split)) triangle.draw(raster);
 }
 
 // Missing keys use bilinear cylinder vertices (0x43A31D, 0x43D2B8).
@@ -1925,6 +2071,7 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain, std::span<const sim::Co
   }
   if (changed == 0)
     return;
+  footprint_.reset();
 
   if (editKeys_.empty())
     editKeys_ = poseGrid0_;
@@ -1958,6 +2105,7 @@ void TubeScene::syncCounterGates(std::span<const sim::CounterGate> gates) {
   if (fractions == counterGateFractions_ && counterGateMeshedBlocks_ == terrainBlocksRebuilt_) return;
   counterGateFractions_ = fractions;
   counterGateMeshedBlocks_ = terrainBlocksRebuilt_;
+  footprint_.reset();
   ++counterGateRevision_;
   counterGateVertexOwners_.assign(mesh_.surface.size(), {});
   if (haveCollision_) gateThickness_.assign(collision_.cells.size(), 1.0);
@@ -1991,9 +2139,10 @@ void TubeScene::syncCounterGates(std::span<const sim::CounterGate> gates) {
   }
 }
 
-void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
+std::vector<PreparedSceneTriangle> TubeScene::prepareCounterGates(const CameraBasis& camera,
     const AssetLibrary& lib, std::span<const sim::CounterGate> gates) {
-  if (std::none_of(gates.begin(), gates.end(), [](const auto& g) { return g.hasCounter(); })) return;
+  std::vector<PreparedSceneTriangle> draws;
+  if (std::none_of(gates.begin(), gates.end(), [](const auto& g) { return g.hasCounter(); })) return draws;
   if (!counterTexturesLoaded_) {
     counterTexturesLoaded_ = true;
     for (int i = 0; i < 11; ++i) {
@@ -2005,9 +2154,6 @@ void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
     }
   }
   rewirePoseLevel();
-  SceneRgbaFramebuffer fb;
-  fb.width = camera.width; fb.height = camera.height; fb.rgb = raster.mutableFramebuffer().rgb;
-  fb.highlights = raster.highlightPixels();
   SceneRasterOptions options{SceneFilter::Linear, SceneAddress::Clamp,
       SceneAlphaFunction::StrictGreater, 0, true, SceneBlendFactor::SrcAlpha,
       SceneBlendFactor::InvSrcAlpha, SceneDepthFunction::Less, true,
@@ -2027,8 +2173,7 @@ void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
       v[i] = {p[0], p[1], p[2], p[3], {255,255,255,255}, uv[i][0], uv[i][1]};
     }
     for (const auto ids : {std::array<int,3>{0,1,2}, std::array<int,3>{0,2,3}})
-      (void)rasterizeSceneTriangle(fb, raster.mutableDepthBuffer(), image,
-          {v[ids[0]],v[ids[1]],v[ids[2]]}, options);
+      draws.push_back({&image, {v[ids[0]], v[ids[1]], v[ids[2]]}, options});
   };
   for (std::uint32_t i = 0; i < gates.size(); ++i) {
     const auto& g = gates[i];
@@ -2040,6 +2185,12 @@ void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
     quad(g.counterX + 1.3, g.counterY + 0.35, 2.1, 3.5, g.remaining() / 10, 1.01);
     quad(g.counterX + 4.0, g.counterY + 0.35, 2.1, 3.5, g.remaining() % 10, 1.01);
   }
+  return draws;
+}
+
+void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
+    const AssetLibrary& lib, std::span<const sim::CounterGate> gates) {
+  drawSceneTriangles(raster, prepareCounterGates(camera, lib, gates));
 }
 
 std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers() {

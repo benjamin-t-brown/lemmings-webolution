@@ -37,8 +37,8 @@ HudBox lineBox(const HudLine& line, std::span<const GlyphCell> cells) {
   return {line.x, line.y, line.x + textWidth(line.text, cells), line.y + kLineHeight};
 }
 
-void drawHud(webo::Image& target, const webo::Image& sheet, std::span<const HudLine> lines,
-             std::span<const GlyphCell> cells) {
+void appendHudGlyphs(std::vector<HudGlyph>& draws, std::span<const HudLine> lines,
+    std::span<const GlyphCell> cells, std::optional<double> comparisonDepth) {
   for (const HudLine& line : lines) {
     int x = line.x;
     for (const char c : line.text) {
@@ -46,23 +46,17 @@ void drawHud(webo::Image& target, const webo::Image& sheet, std::span<const HudL
       if (idx >= cells.size())
         continue;
       const GlyphCell& g = cells[idx];
-      for (int dy = 0; dy < kLineHeight; ++dy) {
-        for (int dx = 0; dx < g.width; ++dx) {
-          const int sx = g.x + dx, sy = g.y + dy;
-          if (sx >= sheet.width || sy >= sheet.height)
-            continue;
-          const int a = sheet.rgba[(static_cast<std::size_t>(sy) * sheet.width + sx) * 4 + 3];
-          const int ox = x + dx, oy = line.y + dy;
-          if (a == 0 || ox < 0 || oy < 0 || ox >= target.width || oy >= target.height)
-            continue;
-          std::uint8_t* px = target.rgba.data() + (static_cast<std::size_t>(oy) * target.width + ox) * 4;
-          for (int k = 0; k < 3; ++k)
-            px[k] = static_cast<std::uint8_t>((px[k] * (255 - a) + line.colour[k] * a + 127) / 255);
-        }
-      }
+      draws.push_back({{g.x, g.y, g.width}, x, line.y, line.colour, kLineHeight, comparisonDepth});
       x += g.width;
     }
   }
+}
+
+void drawHud(webo::Image& target, const webo::Image& sheet, std::span<const HudLine> lines,
+             std::span<const GlyphCell> cells) {
+  std::vector<HudGlyph> draws;
+  appendHudGlyphs(draws, lines, cells);
+  drawHudGlyphs(target, sheet, draws);
 }
 
 }  // namespace webo::shell

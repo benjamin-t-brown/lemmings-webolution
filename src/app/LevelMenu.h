@@ -34,8 +34,12 @@ class LevelMenu {
   LevelMenuAction focusedAction() const;
   int focusedIndex() const { return focusedIndex_; }
   void draw(Image& frame) const;
+  const Image& font() const { return font_; }
+  std::span<const shell::HudLine> titleLines() const { return titleLines_; }
+  shell::PreparedMenuRows prepareRows() const;
   bool touchButtonAt(int x, int y) const;
   void drawTouchButton(Image& frame) const;
+  shell::PreparedMenuRows prepareTouchButton() const;
 
  private:
   struct Row {

@@ -107,6 +107,14 @@ struct SceneRgbaFramebuffer {
   std::span<SceneHighlightPixel> highlights{};
 };
 
+// A prepared draw holds material state. Output planes in SceneRasterOptions
+// are bound by the consumer for its own target.
+struct PreparedSceneTriangle {
+  const SceneRgbaImage* texture;
+  std::array<SceneRasterVertex, 3> vertices;
+  SceneRasterOptions material;
+};
+
 // Software conventions, not asserted native D3D measurements:
 // samples are at pixel+(sampleOffsetX,sampleOffsetY); coverage includes all
 // triangle edges (shared-edge double hits are possible); screen Z is affine;

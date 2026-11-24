@@ -1,10 +1,11 @@
 // Provisional clone ownership shares one window across connected play.
-// Standalone callers own their window. Textures are local to each leg.
+// Standalone callers own their window. SDL textures are local to each leg.
 // Native HWND and device continuity across legs are unresolved.
 #pragma once
 
 #if defined(WEBOLUTION_HAVE_SDL2) && WEBOLUTION_HAVE_SDL2
 #include <SDL.h>
+#include "app/PresentationBackend.h"
 #include "app/SdlShutdown.hpp"
 #include "app/TouchInput.h"
 #include "app/WindowScale.h"
@@ -12,6 +13,7 @@
 #include "web/Browser.h"
 #endif
 #include <cmath>
+#include <cstdio>
 #include <expected>
 #include <optional>
 #include <string>
@@ -49,8 +51,12 @@ inline SDL_Event touchButton(Uint32 type, TouchPoint point, Uint32 timestamp) {
 class SdlWindow {
  public:
   explicit SdlWindow(int choice = 1, int runOverride = 0,
-                     void (*setIcon)(SDL_Window*) = nullptr)
-      : choice_(choice), runOverride_(runOverride), setIcon_(setIcon) {
+                     void (*setIcon)(SDL_Window*) = nullptr,
+                     RendererChoice requested = RendererChoice::Software,
+                     CreateGlPresenter createGl = nullptr,
+                     const GlFrameComparison* comparison = nullptr)
+      : choice_(choice), runOverride_(runOverride), setIcon_(setIcon),
+        requested_(requested), createGl_(createGl), comparison_(comparison) {
 #ifndef __EMSCRIPTEN__
     scale_ = desktopWindowScale(windowScaleChoice(choice, runOverride), 0);
 #endif
@@ -59,12 +65,13 @@ class SdlWindow {
   SdlWindow& operator=(const SdlWindow&) = delete;
   ~SdlWindow() {
     if (renderer_) SDL_DestroyRenderer(renderer_);
-    if (window_) SDL_DestroyWindow(window_);
+    if (gl_) gl_.reset();
+    else if (window_) SDL_DestroyWindow(window_);
     if (initialized_) quitWindowSubsystems();
   }
   std::expected<void, std::string> ensure(
       const char* title = "Lemmings Webolution " WEBOLUTION_VERSION_STRING) {
-    if (renderer_) return {};
+    if (renderer_ || gl_) return {};
     if (choice_ < 0 || choice_ > kMaxFixedWindowScale || runOverride_ < 0 ||
         runOverride_ > kMaxFixedWindowScale)
       return std::unexpected("window scale must be 0, 1, 2 or 3");
@@ -79,31 +86,75 @@ class SdlWindow {
       SDL_EventState(SDL_MOUSEWHEEL, SDL_IGNORE);
 #endif
     }
-    if (!window_) {
 #ifdef __EMSCRIPTEN__
-      constexpr bool desktop = false;
-      const int initialScale = 1;
-      const auto flags = SDL_WINDOW_SHOWN;
+    constexpr bool desktop = false;
+    const int initialScale = 1;
 #else
-      const bool desktop = hasDesktop();
-      const int initialScale = desktop ? 1 : scale_;
-      const auto flags = desktop ? SDL_WINDOW_HIDDEN : SDL_WINDOW_SHOWN;
+    const bool desktop = hasDesktop();
+    const int initialScale = desktop ? 1 : scale_;
 #endif
-      window_ = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-          kGameWidth * initialScale, kGameHeight * initialScale, flags);
-      if (!window_) return error("SDL_CreateWindow");
+    const int width = kGameWidth * initialScale, height = kGameHeight * initialScale;
+    const auto configureWindow = [&] {
       if (desktop && setIcon_) setIcon_(window_);
       applyWindowScale();
       if (desktop) SDL_ShowWindow(window_);
+    };
+    std::string glFailure;
+    if (requested_ != RendererChoice::Software) {
+      auto result = createGl_ ? createGl_(title, width, height, desktop) :
+          std::expected<std::unique_ptr<GlPresenter>, std::string>(
+              std::unexpected("OpenGL presentation is unavailable in this build"));
+      if (result) {
+        gl_ = std::move(*result);
+        window_ = gl_->window();
+        configureWindow();
+        logBackend("gl", gl_->description());
+        return {};
+      }
+      glFailure = std::move(result.error());
+      bool fallback = requested_ == RendererChoice::Auto;
+#ifdef __EMSCRIPTEN__
+      fallback = fallback || createGl_;  // The browser Start choice always allows fallback.
+#endif
+      if (!fallback) {
+        logBackend("none", glFailure);
+        return std::unexpected(std::move(glFailure));
+      }
+    }
+    if (!window_) {
+      const auto flags = desktop ? SDL_WINDOW_HIDDEN : SDL_WINDOW_SHOWN;
+      window_ = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                 width, height, flags);
+      if (!window_) return error("SDL_CreateWindow");
+      configureWindow();
     }
     // Scale the final 640x480 texture on the GPU when available. Headless
     // drivers use the software fallback. The renderer choice is scale-independent.
-    renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
+#ifdef __EMSCRIPTEN__
+    // A failed WebGL2 attempt must work even if every WebGL context is disabled.
+    if (glFailure.empty())
+#endif
+      renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer_) renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_SOFTWARE);
     if (!renderer_) return error("SDL_CreateRenderer");
+    logBackend("software", glFailure);
     return {};
   }
+  SDL_Window* window() const { return window_; }
   SDL_Renderer* renderer() const { return renderer_; }
+  // The browser presenter retains ownership across a switch to software.
+  bool usesGl() const { return bool(gl_); }
+  bool gpuActive() const { return gl_ && gl_->gpuActive(); }
+  std::expected<void, std::string> presentGl(
+      const Image& image, shell::Screen screen, int frame, Image* shot = nullptr) {
+    const bool compare = gl_->gpuActive() && comparison_ && comparison_->checkpoint && comparison_->compare &&
+                         comparison_->checkpoint(screen, frame);
+    Image comparisonImage;
+    auto* readback = shot ? shot : (compare ? &comparisonImage : nullptr);
+    if (auto presented = gl_->present(image, readback); !presented) return presented;
+    if (compare && gl_->gpuActive()) comparison_->compare(screen, frame, image, *readback);
+    return {};
+  }
   int scale() const { return scale_; }
   void updateWindowScale(std::optional<int> choice, bool displayChanged = false) {
     const bool changed = choice && *choice != choice_;
@@ -218,13 +269,23 @@ class SdlWindow {
   static std::unexpected<std::string> error(const char* action) {
     return std::unexpected(std::string(action) + ": " + SDL_GetError());
   }
+  void logBackend(const char* actual, const std::string& details) const {
+    const char* requested = requested_ == RendererChoice::Auto ? "auto" :
+                            requested_ == RendererChoice::Gl ? "gl" : "software";
+    std::fprintf(stderr, "renderer: requested=%s actual=%s%s%s\n", requested, actual,
+                 details.empty() ? "" : "; ", details.c_str());
+  }
   bool initialized_ = false;
   bool receivedTouch_ = false;
   int choice_, runOverride_;
   void (*setIcon_)(SDL_Window*);
+  RendererChoice requested_;
+  CreateGlPresenter createGl_;
+  const GlFrameComparison* comparison_;
   int scale_ = 1;
   SDL_Window* window_ = nullptr;
   SDL_Renderer* renderer_ = nullptr;
+  std::unique_ptr<GlPresenter> gl_;
 };
 }  // namespace webo::app
 #endif

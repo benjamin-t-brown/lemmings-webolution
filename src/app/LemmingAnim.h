@@ -11,6 +11,7 @@
 #include "app/ActorAnim.h"
 #include "assets/Bitmap.h"
 #include "assets/Sprite.h"
+#include "shell/GlyphDraw.h"
 #include "sim/World.h"
 
 #include <cstddef>
@@ -59,6 +60,8 @@ class LemmingAnimTracker {
 
 // Lit fuses show whole seconds rounded up. An unlit fuse returns zero.
 int bomberCountdownDigit(const sim::Lemming& lemming);
+std::vector<shell::HudGlyph> prepareBomberCountdowns(
+    const sim::World&, std::span<const LevelActorView>, int viewportWidth);
 
 // Provisional countdown draws ^Font glyphs above the sprite. Optional
 // scene depth masks glyph pixels against the actor billboard plane.

@@ -62,7 +62,7 @@ std::expected<RuntimeCursor, std::string> RuntimeCursor::load(const AssetLibrary
   return cursor;
 }
 
-void RuntimeCursor::draw(Image& target, CursorState state, int x, int y) const {
+std::optional<PreparedIconRegion> RuntimeCursor::prepare(CursorState state, int x, int y) const {
   const Image* image = nullptr;
   switch (state) {
     case CursorState::NoLemming: image = &images_[0]; break;
@@ -70,15 +70,19 @@ void RuntimeCursor::draw(Image& target, CursorState state, int x, int y) const {
     case CursorState::Grab: image = &images_[2]; break;
     case CursorState::MouseDown: image = &images_[3]; break;
     case CursorState::Entrance: image = &images_[4]; break;
-    default: return; // Unsupported producers are not silently given artwork.
+    default: return std::nullopt; // Unsupported producers have no artwork.
   }
   // READ 455774/4577CD: full 32x32 quad centered on integer sprite position.
   // NoLem/Lem/Entrance use black-key binary alpha. Grab's mode1 selects SRCALPHA /
   // INVSRCALPHA (414D80). Existing compositor supplies that SOURCE integer
   // blend. Hardware sampling/bias/quantization remains unverified.
   constexpr int halfExtent = cursorExtent / 2;
-  compositeIconRegion(target, *image,
-                      {x - halfExtent, y - halfExtent, 0, 0, cursorExtent, cursorExtent});
+  return PreparedIconRegion{image, {x - halfExtent, y - halfExtent, 0, 0, cursorExtent, cursorExtent}};
+}
+
+void RuntimeCursor::draw(Image& target, CursorState state, int x, int y) const {
+  if (const auto icon = prepare(state, x, y))
+    compositeIconRegion(target, *icon->texture, icon->placement);
 }
 
 } // namespace webo::app

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/CursorPolicy.h"
+#include "app/SkillPanel.h"
 #include "assets/Bitmap.h"
 
 #include <array>
@@ -21,6 +22,7 @@ class RuntimeCursor {
  public:
   static std::expected<RuntimeCursor, std::string> load(const AssetLibrary& library);
   void draw(Image& target, CursorState state, int x, int y) const;
+  std::optional<PreparedIconRegion> prepare(CursorState state, int x, int y) const;
 
  private:
   // Whole cursor images at the 32x32 draw extent.

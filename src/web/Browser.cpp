@@ -4,6 +4,17 @@
 
 namespace webo::web {
 
+EM_JS(bool, browserCanvasAvailable, (), {
+  return typeof document !== 'undefined' && !!Module['canvas'];
+});
+
+EM_JS(bool, webGlSelectedAtStart, (), {
+  return Module['preferredRenderer'] === 'gl';
+});
+
+bool hasBrowserCanvas() { return browserCanvasAvailable(); }
+bool requestedWebGl() { return webGlSelectedAtStart(); }
+
 // Clone addition. Scale the display with CSS. SDL maps it to the 640x480 backing canvas.
 EM_JS(void, applyCanvasScale, (int scale), {
   const canvas = Module['canvas'];

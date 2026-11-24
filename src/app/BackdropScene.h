@@ -20,6 +20,8 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <vector>
 #include <functional>
 #include <utility>
@@ -160,6 +162,26 @@ class BackdropScene {
   // FluidGate draws base Fluid only with live entities_42acac receiver state.
   // Frame order at 0x441845 is tube, +0x160/+0x164, base Fluid, +0x15C, secondary.
   enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe, GadgetEffect, TeleportEffect };
+  struct RootSource;
+  struct PreparedStage {
+    struct Draw {
+      PreparedSceneTriangle triangle;
+      const RootSource* root;
+      std::uint64_t source, ordinal;
+      std::optional<std::size_t> submission;
+      bool nullMaterial = false;
+    };
+    struct Candidate {
+      std::size_t beforeDraw;
+      std::uint64_t source, node, block, triangleCount;
+    };
+    Stage stage = Stage::Primary;
+    bool active = false;
+    std::string_view levelId;
+    BackdropStats stats;
+    std::vector<Draw> draws;
+    std::vector<Candidate> candidates;
+  };
   // Provisional clone fluid depth defaults to LessWriteOn. Original ZENABLE,
   // ZWRITEENABLE, ZFUNC and device ZBIAS are unresolved.
   enum class FluidDepthPolicy { LessWriteOn, LessWriteOff, DepthDisabled };
@@ -194,6 +216,10 @@ class BackdropScene {
   void renderStage(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&, Stage,
                   SceneRasterObserver* observer = nullptr,
                   std::vector<double>* depthOutput = nullptr) const;
+  PreparedStage prepareStage(const CameraBasis&, const AssetLibrary&, Stage,
+                             bool trackHighlights, bool observeCandidates = false) const;
+  static void drawStage(Raster&, const PreparedStage&, BackdropStats&,
+                        const SceneRasterObserver* = nullptr, std::span<double> depthOutput = {});
   // Dispatches the parsed trees with the supplied inputs.
   void visitBillboards(const BillboardSourceInputs& cameraChain,
                        const std::function<void(const SceneBillboardSource&)>& visitor) const;
@@ -231,6 +257,11 @@ class BackdropScene {
                        std::span<const GadgetPresentation::TeleportHoverBinding>,
                        int pointerX, int pointerY,
                        const std::function<void(const sim::OccupancySensor&)>& drawSensor) const;
+  bool prepareSwitchHover(std::vector<HoverFragment>&, const CameraBasis&, const Raster&, const sim::LevelSetup&,
+                          const LeverPresentation*, const PressurePadPresentation*,
+                          std::span<const GadgetPresentation::TeleportHoverBinding>,
+                          int pointerX, int pointerY,
+                          const std::function<void(const sim::OccupancySensor&)>& appendSensor) const;
   // Overrides Secondary visibility byte +0x110, which 0x45DA0D toggles on
   // "cutme" type-1 nodes. A hidden node suppresses its subtree.
   void setSecondaryHidden(std::function<bool(const SceneNode&)> hidden) { secondaryHidden_ = std::move(hidden); }
@@ -293,7 +324,10 @@ class BackdropScene {
   std::vector<FluidGateState> fluidState_;
   bool hasFluidState_ = false;
   FluidDepthPolicy fluidPolicy_ = kProvisionalFluidDepthPolicy;
-  void renderFluid(Raster&, const CameraBasis&, BackdropStats&, SceneRasterObserver* observer) const;
+  void prepareFluid(PreparedStage&, const CameraBasis&, bool observeCandidates) const;
+  std::expected<const SceneRgbaImage*, std::string> stageTexture(
+      const AssetLibrary&, const std::string& asset, bool alphaFromRgb) const;
+  mutable std::map<std::tuple<const AssetLibrary*, std::string, bool>, SceneRgbaImage> stageTextures_;
   std::string levelId_;
   std::vector<std::string> diagnostics_;
   std::map<std::string, SpriteSheet> sheets_;

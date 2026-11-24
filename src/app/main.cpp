@@ -1,6 +1,7 @@
 #include "app/FrameProfile.h"
 #include "app/RasterRows.h"
 #include "app/FrameConsumption.h"
+#include "app/PreparedLevelFrame.h"
 #include "app/Replay.hpp"
 // Ordinary startup opens the connected frontend. Game data lookup also serves
 // diagnostics and replays, with --game-dir and WEBOLUTION_GAME_DIR taking precedence.
@@ -12,7 +13,7 @@
 // --window-scale  Override the saved presentation scale (1, 2 or 3).
 // --native        Render at 640x480.
 // --shot PNG      Save a single headless frame.
-// --window-shot PNG  Save the final CPU frame when --frames N is reached.
+// --window-shot PNG  Save the final logical frame when --frames N is reached.
 //                  SDL_VIDEODRIVER=dummy supports offscreen presentation.
 // --geom route    Draw 0x43A4EC's INN and three OUT passes. Other geometry
 //                  options expose the wall, surface, PolyList and cellmesh banks.
@@ -40,7 +41,6 @@
 #include "app/FrontendSession.h"
 #include "app/FrontendWindow.h"
 #include "app/BackdropScene.h"
-#include "app/SceneFrame.h"
 #include "app/CameraInput.h"
 #include "app/Pick.h"
 #include "app/RuntimePick.h"
@@ -143,6 +143,8 @@ struct Args {
   bool framesSpecified = false;
   int windowScale = 0;  // omitted: use the saved choice in ordinary play
   bool invalidWindowScale = false;
+  app::RendererChoice renderer = app::RendererChoice::Software;
+  bool invalidRenderer = false;
   bool help = false;
   bool version = false;
   bool map = false;
@@ -172,12 +174,13 @@ struct Args {
 
 Args parseArgs(int argc, char** argv) {
   Args a;
-  // Bare startup, --game-dir, --no-audio, --window-scale and --record default
-  // to the frontend. Other tokens select diagnostics unless --frontend is explicit.
+  // Startup options keep the frontend route. Diagnostics select their own route
+  // unless --frontend is explicit.
   bool defaultFrontend = true;
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
-    if (arg != "--game-dir" && arg != "--no-audio" && arg != "--window-scale" && arg != "--record") defaultFrontend = false;
+    if (arg != "--game-dir" && arg != "--no-audio" && arg != "--window-scale" &&
+        arg != "--record" && arg != "--renderer") defaultFrontend = false;
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
     else if (arg == "--version") a.version = true;
@@ -196,6 +199,13 @@ Args parseArgs(int argc, char** argv) {
       const auto value = next();
       if (value == "1" || value == "2" || value == "3") a.windowScale = value[0] - '0';
       else a.invalidWindowScale = true;
+    }
+    else if (arg == "--renderer") {
+      const auto value = next();
+      if (value == "software") a.renderer = app::RendererChoice::Software;
+      else if (value == "gl") a.renderer = app::RendererChoice::Gl;
+      else if (value == "auto") a.renderer = app::RendererChoice::Auto;
+      else a.invalidRenderer = true;
     }
     else if (arg == "--camera") a.camera = next();
     else if (arg == "--geom") a.geom = next();
@@ -245,11 +255,13 @@ void printHelp() {
   std::puts("Lemmings Webolution " WEBOLUTION_VERSION_STRING "\n"
             "webolution [--game-dir PATH] [--frontend | --direct-level | --level ID | --map] [options]\n"
             "--version prints the build version.\n"
-            "No options, or only --game-dir/--no-audio/--window-scale, starts the connected frontend.\n"
+            "No options, or only --game-dir/--no-audio/--window-scale/--renderer/--record, starts the frontend.\n"
             "Any other option keeps its diagnostic route unless --frontend is explicit.\n"
             "--direct-level opens the previous MM_CLIMB_002 injected-walker diagnostic.\n"
             "--level ID --sim starts direct play. Escape opens the level menu.\n"
             "--window-scale 1|2|3 overrides the saved Window size for this run.\n"
+            "--renderer software|gl|auto selects window presentation (default software).\n"
+            "gl requires native OpenGL 3.3 core. auto tries GL and falls back to software.\n"
             "Without a saved Window size, ordinary play uses Auto on desktop or Fill on web.\n"
             "--record DIR records each level attempt as DIR/*.replay (default via Play-Clone.ps1).\n"
             "--replay FILE checks a recording headless at full speed, without opening a save.\n"
@@ -286,20 +298,6 @@ void printHelp() {
             "device or WAV is reported on stderr and the game continues. --no-audio disables sound.");
 }
 
-Image toImage(const app::Framebuffer& fb) {
-  Image image;
-  image.width = fb.width;
-  image.height = fb.height;
-  image.rgba.resize(static_cast<std::size_t>(fb.width) * fb.height * 4);
-  for (std::size_t i = 0, n = static_cast<std::size_t>(fb.width) * fb.height; i < n; ++i) {
-    image.rgba[i * 4] = fb.rgb[i * 3];
-    image.rgba[i * 4 + 1] = fb.rgb[i * 3 + 1];
-    image.rgba[i * 4 + 2] = fb.rgb[i * 3 + 2];
-    image.rgba[i * 4 + 3] = 255;
-  }
-  return image;
-}
-
 #if WEBOLUTION_HAVE_SDL2
 // Truncate projected rectangles toward zero, as the native box accessors do.
 app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
@@ -314,20 +312,18 @@ app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
 // Hover and click share a 32x32 cursor box (0x0045578C) in render pixels;
 // pickBoxOverlaps adjusts it by 4 px per edge. Provisional clone ranking
 // uses nearest displayed body centre after eligibility checks. Ties keep World order.
-std::optional<std::size_t> hoveredActor(const sim::World& world, const app::TubeScene& scene,
-                        const app::SceneOptions& options, const AssetLibrary& library,
-                        const app::CameraBasis& camera, const app::Raster& sceneRaster,
+std::optional<std::size_t> hoveredActor(const sim::World& world, const app::DisplayedFrameQueries& queries,
                         int x, int y, sim::Skill skill, bool firstLevelSupport) {
   // SOURCE stock gate shared by both consumers; -1 remains unlimited.
   if (world.setup().skills[static_cast<std::size_t>(skill)] == 0) return std::nullopt;
-  const auto boxes = scene.injectedWalkerScreenBoxes(camera, options, library, sceneRaster);
+  const auto boxes = queries.actorBoxes();
   std::vector<app::ScreenPickCandidate> candidates;
   std::size_t walker = 0;
   const auto& lemmings = world.lemmings();
   for (std::size_t i = 0; i < lemmings.size(); ++i) {
     if (!lemmings[i].alive())
       continue;
-    if (walker < boxes.size() && boxes[walker] && walker < options.injectedWalkers.size()) {
+    if (walker < boxes.size() && boxes[walker]) {
       const auto& placement = *boxes[walker];
       const auto support = firstLevelSupport ?
           app::firstLevelClimberSupport(lemmings[i], skill, world.terrain()) : std::nullopt;
@@ -458,24 +454,36 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
     }
     auto* renderer = presentation.renderer();
-    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, 640, 480);
-    if (!texture || SDL_UpdateTexture(texture, nullptr, map->image().rgba.data(), 640*4) != 0) {
-      std::fprintf(stderr, "SDL map texture: %s\n", SDL_GetError());
-      if (texture) SDL_DestroyTexture(texture);
-      return 1;
+    std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> texture(nullptr, SDL_DestroyTexture);
+    if (renderer) {
+      texture.reset(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32,
+                                      SDL_TEXTUREACCESS_STATIC, 640, 480));
+      if (!texture || SDL_UpdateTexture(texture.get(), nullptr, map->image().rgba.data(), 640*4) != 0) {
+        std::fprintf(stderr, "SDL map texture: %s\n", SDL_GetError());
+        return 1;
+      }
+      SDL_SetTextureScaleMode(texture.get(), SDL_ScaleModeNearest);
     }
-    SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
     bool running = true;
+    int frame = 0;
     do {
 #ifdef __EMSCRIPTEN__
       web::nextFrame();
 #endif
       SDL_Event event; while (SDL_PollEvent(&event)) if (event.type == SDL_QUIT ||
           (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) running = false;
-      SDL_RenderClear(renderer); SDL_RenderCopy(renderer, texture, nullptr, nullptr); SDL_RenderPresent(renderer);
+      if (presentation.usesGl()) {
+        if (auto shown = presentation.presentGl(map->image(), shell::Screen::Map, frame++); !shown) {
+          std::fprintf(stderr, "map presenter: %s\n", shown.error().c_str());
+          return 1;
+        }
+      } else {
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr);
+        SDL_RenderPresent(renderer);
+      }
       if (args.frames > 0) running = false;
     } while (running);
-    SDL_DestroyTexture(texture);
     return 0;
 #else
     std::fprintf(stderr, "SDL2 unavailable: map window mode is not built (use --shot for headless rendering)\n");
@@ -758,7 +766,6 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       scene->syncCounterGates(world->setup().counterGates);
     }
   };
-  std::vector<double> fluidDrownSceneDepth, pipeSceneDepth;
   bool hasPipes = false;
   if (backdrop) backdrop->visitRoots([&](const auto& source, const auto&) {
     hasPipes |= source.stage == app::BackdropScene::Stage::FluidPipe;
@@ -766,9 +773,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   // Primary is the immutable paired-primary tree. Doors, balloons, hazards,
   // levers and opaque gadget parts are LegacyUnattributed. Pad beams, flipper
   // coils, fluids and the secondary tree draw in uncached passes after the tube.
-  std::optional<app::Raster> primaryCache, tubeCache;
+  std::shared_ptr<const app::BackdropScene::PreparedStage> primaryDraws;
+  std::shared_ptr<const app::TubeScene::PreparedTube> tubeDraws;
+  app::SoftwareLevelRaster software;
   std::optional<app::CameraBasis> primaryPose, tubePose, previousCamera;
-  app::BackdropStats primaryStats;
   std::size_t tubeTerrainRevision = 0;
   const auto sameCamera = [](const app::CameraBasis& a, const app::CameraBasis& b) {
     return a.worldToView == b.worldToView && a.projectionVector == b.projectionVector &&
@@ -783,20 +791,70 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const bool trackSceneHover = args.sim &&
       ((leverPresentation && !leverPresentation->bindings.empty()) ||
        (pressurePadPresentation && !pressurePadPresentation->bindings.empty()) || !teleportHover.empty());
-  auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target, bool scenePrepared = false) {
+  const bool c3Diagnostic = !args.c3WriteMask.empty() || !args.c3WriteEvents.empty();
+  using BackdropStage = app::BackdropScene::Stage;
+  const auto prepareLevelScene = [&](const app::CameraBasis& camera) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
-    const auto frameCamera = app::buildCamera(frameParams);
+    app::PreparedLevelScene frame;
+    frame.camera = camera;
+    frame.cachePose = !previousCamera || sameCamera(*previousCamera, camera);
+    previousCamera = camera;
+    frame.trackHighlights = trackSceneHover;
+    frame.hasPipes = hasPipes;
+    frame.hasFluidDrowning = std::ranges::any_of(options.injectedWalkers,
+        [](const auto& actor) { return actor.drownFluidKind >= 0; });
+    const bool actorsBeforeRoute = options.composeActorsBeforeRoute && options.drawCellRoute &&
+                                   !options.flat && !options.injectedWalkers.empty();
+    const bool drawActors = options.drawCellRoute && (!options.composeActorsBeforeRoute || actorsBeforeRoute);
+    frame.passes = app::prepareLevelPassOrder(drawActors, actorsBeforeRoute, darkBlueSky, frame.hasFluidDrowning);
+    frame.cacheTube = options.depthTest && !options.flat && !options.composeActorsBeforeRoute && !c3Diagnostic;
+    if (backdrop) {
+      if (!c3Diagnostic && primaryDraws && sameCamera(*primaryPose, camera)) {
+        frame.primary = primaryDraws;
+      } else {
+        frame.primary = std::make_shared<app::BackdropScene::PreparedStage>(
+            backdrop->prepareStage(camera, *library, BackdropStage::Primary, false, c3Diagnostic));
+        if (!c3Diagnostic && frame.cachePose) {
+          primaryDraws = frame.primary;
+          primaryPose = camera;
+        }
+      }
+      frame.legacy = backdrop->prepareStage(camera, *library, BackdropStage::LegacyUnattributed, trackSceneHover);
+    }
+    const auto revision = scene->terrainBlocksRebuilt() + scene->counterGateRevision();
+    if (frame.cacheTube && tubeDraws && tubeTerrainRevision == revision && sameCamera(*tubePose, camera)) {
+      frame.tube = tubeDraws;
+    } else {
+      frame.tube = std::make_shared<app::TubeScene::PreparedTube>(
+          scene->prepareTube(camera, options, trackSceneHover));
+      if (frame.cacheTube && frame.cachePose) {
+        tubeDraws = frame.tube;
+        tubePose = camera;
+        tubeTerrainRevision = revision;
+      }
+    }
+    if (backdrop) {
+      frame.gadgetEffects = backdrop->prepareStage(camera, *library, BackdropStage::GadgetEffect, trackSceneHover);
+      frame.pipes = backdrop->prepareStage(camera, *library, BackdropStage::FluidPipe, trackSceneHover);
+      frame.fluid = backdrop->prepareStage(camera, *library, BackdropStage::FluidGate, trackSceneHover);
+      frame.secondary = backdrop->prepareStage(camera, *library, BackdropStage::Secondary, trackSceneHover);
+    }
+    if (world) frame.counterGates = scene->prepareCounterGates(camera, *library, world->setup().counterGates);
+    frame.explosionMarks = scene->prepareExplosionDecals(camera);
+    if (drawActors || world)
+      frame.actors = scene->prepareActors(camera, options, *library, bool(world));
+    frame.particles = scene->prepareDeathParticles(camera, *library);
+    if (backdrop)
+      frame.teleportEffects = backdrop->prepareStage(camera, *library, BackdropStage::TeleportEffect, trackSceneHover);
+    return frame;
+  };
+  const auto renderLevelScene = [&](const app::PreparedLevelScene& frame, app::Raster& target) {
+    app::profile::Scope profilePrepare(app::profile::Preparation);
+    const auto& frameCamera = frame.camera;
     app::BackdropStats backdropStats;
     app::SceneRasterObserver observer;
     std::vector<std::uint8_t> c3Mask;
     std::ofstream c3Out;
-    const bool c3Diagnostic=!args.c3WriteMask.empty()||!args.c3WriteEvents.empty();
-    const bool primaryHit = !c3Diagnostic && primaryCache && sameCamera(*primaryPose, frameCamera);
-    // Draw moving poses directly. Populate the pose caches on a repeated pose.
-    const bool cachePose = !previousCamera || sameCamera(*previousCamera, frameCamera);
-    previousCamera = frameCamera;
-    target.trackSceneHighlights(false);
-    if (!primaryHit) target.clear(0, 0, 0);
     if(c3Diagnostic){
       if(args.c3WriteMask.empty()||args.c3WriteEvents.empty()||frameCamera.width!=640||frameCamera.height!=480){std::fprintf(stderr,"C3 diagnostic requires both paths and a 640x480 frame\n");std::exit(2);}
       std::ifstream mf(args.c3WriteMask,std::ios::binary);c3Mask.assign(std::istreambuf_iterator<char>(mf),{});
@@ -810,127 +868,24 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         for(auto v:e.colorAfter)c3Out<<','<<unsigned(v);
         c3Out<<','<<e.depthBefore<<','<<e.depthAfter<<','<<e.depthAssigned<<'\n';};
     }
-    if (!scenePrepared) prepareScene();
-    fluidDrownSceneDepth.clear();
-    options.fluidDrownSceneDepth = {};
-    options.pipeSceneDepth = {};
-    auto geometryOptions = options;
-    if (!options.composeActorsBeforeRoute) geometryOptions.injectedWalkers.clear();
-    const bool fluidDrowning = std::any_of(options.injectedWalkers.begin(), options.injectedWalkers.end(),
-        [](const auto& l) { return l.drownFluidKind >= 0; });
-    std::vector<double> afterFluidDepth;
-    app::scheduleSceneFrame(
-          [&] {
-            if (!backdrop) return;
-            if (primaryHit) {
-              target = *primaryCache;
-              backdropStats = primaryStats;
-            } else {
-              backdrop->renderStage(target, frameCamera, *library, backdropStats,
-                  app::BackdropScene::Stage::Primary, c3Diagnostic ? &observer : nullptr);
-              if (!c3Diagnostic && cachePose) {
-                primaryCache = target; primaryPose = frameCamera; primaryStats = backdropStats;
-              }
-            }
-          },
-         [&] {
-           target.trackSceneHighlights(trackSceneHover);
-           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
-               app::BackdropScene::Stage::LegacyUnattributed);
-         },
-         [&] {
-           // Cache the nearest opaque tube fragments and merge after the animated legacy stage.
-           if (!geometryOptions.depthTest || geometryOptions.flat || geometryOptions.composeActorsBeforeRoute || c3Diagnostic) {
-             scene->render(target, frameCamera, geometryOptions, library);
-             return;
-           }
-           const auto revision = scene->terrainBlocksRebuilt() + scene->counterGateRevision();
-           const auto renderTube = [&](app::Raster& destination) {
-             app::detail::RasterCommandBatch batch(frameCamera.height);
-             scene->render(destination, frameCamera, geometryOptions, library);
-             app::profile::Scope rasterTime(app::profile::TubeRaster);
-             batch.flush();
-           };
-           if (!tubeCache || tubeTerrainRevision != revision || !sameCamera(*tubePose, frameCamera)) {
-             if (!cachePose) {
-               renderTube(target);
-               return;
-             }
-             if (!tubeCache || tubeCache->framebuffer().width != frameCamera.width ||
-                 tubeCache->framebuffer().height != frameCamera.height) {
-               tubeCache.emplace(frameCamera.width, frameCamera.height);
-               tubeCache->trackSceneHighlights(trackSceneHover);
-             }
-             tubeCache->clear(0, 0, 0);
-             tubeCache->resetDrawCounts();
-             renderTube(*tubeCache);
-             tubePose = frameCamera; tubeTerrainRevision = revision;
-           }
-           target.compositeOpaque(*tubeCache);
-         },
-         [&] {
-           // Pad beams and flipper coils add light to the tube colour. The original
-           // draws them inside its tube walker. Composite them over the completed
-           // opaque tube here, using its depth to keep foreground ledges solid.
-           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
-               app::BackdropScene::Stage::GadgetEffect);
-           // 0x4418C2: draw all receiver pipes after the tube and before water.
-           // Include their opaque depth in the drowning-actor scenery snapshot.
-           if (backdrop) {
-             if (hasPipes)
-               pipeSceneDepth.assign(target.depthBuffer().size(), std::numeric_limits<double>::infinity());
-             backdrop->renderStage(target, frameCamera, *library, backdropStats,
-                 app::BackdropScene::Stage::FluidPipe, nullptr, hasPipes ? &pipeSceneDepth : nullptr);
-             if (hasPipes) options.pipeSceneDepth = pipeSceneDepth;
-           }
-           if (fluidDrowning) fluidDrownSceneDepth = target.depthBuffer();
-           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate);
-           if (fluidDrowning) afterFluidDepth = target.depthBuffer();
-         },
-         [&] {
-           if (app::ScopedFrameConsumption::observing())
-             app::detail::frameSpriteCoverage().assign(std::size_t(frameCamera.width) * frameCamera.height, 0);
-           std::vector<std::uint8_t> spriteObserveAll;
-           if (app::ScopedFrameConsumption::observing())
-             spriteObserveAll.assign(std::size_t(frameCamera.width) * frameCamera.height, 1);
-           app::SceneRasterObserver spriteCoverage;
-           spriteCoverage.mask = &spriteObserveAll;
-           if (app::ScopedFrameConsumption::observing()) spriteCoverage.accepted = [&](const app::SceneRasterWriteEvent& e) {
-             if (backdrop->spriteState(e.source)) app::detail::frameSpriteCoverage()[e.pixel] = 1;
-           };
-           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
-               app::BackdropScene::Stage::Secondary,
-               app::ScopedFrameConsumption::observing() ? &spriteCoverage : nullptr);
-           if (world) scene->renderCounterGates(target, frameCamera, *library, world->setup().counterGates);
-         });
-    if (darkBlueSky) {
-      // Provisional clone sky fills uncovered pixels after water blends with the black clear.
-      auto& rgb = target.mutableFramebuffer().rgb;
-      const auto& depth = target.depthBuffer();
-      for (std::size_t p = 0; p < depth.size(); ++p) {
-        if (depth[p] != std::numeric_limits<double>::infinity()) continue;
-        const std::size_t i = 3 * p;
-        if (rgb[i] != 0 || rgb[i + 1] != 0 || rgb[i + 2] != 0) continue;
-        rgb[i] = 4;
-        rgb[i + 1] = 8;
-        rgb[i + 2] = 24;
-      }
+    std::vector<std::uint8_t> spriteObserveAll;
+    app::SceneRasterObserver spriteCoverage;
+    if (app::ScopedFrameConsumption::observing()) {
+      const auto pixels = std::size_t(frameCamera.width) * frameCamera.height;
+      app::detail::frameSpriteCoverage().assign(pixels, 0);
+      spriteObserveAll.assign(pixels, 1);
+      spriteCoverage.mask = &spriteObserveAll;
+      spriteCoverage.accepted = [&](const app::SceneRasterWriteEvent& event) {
+        if (backdrop->spriteState(event.source)) app::detail::frameSpriteCoverage()[event.pixel] = 1;
+      };
     }
-    if (fluidDrowning) {
-      // Provisional drowning occlusion includes all opaque stages, including
-      // the later secondary pass. The additive figure can show through its fluid.
-      const auto& completed = target.depthBuffer();
-      for (std::size_t p = 0; p < fluidDrownSceneDepth.size(); ++p)
-        if (completed[p] != afterFluidDepth[p]) fluidDrownSceneDepth[p] = completed[p];
-      options.fluidDrownSceneDepth = fluidDrownSceneDepth;
+    {
+#if WEBOLUTION_HAVE_SDL2
+      app::detail::ScopedSerialRaster serialRaster(sharedWindow->gpuActive());
+#endif
+      software.draw(target, frame, backdropStats,
+          c3Diagnostic ? &observer : nullptr, app::ScopedFrameConsumption::observing() ? &spriteCoverage : nullptr);
     }
-    // Test actors against the completed scene depth.
-    scene->drawExplosionDecals(target, frameCamera);
-    if (options.drawCellRoute && !options.composeActorsBeforeRoute)
-      scene->drawInjectedWalkers(target, frameCamera, options, *library);
-    scene->drawDeathParticles(target, frameCamera, *library, options.pipeSceneDepth);
-    if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
-        app::BackdropScene::Stage::TeleportEffect);
 #ifndef __EMSCRIPTEN__
     if (logLevelDetails && !args.sceneOff) {
       std::fprintf(stderr, "backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu "
@@ -949,10 +904,28 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       std::fprintf(stderr, "backdrop: sprite scenery generator state at first draw = 0x%08x (%s)\n",
                    *backdrop->firstSpriteDrawRandomState(), seedSource);
     }
-    return frameCamera;
   };
+#if WEBOLUTION_HAVE_SDL2
+  auto& presentation = *sharedWindow;
+  const auto ensureLevelPresentation = [&] {
+    if (persistentFrontend) presentation.updateWindowScale(persistentFrontend->windowScale());
+    if (auto ready = presentation.ensure(
+        "Lemmings Webolution " WEBOLUTION_VERSION_STRING
+        " — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip"); !ready) {
+      std::fprintf(stderr, "SDL: %s\n", ready.error().c_str());
+      return false;
+    }
+    return true;
+  };
+  // Resolve auto before the first raster batch so only a real GL backend runs serially.
+  const bool selectRendererBeforeDraw = args.shot.empty() && args.renderer != app::RendererChoice::Software;
+  if (selectRendererBeforeDraw && !ensureLevelPresentation()) return 1;
+  const bool useGl = presentation.usesGl();
+#endif
   app::Raster raster(params.width, params.height);
-  const auto camera = renderFrame(params, raster);
+  const auto camera = app::buildCamera(params);
+  prepareScene();
+  renderLevelScene(prepareLevelScene(camera), raster);
 
   if (logLevelDetails) {
     std::printf(
@@ -970,7 +943,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     std::fprintf(stderr, "tile: %s\n", missing.c_str());
 
   if (!args.shot.empty()) {
-    Image image = toImage(raster.framebuffer());
+    Image image = app::sceneImage(raster.framebuffer());
     if (args.skillPanel) {
       // Draw the headless skill panel.
       if (auto panel = app::drawRetailSkillPanel(image, *library, args.level); !panel) {
@@ -1066,37 +1039,34 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     cues->prepareLevelMusic();
     if (!(args.sim && world)) cues->playLevelMusic(); // Scene-only diagnostics have no entry clock.
   }
-  auto& presentation = *sharedWindow;
-  if (persistentFrontend) presentation.updateWindowScale(persistentFrontend->windowScale());
-  if (auto ready = presentation.ensure(
-      "Lemmings Webolution " WEBOLUTION_VERSION_STRING
-      " — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip"); !ready) {
-    std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
-  }
+  if (!selectRendererBeforeDraw && !ensureLevelPresentation()) return 1;
   SDL_Renderer* presenter = presentation.renderer();
   // RGBX uploads use the first three bytes of the composed HUD pixels.
   bool uploadRgbx = args.sim && world;
-  const auto makeTexture = [&](Uint32 format) {
-    return SDL_CreateTexture(presenter, format, SDL_TEXTUREACCESS_STREAMING, 640, 480);
-  };
   std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> ownedTexture(
-      makeTexture(uploadRgbx ? SDL_PIXELFORMAT_RGBX32 : SDL_PIXELFORMAT_RGB24), SDL_DestroyTexture);
-  if (!ownedTexture && uploadRgbx) {
-    uploadRgbx = false;
-    ownedTexture.reset(makeTexture(SDL_PIXELFORMAT_RGB24));
+      nullptr, SDL_DestroyTexture);
+  if (presenter) {
+    const auto makeTexture = [&](Uint32 format) {
+      return SDL_CreateTexture(presenter, format, SDL_TEXTUREACCESS_STREAMING, 640, 480);
+    };
+    ownedTexture.reset(makeTexture(uploadRgbx ? SDL_PIXELFORMAT_RGBX32 : SDL_PIXELFORMAT_RGB24));
+    if (!ownedTexture && uploadRgbx) {
+      uploadRgbx = false;
+      ownedTexture.reset(makeTexture(SDL_PIXELFORMAT_RGB24));
+    }
+    if (!ownedTexture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); return 1; }
+    if (SDL_SetTextureScaleMode(ownedTexture.get(), SDL_ScaleModeNearest) != 0) {
+      std::fprintf(stderr, "SDL texture scale: %s\n", SDL_GetError()); return 1;
+    }
   }
   std::vector<std::uint8_t> rgbFallback;
-  SDL_Texture* texture = ownedTexture.get();
-  if (!texture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); return 1; }
-  if (SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest) != 0) {
-    std::fprintf(stderr, "SDL texture scale: %s\n", SDL_GetError()); return 1;
-  }
 
   params.width = 640; params.height = 480; params.aspect = 4.0 / 3.0;
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
                                  static_cast<int>(params.levelEyeHeight));
   app::Raster windowRaster(640, 480);
   bool running = true, leftDown = false, focused = true;
+  bool presentationFailed = false;
   Uint8 dragButton = 0;
   app::TouchInput touch;
   app::TouchInput menuTouch;
@@ -1120,7 +1090,6 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   // The 144 Hz camera clock is independent of simulation and redraw cadence.
   // Connected entry starts at tick 0. --sim-ticks can seed the direct-level World.
   app::RuntimeSimState runtimeSim;
-  bool entryVoicePending = true;
   const auto uiClick = [&] { if (cues) cues->playUiClick(); };
   // Audio events are taken after each simulation update and successful skill
   // assignment. Snapshot the current camera; active one-shots keep their gains.
@@ -1246,8 +1215,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   std::optional<Image> finalWindowFrame;
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
   auto displayedPickReference = controls.pickReference();
-  auto displayedScenePose = cameraIntro.pose(controls.camera());
-  // After a discarded loop frame, a click refreshes invalid scene depth.
+  std::optional<app::PreparedLevelFrame> displayedFrame;
+  std::optional<app::DisplayedFrameQueries> displayedQueries;
   bool windowSceneCurrent = true;
   bool pointerInWindow = true;
   // First-draw sprite latches consume RNG in dispatch order. Until every sprite
@@ -1274,17 +1243,26 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (active && !runtimeSim.fastForward()) uiClick(); // Original plate 8 has no play call.
     runtimeSim.setFastForward(active);
   };
-  const auto ensureDisplayedScene = [&] {
+  const auto ensureDisplayedScene = [&]() -> app::DisplayedFrameQueries& {
     if (!windowSceneCurrent) {
-      displayedCamera = renderFrame(displayedScenePose, windowRaster, true);
+      displayedFrame.emplace(app::PreparedLevelFrame{prepareLevelScene(displayedCamera), {}});
+      renderLevelScene(displayedFrame->scene, windowRaster);
       windowSceneCurrent = true;
     }
+    if (!displayedQueries) displayedQueries.emplace(displayedCamera, windowRaster);
+    if (!displayedQueries->sceneResultsReady()) {
+      auto boxes = displayedFrame ? displayedFrame->scene.actors.boxes :
+          scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
+      auto hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
+          std::vector<app::HatchHoverTarget>{};
+      if (world)
+        for (auto& h : hatches) h.remaining = world->remainingFromEntrance(h.index);
+      displayedQueries->setSceneResults(std::move(boxes), std::move(hatches));
+    }
+    return *displayedQueries;
   };
   const auto pickActorAt = [&](int x, int y, sim::Skill skill) {
-    // Use the displayed scene even if its observer did not inspect pixels.
-    ensureDisplayedScene();
-    return hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
-                        x, y, skill, args.level == "MM_CLIMB_002");
+    return hoveredActor(*world, ensureDisplayedScene(), x, y, skill, args.level == "MM_CLIMB_002");
   };
   const auto assignActor = [&](std::optional<std::size_t> hit, sim::Skill skill) {
     // Record the resolved simulation target, never the picking pixels.
@@ -1303,19 +1281,17 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         x < 0 || x >= displayedCamera.width || y < 0 || y >= displayedCamera.height ||
         (runtimePanel && app::runtimeSkillPanelIndex(x, y) >= 0))
       return std::nullopt;
-    ensureDisplayedScene();
-    const auto pixel = std::size_t(y) * displayedCamera.width + x;
-    const double actorDepth = windowRaster.actorDepth().depthAt(pixel);
-    const double depth = std::isfinite(actorDepth) ? actorDepth : windowRaster.depthBuffer()[pixel];
-    return app::cursorZoomPose(displayedCamera, cameraIntro.pose(controls.camera()),
-        x + 0.5, y + 0.5, depth);
+    const auto& queries = ensureDisplayedScene();
+    const auto depth = queries.pointDepth(x, y);
+    if (!depth) return std::nullopt;
+    return app::cursorZoomPose(queries.camera(), cameraIntro.pose(controls.camera()),
+        x + 0.5, y + 0.5, *depth);
   };
   std::optional<Uint64> releasePressedAt;
   const auto hatchPressTarget = [&](int x, int y, int button, bool actorCanReceiveSkill)
       -> std::optional<std::size_t> {
     if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y) >= 0) return std::nullopt;
-    ensureDisplayedScene();
-    const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
+    const auto targets = ensureDisplayedScene().hatches();
     const auto hit = app::RuntimeReleaseRateControl::pressTarget(targets, x, y, button, actorCanReceiveSkill);
     return hit ? std::optional{targets[*hit].index} : std::nullopt;
   };
@@ -1331,8 +1307,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   };
   const auto advanceReleaseHold = [&](double elapsed) {
     if (!releaseControl || !releaseControl->holding()) return false;
-    ensureDisplayedScene();
-    const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
+    const auto targets = ensureDisplayedScene().hatches();
     const auto [x, y] = scenePointer();
     return releaseControl->advance(elapsed, targets, x, y, *world);
   };
@@ -1366,7 +1341,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     SDL_SetRelativeMouseMode(SDL_FALSE);
     // Restore the frozen pointer in window pixels for subsequent motion.
     const int scale = presentation.scale();
-    SDL_WarpMouseInWindow(SDL_RenderGetWindow(presenter),
+    SDL_WarpMouseInWindow(presentation.window(),
                           pointerX * scale + scale / 2, pointerY * scale + scale / 2);
   };
   const auto cancelCameraDrag = [&] {
@@ -1431,7 +1406,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   app::profile::Run frameProfile;
   const char* profilePath = std::getenv("WEBOLUTION_FRAME_PROFILE");
   SDL_RendererInfo rendererInfo{};
-  if ((logLevelDetails || (profilePath && *profilePath)) &&
+  if (presenter && (logLevelDetails || (profilePath && *profilePath)) &&
       SDL_GetRendererInfo(presenter, &rendererInfo) == 0)
     std::fprintf(stderr, "presenter: %s flags=0x%x software=%d vsync=%d; simulation frames do not sleep\n",
         rendererInfo.name, rendererInfo.flags, bool(rendererInfo.flags & SDL_RENDERER_SOFTWARE),
@@ -1689,8 +1664,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           releaseControl->reset();
           if (action.hatchSlide == app::TouchHatchSlide::Neutral) break;
           const int button = action.hatchSlide == app::TouchHatchSlide::Up ? SDL_BUTTON_RIGHT : SDL_BUTTON_LEFT;
-          ensureDisplayedScene();
-          const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
+          const auto targets = ensureDisplayedScene().hatches();
           // The origin stays on the selected hatch while the finger slides.
           const auto [x, y] = scenePointer();
           if (app::hoveredHatch(targets, x, y, touchHatch)) startReleaseHold(touchHatch, button);
@@ -1926,16 +1900,16 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       }
       params = controls.camera();
       const auto displayedPose = cameraIntro.pose(params);
-      displayedScenePose = displayedPose;
       displayedCamera = app::buildCamera(displayedPose);
       displayedPickReference = controls.pickReference();
       prepareScene();
       windowSceneCurrent = false;
+      displayedQueries.emplace(displayedCamera, windowRaster);
+      displayedFrame.reset();
       // Sample the pose before advancing intro time. Pause freezes the intro clock.
       cameraIntro.advanceAfterFrame(elapsed, runtimeSim.paused());
-      Image image;
       std::vector<app::LevelActorView> actors;
-      std::vector<app::HatchHoverTarget> hatches;
+      std::span<const app::HatchHoverTarget> hatches;
       bool touchMenuDrawn = false;
       // This state-only view is never offered to an ordinary observer. The
       // explicit automation scope opts into inspectLevelFrame() for pixels,
@@ -1943,7 +1917,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       const auto cueFrame = mapPlay && entryCue ? entryCue->frame() : std::nullopt;
       std::optional<app::LevelFrameView> pendingView;
       if (args.sim && world && runtimeFont && runtimePanel)
-        pendingView.emplace(app::LevelFrameView{rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
+        pendingView.emplace(app::LevelFrameView{rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors,
+                         displayedQueries->imageStorage(),
                          std::nullopt, cursorX, cursorY, app::CursorState::Hidden,
                          runtimeSim.endTransition().phase(), runtimeSim.endTransition().timerSeconds(),
                          cameraIntro.active(), mapPlay && entryCue ? entryCue->seconds() : 0.0,
@@ -1956,12 +1931,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                          hatches});
       const std::function<void()> materialize = [&] {
         if (windowSceneCurrent) return;
-        displayedCamera = renderFrame(displayedPose, windowRaster, true);
-        windowSceneCurrent = true;
+        auto& queries = ensureDisplayedScene();
         if (pendingView) {
           auto& view = *pendingView;
           app::profile::Scope profileHud(app::profile::Hud);
-          image = toImage(windowRaster.framebuffer());
+          auto& layers = displayedFrame->layers;
+          const auto& camera = queries.camera();
           const int panelIndex = app::runtimeSkillPanelIndex(cursorX, cursorY);
           const bool canHover = focused && !menuOpen() && !cameraDragging() && panelIndex < 0;
           const bool cursorInWindow = touchCursor.has_value() || pointerInWindow;
@@ -1969,18 +1944,16 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           const auto hudLines = shell::layoutHud(app::runtimeHudValues(*world), {}, hudCells);
           const bool pointerOnHud = !teleportHover.empty() && canHover && cursorInWindow &&
               overStatusHud(cursorX, cursorY, hudLines, hudCells);
+          std::vector<app::HoverFragment> highlights;
           const bool switchHover = canHover && cursorInWindow && backdrop &&
-            backdrop->drawSwitchHover(image, displayedCamera, windowRaster, world->setup(),
+            backdrop->prepareSwitchHover(highlights, camera, windowRaster, world->setup(),
                 leverPresentation ? &*leverPresentation : nullptr,
                 pressurePadPresentation ? &*pressurePadPresentation : nullptr,
                 pointerOnHud ? TeleportHoverBindings{} : teleportHover, cursorX, cursorY,
                 [&](const sim::OccupancySensor& sensor) {
-                  scene->drawHoveredSensor(image, displayedCamera, windowRaster, sensor);
+                  scene->prepareHoveredSensor(highlights, camera, windowRaster, sensor);
                 });
-          hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
-              std::vector<app::HatchHoverTarget>{};
-          for (auto& h : hatches)
-            h.remaining = world->remainingFromEntrance(h.index);
+          hatches = queries.hatches();
           std::optional<std::size_t> heldHatch;
           if (releaseControl && cursorInWindow && focused && !menuOpen() && !cameraDragging()) {
             heldHatch = touchHatch && touchCursor
@@ -1989,7 +1962,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           }
           const auto selectedSkill = skillSelection.selectedSkill();
           auto hover = canHover && !heldHatch ?
-              hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
+              hoveredActor(*world, queries,
                   cursorX, cursorY, selectedSkill, args.level == "MM_CLIMB_002") : std::nullopt;
           const bool actorCanReceiveSkill = hover && world->canAssign(*hover, selectedSkill);
           // Idle feedback follows left-click precedence. While adjusting a
@@ -2000,49 +1973,60 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                 hatches, cursorX, cursorY, SDL_BUTTON_LEFT, actorCanReceiveSkill);
           if (hatchHover) hover.reset();
           // The picker can resolve a refused click. Only a skill recipient gets the body redraw.
-          if (hover && actorCanReceiveSkill && cursorInWindow && cursorX >= 0 && cursorX < image.width &&
-              cursorY >= 0 && cursorY < image.height) {
+          if (hover && actorCanReceiveSkill && cursorInWindow && cursorX >= 0 && cursorX < camera.width &&
+              cursorY >= 0 && cursorY < camera.height) {
             // Injected walkers contain the live actors in World order.
             const auto& lemmings = world->lemmings();
             const auto walker = std::count_if(lemmings.begin(), lemmings.begin() + *hover,
                                               [](const sim::Lemming& l) { return l.alive(); });
-            if (scene->drawHoveredWalker(image, walker, displayedCamera, options, *library, windowRaster))
-              view.markedActor = hover;
+            if (scene->prepareHoveredWalker(highlights, walker, camera, displayedFrame->scene.actors,
+                    windowRaster, software.drowningDepth(), software.pipeDepth())) view.markedActor = hover;
           }
+          if (!highlights.empty()) layers.draws.emplace_back(std::move(highlights));
           if (hatchHover) {
             const auto& target = hatches[*hatchHover];
             const auto adjustingRate = heldHatch
                 ? std::optional{world->setup().entrances[target.index].releaseRate} : std::nullopt;
-            app::drawHatchHover(image, *runtimeFont, target, adjustingRate);
+            layers.appendText(*runtimeFont, app::layoutHatchHover(camera.width, camera.height, target, adjustingRate));
           } else if (canHover && cursorInWindow && backdrop && !hover && !switchHover) {
-            if (const auto exit = backdrop->exitHoverTarget(displayedCamera, windowRaster, cursorX, cursorY))
-              app::drawExitHover(image, *runtimeFont, *exit, world->setup().saveTarget);
+            if (const auto exit = backdrop->exitHoverTarget(camera, windowRaster, cursorX, cursorY)) {
+              const auto label = app::layoutExitHover(camera.width, camera.height, *exit, world->setup().saveTarget);
+              layers.appendText(*runtimeFont, std::span(&label, 1));
+            }
           }
-          app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
-                                     &*panelIconAnimation);
+          const auto counts = app::runtimeSkillPanelCounts(*world);
+          layers.draws.emplace_back(runtimePanel->prepare(counts, skillSelection.selectedIndex(),
+              runtimeSim.fastForward(), &*panelIconAnimation));
           for (std::size_t i = 0; i < hudIcons.size(); ++i)
-            app::compositeIconRegion(image, runtimeHudIcons[i], hudIcons[i].placement);
-          shell::drawHud(image, *runtimeFont, hudLines, hudCells);
-          app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
-          // Draw a countdown over each lemming with a lit fuse.
-          if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
-                          [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
-            const auto fuseBoxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
-            std::vector<app::LevelActorView> fuseActors;
-            std::size_t fuseWalker = 0;
+            layers.draws.emplace_back(app::PreparedIconRegion{&runtimeHudIcons[i], hudIcons[i].placement});
+          layers.appendText(*runtimeFont, hudLines);
+          if (const auto nuke = app::prepareNukeFeedback(world->nukeRequested(), nukeInput.armed())) {
+            for (const auto& rect : nuke->outline) layers.draws.emplace_back(rect);
+            layers.appendText(*runtimeFont, std::span(&nuke->hint, 1));
+          }
+          // The same placement records serve the observer and depth-tagged fuse digits.
+          const bool hasFuses = !args.noActorAnim && std::ranges::any_of(world->lemmings(),
+              [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; });
+          if (levelObserver || hasFuses) {
+            const auto boxes = queries.actorBoxes();
+            std::size_t walker = 0;
             for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
               if (!world->lemmings()[i].alive()) continue;
-              if (fuseWalker < fuseBoxes.size() && fuseBoxes[fuseWalker])
-                fuseActors.push_back({i, *fuseBoxes[fuseWalker]});
-              ++fuseWalker;
+              if (walker < boxes.size() && boxes[walker]) {
+                const auto& drawn = options.injectedWalkers[walker];
+                actors.push_back({i, *boxes[walker], drawn.clip, drawn.walkTemporalIndex,
+                                 {drawn.plus8X, drawn.plus8Y, drawn.plus8Z}});
+              }
+              ++walker;
             }
-            app::drawBomberCountdowns(image, *runtimeFont, *world, fuseActors, windowRaster.mutableDepthBuffer());
           }
+          if (hasFuses)
+            layers.draws.emplace_back(app::PreparedLevelLayers::Text{
+                &*runtimeFont, app::prepareBomberCountdowns(*world, actors, camera.width)});
           if (cueFrame) {
-            app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
-            // Request Letsgo on the first drawn cue frame, once per level entry or retry.
-            if (entryVoicePending) {
-              entryVoicePending = false;
+            auto cue = entryCue->preparePresentation(*runtimeFont, entryCueText, *cueFrame);
+            layers.draws.emplace_back(std::move(cue.draw));
+            if (cue.playVoice) {
               if (cues) cues->play(sim::SoundCue::LevelStart);
               view.audioCuesDrained = cues ? cues->drained() : 0;
               view.audioCuesRouted = cues ? cues->routed() : 0;
@@ -2057,44 +2041,42 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const int phaseMs = digit * 1000 - remainingMs;
             const int dx = 150 * phaseMs / 1000, dy = 195 * phaseMs / 1000;
             const app::EntryCueFrame countdown{{320 - dx, 240 - dy, 330 + dx, 252 + dy}, true};
-            app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), countdown);
+            layers.draws.emplace_back(app::prepareEntryCue(*runtimeFont, std::to_string(digit), countdown));
           }
           if (menuOpen() && persistentFrontend->screen() == shell::Screen::SoundOptions) {
             persistentFrontend->setWindowScaleMenu(presentation.windowScaleMenu());
-            image = persistentFrontend->renderSoundOptions(image);
+            layers.draws.emplace_back(persistentFrontend->prepareSoundOptions(camera.width));
           } else if (menuOpen() && persistentFrontend->screen() == shell::Screen::KeyboardShortcuts) {
-            image = persistentFrontend->image();
+            layers.draws.emplace_back(&persistentFrontend->image());
           } else if (menuOpen()) {
-            levelMenu->draw(image);
+            layers.appendText(levelMenu->font(), levelMenu->titleLines());
+            layers.draws.emplace_back(levelMenu->prepareRows());
           } else if (levelMenu && presentation.receivedTouch()) {
-            levelMenu->drawTouchButton(image);
+            layers.draws.emplace_back(levelMenu->prepareTouchButton());
             touchMenuDrawn = true;
           }
-          const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
           const auto cursorState = menuOpen() ? persistentFrontend->cursorState() :
               app::runtimeCursorState(focused, cameraDragging(), hover.has_value(),
                   runtimeSim.paused(), heldHatch ? -1 : panelIndex, panelAvailability, hatchHover.has_value());
-          runtimeCursor->draw(image, cursorState, cursorX, cursorY);
+          if (const auto icon = runtimeCursor->prepare(cursorState, cursorX, cursorY))
+            layers.draws.emplace_back(*icon);
           // READ45E2B5/45E342: cue is below the later cursor and pause caption.
-          if (!menuOpen()) {
-            if (runtimeSim.examining()) shell::drawExamineCaption(image, *runtimeFont, shell::fontCells());
-            else if (runtimeSim.paused()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
-          }
-          if (levelObserver) {
-            const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
-            actors.clear();
-            std::size_t walker = 0;
-            for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
-              if (!world->lemmings()[i].alive()) continue;
-              if (walker < boxes.size() && boxes[walker]) {
-                const auto& drawn = options.injectedWalkers[walker];
-                actors.push_back({i, *boxes[walker], drawn.clip, drawn.walkTemporalIndex,
-                                 {drawn.plus8X, drawn.plus8Y, drawn.plus8Z}});
-              }
-              ++walker;
+          if (!menuOpen() && runtimeSim.paused()) {
+            if (runtimeSim.examining()) {
+              const auto caption = shell::prepareExamineCaption(camera.width, camera.height, hudCells);
+              layers.draws.emplace_back(caption.panel);
+              layers.appendText(*runtimeFont, caption.lines);
+            } else {
+              const shell::CaptionParams caption;
+              layers.draws.emplace_back(caption);
+              const auto line = shell::captionLine(caption);
+              layers.appendText(*runtimeFont, std::span(&line, 1));
             }
           }
+          queries.setLayers(layers);
+          (void)queries.composedImage();
+          view.queries = &queries;
           view.actors = actors;
           view.hoveredActor = hover;
           view.cursorState = cursorState;
@@ -2122,11 +2104,21 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         app::detail::PendingFrameInspection inspection(materialize);
         levelObserver(*pendingView);
       }
-      if (windowSceneCurrent) {
+      if (windowSceneCurrent && useGl) {
+        Image scene;
+        if (!pendingView) scene = app::sceneImage(windowRaster.framebuffer());
+        const auto& composed = pendingView ? displayedQueries->composedImage() : scene;
+        Image* shot = finalShot ? &finalWindowFrame.emplace() : nullptr;
+        if (auto shown = presentation.presentGl(composed, shell::Screen::Level, rendered, shot); !shown) {
+          std::fprintf(stderr, "level presenter: %s\n", shown.error().c_str());
+          presentationFailed = true;
+          break;
+        }
+      } else if (windowSceneCurrent) {
         const void* pixels = windowRaster.framebuffer().rgb.data();
         if (pendingView) {
-          if (finalShot) finalWindowFrame = std::move(image);
-          const auto& composed = finalShot ? *finalWindowFrame : image;
+          const auto& composed = displayedQueries->composedImage();
+          if (finalShot) finalWindowFrame = composed;
           pixels = composed.rgba.data();
           if (!uploadRgbx) {
             rgbFallback.resize(composed.pixelCount() * 3);
@@ -2135,10 +2127,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             pixels = rgbFallback.data();
           }
         }
-        if (finalShot && !finalWindowFrame) finalWindowFrame = toImage(windowRaster.framebuffer());
-        { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * (uploadRgbx ? 4 : 3)); }
-        { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); }
+        if (finalShot && !finalWindowFrame) finalWindowFrame = app::sceneImage(windowRaster.framebuffer());
+        { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(ownedTexture.get(), nullptr, pixels, 640 * (uploadRgbx ? 4 : 3)); }
+        { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, ownedTexture.get(), nullptr, nullptr); }
         { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
+      }
+      if (windowSceneCurrent) {
         touchMenuPresented = touchMenuDrawn;
         lemmingMotion.frameDrawn();
       }
@@ -2164,6 +2158,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       std::fprintf(stderr, "record: %s; replay remains incomplete\n", written.error().c_str());
     else if (logLevelDetails) std::fprintf(stderr, "record: saved %s\n", written->string().c_str());
   }
+  if (presentationFailed) return 1;
   if (!args.windowShot.empty() && disposition == LegDisposition::Exit) {
     if (!finalWindowFrame) {
       std::fprintf(stderr, "window screenshot: exited before the requested final frame\n");
@@ -2185,12 +2180,20 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
 int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver observer,
                             LevelFrameObserver levelObserver, ApplicationRunOptions options) {
   auto args = parseArgs(argc, argv);
+#ifdef __EMSCRIPTEN__
+  if (argc == 0 && web::requestedWebGl()) args.renderer = RendererChoice::Gl;
+#endif
   if (args.invalidWindowScale) { std::fprintf(stderr, "--window-scale requires 1, 2 or 3\n"); return 1; }
+  if (args.invalidRenderer) { std::fprintf(stderr, "--renderer requires software, gl or auto\n"); return 1; }
   if (args.invalidReplayOption || (!args.recordDir.empty() && !args.replayFile.empty())) {
     std::fprintf(stderr, "--record DIR and --replay FILE require paths and cannot be combined\n"); return 1;
   }
   if (args.help) { printHelp(); return 0; }
   if (args.version) { std::puts("Lemmings Webolution " WEBOLUTION_VERSION_STRING); return 0; }
+  if (args.renderer == RendererChoice::Gl && (!args.shot.empty() || !args.replayFile.empty())) {
+    std::fprintf(stderr, "--renderer gl requires window presentation; use --window-shot for GL capture\n");
+    return 1;
+  }
   const auto location = app::locateGameData(args.gameDir);
   args.gameDir = location.directory;
   const bool connected = args.frontend && args.shot.empty() && !args.map;
@@ -2283,8 +2286,15 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
 #else
   constexpr auto setIcon = nullptr;
 #endif
+#ifdef WEBOLUTION_NATIVE_GL
+  constexpr auto createGl = createNativeGlPresenter;
+#elif defined(__EMSCRIPTEN__)
+  const CreateGlPresenter createGl = web::hasBrowserCanvas() ? createWebGlPresenter : nullptr;
+#else
+  constexpr CreateGlPresenter createGl = nullptr;
+#endif
   SdlWindow presentation(sound.windowScale, windowScaleOverride(args.windowScale, useAutomationScale),
-                         setIcon);
+                         setIcon, args.renderer, createGl, &options.glComparison);
   auto* sharedWindow = &presentation;
 #else
   SdlWindow* sharedWindow = nullptr;

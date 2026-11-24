@@ -86,10 +86,11 @@ SkillPanelRect skillPanelRect(const webo::SpriteFrame& f, double x, double y, in
   return {left, top, left + f.width * scale, top + f.height * scale};
 }
 
-void drawSkillPanelIcon(Image& dest, const Image& sheet, const webo::SpriteFrame& f,
-                        double x, double y, int scaleDelta) {
+static void drawPreparedSkillIcon(Image& dest, const PreparedSkillIcon& draw) {
+  const auto& sheet = *draw.texture;
+  const auto& f = draw.frame;
+  const auto& r = draw.rect;
   if (dest.empty() || sheet.empty() || f.width == 0 || f.height == 0) return;
-  const auto r = skillPanelRect(f, x, y, scaleDelta);
   const int x0 = std::max(0, static_cast<int>(std::ceil(r.left)));
   const int x1 = std::min(dest.width, static_cast<int>(std::ceil(r.right)));
   const int y0 = std::max(0, static_cast<int>(std::ceil(r.top)));
@@ -118,20 +119,26 @@ void drawSkillPanelIcon(Image& dest, const Image& sheet, const webo::SpriteFrame
   }
 }
 
-void drawSkillPanelCounts(Image& dest, const Image& font, const std::array<int, 9>& counts) {
+void drawSkillPanelIcon(Image& dest, const Image& sheet, const SpriteFrame& frame,
+                        double x, double y, int scaleDelta) {
+  drawPreparedSkillIcon(dest, {&sheet, frame, skillPanelRect(frame, x, y, scaleDelta)});
+}
+
+static std::vector<shell::HudGlyph> prepareSkillPanelCounts(const std::array<int, 9>& counts) {
+  std::vector<shell::HudGlyph> digits;
   for (int i = 0; i < 9; ++i) {
     const int count = counts[static_cast<std::size_t>(i)];
     if (count == 0) continue; // Native skips text for zero stock.
-    const char digits[2] = {static_cast<char>('0' + count / 10), static_cast<char>('0' + count % 10)};
-    for (int d = 0; d < 2; ++d) for (int y = 0; y < 14; ++y) for (int x = 0; x < 6; ++x) {
-      const int sx = (digits[d] - '0') * 6 + x, dx = 66 + d * 6 + x, dy = 20 + 40 * i + y;
-      if (sx < 0 || sx >= font.width || y >= font.height || dx < 0 || dx >= dest.width || dy < 0 || dy >= dest.height) continue;
-      const auto* src = font.rgba.data() + (static_cast<std::size_t>(y) * font.width + sx) * 4;
-      auto* dst = dest.rgba.data() + (static_cast<std::size_t>(dy) * dest.width + dx) * 4;
-      const int a = src[3];
-      for (int c = 0; c < 3; ++c) dst[c] = static_cast<std::uint8_t>((dst[c] * (255 - a) + 255 * a + 127) / 255);
-    }
+    const char text[2] = {static_cast<char>('0' + count / 10), static_cast<char>('0' + count % 10)};
+    for (int d = 0; d < 2; ++d)
+      digits.push_back({{(text[d] - '0') * 6, 0, 6}, 66 + d * 6, 20 + 40 * i,
+                        {255, 255, 255}, 14, std::nullopt});
   }
+  return digits;
+}
+
+void drawSkillPanelCounts(Image& dest, const Image& font, const std::array<int, 9>& counts) {
+  shell::drawHudGlyphs(dest, font, prepareSkillPanelCounts(counts));
 }
 
 Image resizeSkillPlatePatch(const Image& source) {
@@ -156,23 +163,33 @@ Image resizeSkillPlatePatch(const Image& source) {
 
 namespace {
 
+constexpr int skillPlateWidth = 72;
+constexpr int skillPlateTextureWidth = 128;
+
+PreparedSkillPanel::Plate prepareSkillPanelPlate(const Image& texture, int index) {
+  return {&texture, 18, 12 + 40 * index, skillPlateWidth, 32};
+}
+
 // Provisional horizontal linear sampling uses s = x * 128 / 72 with
 // integer texel centres. Nearest uses min(127, (x * 128 + 36) / 72).
 // D3D request 2 denotes LINEAR in d3dtypes.h. Y stays on the source row.
-void drawSkillPanelPlateQuad(Image& dest, const Image& plate, int index) {
-  const int py = 12 + 40 * index;
-  for (int y = 0; y < 32 && py + y < dest.height; ++y) for (int x = 0; x < 72 && 18 + x < dest.width; ++x) {
-    const int numer = x * 128;
-    const int sx0 = std::min(127, numer / 72);
-    const int sx1 = std::min(127, sx0 + 1);
-    const int rem = numer % 72;
-    const int w0 = 72 - rem;
-    const auto* t0 = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx0) * 4;
-    const auto* t1 = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx1) * 4;
+void drawSkillPanelPlateQuad(Image& dest, const PreparedSkillPanel::Plate& draw) {
+  const auto& plate = *draw.texture;
+  const int width = std::min(draw.width, dest.width - draw.left);
+  const int height = std::min(draw.height, dest.height - draw.top);
+  for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
+    const int numer = x * skillPlateTextureWidth;
+    const int sx0 = numer / skillPlateWidth;
+    const int sx1 = std::min(skillPlateTextureWidth - 1, sx0 + 1);
+    const int rem = numer % skillPlateWidth;
+    const int w0 = skillPlateWidth - rem;
+    const auto* row = plate.rgba.data() + static_cast<std::size_t>(y) * skillPlateTextureWidth * 4;
+    const auto* t0 = row + sx0 * 4;
+    const auto* t1 = row + sx1 * 4;
     unsigned sample[4];
     for (int c = 0; c < 4; ++c)
-      sample[c] = static_cast<unsigned>((t0[c] * w0 + t1[c] * rem) / 72);
-    auto* d = dest.rgba.data() + (static_cast<std::size_t>(py + y) * dest.width + 18 + x) * 4;
+      sample[c] = static_cast<unsigned>((t0[c] * w0 + t1[c] * rem) / skillPlateWidth);
+    auto* d = dest.rgba.data() + (static_cast<std::size_t>(draw.top + y) * dest.width + draw.left + x) * 4;
     const unsigned a = sample[3];
     for (int c = 0; c < 3; ++c)
       d[c] = static_cast<std::uint8_t>((sample[c] * a + d[c] * (255 - a)) / 255);
@@ -183,12 +200,12 @@ void drawSkillPanelPlateQuad(Image& dest, const Image& plate, int index) {
 
 void drawSkillPanelPlates(Image& dest, const Image& plate) {
   for (int i = 0; i < 10; ++i)
-    drawSkillPanelPlateQuad(dest, plate, i);
+    drawSkillPanelPlateQuad(dest, prepareSkillPanelPlate(plate, i));
 }
 
 // The headless overlay starts enabled at index 0, rectangle 18,12,90,44.
 void drawSkillPanelSelectedPlate(Image& dest, const Image& plate) {
-  drawSkillPanelPlateQuad(dest, plate, 0);
+  drawSkillPanelPlateQuad(dest, prepareSkillPanelPlate(plate, 0));
 }
 
 std::expected<RetailSkillPanel, std::string> RetailSkillPanel::create(
@@ -298,10 +315,15 @@ std::expected<SkillPanelIconAnimation, std::string> SkillPanelIconAnimation::cre
 }
 
 void SkillPanelIconAnimation::drawIcon(Image& dest, std::size_t index) const {
-  if (index >= icons_.size()) return;
+  if (const auto icon = prepareIcon(index)) drawPreparedSkillIcon(dest, *icon);
+}
+
+std::optional<PreparedSkillIcon> SkillPanelIconAnimation::prepareIcon(std::size_t index) const {
+  if (index >= icons_.size()) return std::nullopt;
   const auto& icon = icons_[index];
   const auto& pose = icon.poses[icon.current];
-  drawSkillPanelIcon(dest, textures_[pose.texture], pose.frame, icon.x, icon.y, icon.scaleDelta);
+  return PreparedSkillIcon{&textures_[pose.texture], pose.frame,
+      skillPanelRect(pose.frame, icon.x, icon.y, icon.scaleDelta)};
 }
 
 void SkillPanelIconAnimation::advanceIcons(double seconds, std::optional<int> selectedIndex, int hoveredIndex) {
@@ -341,18 +363,35 @@ void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
 void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
                             std::optional<int> selectedIndex, bool fastForward,
                             const SkillPanelIconAnimation* animation) const {
-  drawSkillPanelPlates(dest, plate_);
+  prepare(counts, selectedIndex, fastForward, animation).draw(dest);
+}
+
+PreparedSkillPanel RetailSkillPanel::prepare(const std::array<int, 9>& counts,
+    std::optional<int> selectedIndex, bool fastForward, const SkillPanelIconAnimation* animation) const {
+  PreparedSkillPanel prepared{{}, &font_, prepareSkillPanelCounts(counts), {}};
+  prepared.plates.reserve(12);
+  for (int i = 0; i < 10; ++i)
+    prepared.plates.push_back(prepareSkillPanelPlate(plate_, i));
   if (selectedIndex && *selectedIndex >= 0 && *selectedIndex < 10)
-    drawSkillPanelPlateQuad(dest, selectedPlate_, *selectedIndex);
-  if (fastForward) drawSkillPanelPlateQuad(dest, selectedPlate_, 8);
-  drawSkillPanelCounts(dest, font_, counts);
+    prepared.plates.push_back(prepareSkillPanelPlate(selectedPlate_, *selectedIndex));
+  if (fastForward) prepared.plates.push_back(prepareSkillPanelPlate(selectedPlate_, 8));
+  prepared.icons.reserve(icons_.size());
   for (std::size_t i = 0; i < icons_.size(); ++i) {
-    if (animation && i < 8) animation->drawIcon(dest, i);
-    else {
+    if (animation && i < 8) {
+      if (const auto icon = animation->prepareIcon(i)) prepared.icons.push_back(*icon);
+    } else {
       const auto& icon = icons_[i];
-      drawSkillPanelIcon(dest, icon.texture, icon.frame, icon.x, icon.y, icon.scaleDelta);
+      prepared.icons.push_back({&icon.texture, icon.frame,
+          skillPanelRect(icon.frame, icon.x, icon.y, icon.scaleDelta)});
     }
   }
+  return prepared;
+}
+
+void PreparedSkillPanel::draw(Image& dest) const {
+  for (const auto& plate : plates) drawSkillPanelPlateQuad(dest, plate);
+  shell::drawHudGlyphs(dest, *font, digits);
+  for (const auto& icon : icons) drawPreparedSkillIcon(dest, icon);
 }
 
 std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLibrary& library,

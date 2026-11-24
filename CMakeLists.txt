@@ -113,6 +113,13 @@ if(WEBOLUTION_HAVE_SDL2)
   elseif(TARGET PkgConfig::SDL2)
     target_link_libraries(webolution PRIVATE PkgConfig::SDL2)
   endif()
+  if(NOT EMSCRIPTEN)
+    target_sources(webolution PRIVATE src/app/NativeGlPresenter.cpp)
+    target_compile_definitions(webolution PRIVATE WEBOLUTION_NATIVE_GL=1)
+    if(WIN32)
+      target_link_libraries(webolution PRIVATE opengl32)
+    endif()
+  endif()
 else()
   target_compile_definitions(webolution PRIVATE WEBOLUTION_HAVE_SDL2=0)
 endif()
@@ -180,10 +187,10 @@ endif()
 if(EMSCRIPTEN)
   set(web_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/web")
   target_sources(webolution_objects PRIVATE "${web_dir}/WebMixer.cpp")
-  target_sources(webolution PRIVATE "${web_dir}/Browser.cpp")
+  target_sources(webolution PRIVATE "${web_dir}/Browser.cpp" "${web_dir}/WebGlPresenter.cpp")
   set_target_properties(webolution PROPERTIES SUFFIX ".js")
   target_link_options(webolution PRIVATE
-    -fexceptions -pthread -sUSE_SDL=2 -sASYNCIFY -sASYNCIFY_STACK_SIZE=262144
+    -fexceptions -pthread -sUSE_SDL=2 -sMAX_WEBGL_VERSION=2 -sASYNCIFY -sASYNCIFY_STACK_SIZE=262144
     # Preload before Start. The browser main thread waits for raster bands
     # synchronously and cannot handle thread startup messages at the barrier.
     "-sPTHREAD_POOL_SIZE=Math.max(0,Math.min(8,_emscripten_num_logical_cores()||1)-1)"

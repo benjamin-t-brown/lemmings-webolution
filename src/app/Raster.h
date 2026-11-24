@@ -85,4 +85,19 @@ class Raster {
   std::size_t pixels_ = 0;
 };
 
+// Projected RGB geometry. A texture handle borrows a leg-owned tile.
+struct PreparedRasterTriangle {
+  std::array<std::array<double, 4>, 3> vertices;
+  std::array<std::array<double, 2>, 3> uv;
+  const Texture* texture;
+  std::array<double, 3> diffuse;
+  std::size_t actorOwner = ActorDepth::noOwner;
+  SceneAddress address = SceneAddress::Wrap;
+  SceneHighlightId highlight{};
+
+  void draw(Raster& target) const {
+    target.triangle(vertices, uv, *texture, diffuse, actorOwner, address, highlight);
+  }
+};
+
 }  // namespace webo::app

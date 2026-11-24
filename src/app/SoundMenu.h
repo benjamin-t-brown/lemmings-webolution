@@ -3,10 +3,13 @@
 #include "assets/GameData.h"
 #include "assets/Bitmap.h"
 #include "app/WindowScale.h"
+#include "app/SkillPanel.h"
 #include "save/SoundSettings.h"
+#include "shell/MenuRender.h"
 
 #include <array>
 #include <optional>
+#include <vector>
 
 namespace webo::app {
 
@@ -23,6 +26,17 @@ class SoundMenu {
                          const WindowScaleMenu& window) const;
   Image render(const Image& backdrop, const Image& font, int baseY, int focus,
                save::SoundSettings settings, const WindowScaleMenu& window) const;
+  struct Prepared {
+    struct Row {
+      shell::PreparedMenuRows label;
+      std::vector<PreparedIconRegion> arrows;
+      std::optional<std::array<shell::ScreenRect, 16>> meter;
+    };
+    std::vector<Row> rows;
+    void draw(Image&) const;
+  };
+  Prepared prepare(int viewportWidth, const Image& font, int baseY, int focus,
+                   save::SoundSettings settings, const WindowScaleMenu& window) const;
   static Image renderShortcuts(const Image& backdrop, const Image& font);
   static bool shortcutsBackAt(int x, int y);
 

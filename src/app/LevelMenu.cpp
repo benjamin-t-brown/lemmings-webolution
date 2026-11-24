@@ -135,12 +135,15 @@ LevelMenuAction LevelMenu::focusedAction() const {
 
 void LevelMenu::draw(Image& frame) const {
   if (!open_) return;
-  const auto& cells = shell::fontCells();
-  shell::drawHud(frame, font_, titleLines_, cells);
+  shell::drawHud(frame, font_, titleLines_, shell::fontCells());
+  shell::drawMenuRows(frame, prepareRows());
+}
+
+shell::PreparedMenuRows LevelMenu::prepareRows() const {
   shell::MenuParams params;
   params.baseY = rowBaseY_;
   params.highlight = focusedIndex_;
-  shell::drawMenuRows(frame, font_, labels_, params, cells);
+  return shell::prepareMenuRows(font_, labels_, params, shell::fontCells());
 }
 
 bool LevelMenu::touchButtonAt(int x, int y) const {
@@ -152,7 +155,11 @@ bool LevelMenu::touchButtonAt(int x, int y) const {
 }
 
 void LevelMenu::drawTouchButton(Image& frame) const {
-  shell::drawMenuRows(frame, font_, kTouchButtonLabel, kTouchButtonParams, shell::fontCells());
+  shell::drawMenuRows(frame, prepareTouchButton());
+}
+
+shell::PreparedMenuRows LevelMenu::prepareTouchButton() const {
+  return shell::prepareMenuRows(font_, kTouchButtonLabel, kTouchButtonParams, shell::fontCells());
 }
 
 } // namespace webo::app

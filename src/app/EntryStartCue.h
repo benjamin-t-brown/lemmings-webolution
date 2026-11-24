@@ -20,6 +20,13 @@ struct EntryCueFrame {
   double vertexAlpha = 255.0;
 };
 
+struct PreparedEntryCue {
+  struct Glyph { shell::GlyphCell source; std::array<int, 4> destination; };
+  const Image* font;
+  std::vector<Glyph> glyphs;
+  bool additive;
+};
+
 class EntryStartCue {
  public:
   explicit EntryStartCue(bool introEnabled = true);
@@ -30,15 +37,22 @@ class EntryStartCue {
   double seconds() const { return seconds_; }
   bool active() const { return active_; }
   std::optional<EntryCueFrame> frame(bool levelScenePresent = true) const;
+  struct Presentation { PreparedEntryCue draw; bool playVoice; };
+  Presentation preparePresentation(const Image& font, std::string_view text, const EntryCueFrame&);
 
  private:
   double seconds_;
   bool active_ = true;
+  bool voicePending_ = true;
 };
 
 // The fit skips unsupported characters and zero-width cells.
 std::vector<std::array<int, 4>> entryCueGlyphRects(std::string_view text, const EntryCueFrame& cue,
                                                     std::span<const shell::GlyphCell> cells = shell::fontCells());
+
+PreparedEntryCue prepareEntryCue(const Image& font, std::string_view text, const EntryCueFrame&,
+                                 std::span<const shell::GlyphCell> cells = shell::fontCells());
+void drawEntryStartCue(Image&, const PreparedEntryCue&);
 
 // Software approximation with POINT sampling and texture-alpha blending.
 // The native sampler depends on renderer+3A1. Its active state is unresolved.

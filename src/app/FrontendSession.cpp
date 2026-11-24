@@ -341,7 +341,13 @@ void FrontendSession::hoverSound(int x, int y) {
 }
 
 Image FrontendSession::renderSoundOptions(const Image& backdrop) const {
-  return soundMenu_.render(backdrop, font_, soundBaseY(), menuFocus(), editingSound_, windowScaleMenu_);
+  Image frame = backdrop;
+  prepareSoundOptions(frame.width).draw(frame);
+  return frame;
+}
+
+SoundMenu::Prepared FrontendSession::prepareSoundOptions(int viewportWidth) const {
+  return soundMenu_.prepare(viewportWidth, font_, soundBaseY(), menuFocus(), editingSound_, windowScaleMenu_);
 }
 
 void FrontendSession::hoverMenu(int x, int y) {

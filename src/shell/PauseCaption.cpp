@@ -39,22 +39,27 @@ void drawCaption(webo::Image& target, const webo::Image& sheet, std::span<const 
   drawHud(target, sheet, std::span<const HudLine>(&line, 1), cells);
 }
 
-void drawExamineCaption(webo::Image& target, const webo::Image& sheet, std::span<const GlyphCell> cells) {
-  const int top = target.height / 2 - kLineHeight;
+ExamineCaption prepareExamineCaption(int viewportWidth, int viewportHeight, std::span<const GlyphCell> cells) {
+  const int top = viewportHeight / 2 - kLineHeight;
   std::array lines{HudLine{"Paused", 0, top}, HudLine{"Drag to look around", 0, top + kLineHeight}};
   int widest = 0;
   for (auto& line : lines) {
     const int width = textWidth(line.text, cells);
-    line.x = (target.width - width) / 2;
+    line.x = (viewportWidth - width) / 2;
     widest = std::max(widest, width);
   }
   constexpr int padding = 8;
-  const int left = (target.width - widest) / 2;
+  const int left = (viewportWidth - widest) / 2;
   CaptionParams panel;
   panel.rect = {left - padding, top - padding, left + widest + padding,
                 top + 2 * kLineHeight + padding};
-  drawCaptionPanel(target, panel);
-  drawHud(target, sheet, lines, cells);
+  return {std::move(panel), std::move(lines)};
+}
+
+void drawExamineCaption(webo::Image& target, const webo::Image& sheet, std::span<const GlyphCell> cells) {
+  const auto prepared = prepareExamineCaption(target.width, target.height, cells);
+  drawCaptionPanel(target, prepared.panel);
+  drawHud(target, sheet, prepared.lines, cells);
 }
 
 }  // namespace webo::shell

@@ -127,27 +127,46 @@ std::optional<SoundMenu::Hit> SoundMenu::hit(int x, int y, int baseY,
   return std::nullopt;
 }
 
-Image SoundMenu::render(const Image& backdrop, const Image& font, int baseY, int focus,
-                        save::SoundSettings settings, const WindowScaleMenu& window) const {
+SoundMenu::Prepared SoundMenu::prepare(int viewportWidth, const Image& font, int baseY, int focus,
+    save::SoundSettings settings, const WindowScaleMenu& window) const {
   shell::MenuParams params;
   const auto text = labels(settings, window);
   const auto rows = layout(text, baseY);
-  Image frame = backdrop;
+  Prepared prepared{};
+  prepared.rows.resize(RowCount);
   for (int i = 0; i < RowCount; ++i) {
     const auto& row = rows[i];
     params.baseY = row.top;
     params.highlight = i == focus ? 0 : -1;
-    shell::drawMenuRows(frame, font, std::span(&text[i], 1), params, shell::fontCells());
+    auto& draw = prepared.rows[i];
+    draw.label = shell::prepareMenuRows(font, std::span(&text[i], 1), params, shell::fontCells());
     if (hasArrows(i)) {
       for (int side = 0; side < 2; ++side) {
         const auto& art = arrows_[side];
-        compositeIconRegion(frame, art, {row.arrowX(side), row.top, 0, 0, art.width, art.height});
+        draw.arrows.push_back({&art, {row.arrowX(side), row.top, 0, 0, art.width, art.height}});
       }
     }
     if (hasMeter(i))
-      shell::drawVolumeMeter(frame, row.top + shell::kLineHeight + 8,
-                            i == Music ? settings.music : settings.sfx);
+      draw.meter = shell::prepareVolumeMeter(viewportWidth, row.top + shell::kLineHeight + 8,
+                                            i == Music ? settings.music : settings.sfx);
   }
+  return prepared;
+}
+
+void SoundMenu::Prepared::draw(Image& frame) const {
+  for (const auto& row : rows) {
+    shell::drawMenuRows(frame, row.label);
+    for (const auto& arrow : row.arrows)
+      compositeIconRegion(frame, *arrow.texture, arrow.placement);
+    if (row.meter)
+      for (const auto& rect : *row.meter) shell::drawScreenRect(frame, rect);
+  }
+}
+
+Image SoundMenu::render(const Image& backdrop, const Image& font, int baseY, int focus,
+                        save::SoundSettings settings, const WindowScaleMenu& window) const {
+  Image frame = backdrop;
+  prepare(frame.width, font, baseY, focus, settings, window).draw(frame);
   return frame;
 }
 

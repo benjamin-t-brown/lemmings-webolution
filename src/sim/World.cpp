@@ -1950,7 +1950,8 @@ void World::stepGadgetContacts(double dt) {
   }
 }
 
-void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool releaseEnabled) {
+void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool releaseEnabled,
+                          std::optional<double> openingRemainder) {
   const std::uint64_t period = static_cast<std::uint64_t>(std::max(1, msPerTick()));
   // The level clock is advanced before the update, as in the frame loop (0x45CFF9).
   levelClockMs_ += static_cast<std::uint64_t>(segmentMs);
@@ -1960,7 +1961,11 @@ void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool 
   updateDtSeconds_ = dt;
 
   stepNuke(segmentMs, tickBoundary);
-  if (releaseEnabled) stepRelease(dt, tickBoundary, continueHatchesAfterTimeout);
+  if (releaseEnabled) {
+    // 0x425A95 arms the hatch and debits the clip remainder in this update.
+    if (openingRemainder) releaseArmed_ = true;
+    stepRelease(openingRemainder.value_or(dt), tickBoundary, continueHatchesAfterTimeout);
+  }
   const auto gateBefore = gateMotionSamples();
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     stepElapsed(lemmings_[i], tickBoundary);
@@ -1988,10 +1993,25 @@ void World::advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout,
 }
 
 void World::advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterTimeout,
-                             bool releaseEnabled, const std::function<bool(double)>& afterUpdate) {
+                             bool releaseEnabled, const std::function<bool(double)>& afterUpdate,
+                             std::optional<double> releaseOpensAfter) {
   const std::uint64_t period = static_cast<std::uint64_t>(std::max(1, msPerTick()));
   int remaining = std::max(0, dtMs);
   bool open = true;
+  std::optional<double> closedMs;
+  if (releaseEnabled && releaseOpensAfter)
+    closedMs = std::clamp(*releaseOpensAfter * 1000.0, 0.0, static_cast<double>(remaining));
+  const auto update = [&](int ms) {
+    if (!closedMs) {
+      updateSegment(ms, continueHatchesAfterTimeout, releaseEnabled);
+    } else if (*closedMs <= ms) {
+      updateSegment(ms, continueHatchesAfterTimeout, true, (ms - *closedMs) / 1000.0);
+      closedMs.reset();
+    } else {
+      *closedMs -= ms;
+      updateSegment(ms, continueHatchesAfterTimeout, false);
+    }
+  };
   // One update; reports false once the caller abandoned the pass.
   const auto run = [&](int ms) {
     if (!open)
@@ -1999,14 +2019,14 @@ void World::advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterT
     // Split at tick boundaries so each update reaches at most one.
     while (((levelClockMs_ % period) + static_cast<std::uint64_t>(ms)) / period >= 2) {
       const int toBoundary = static_cast<int>(period - levelClockMs_ % period);
-      updateSegment(toBoundary, continueHatchesAfterTimeout, releaseEnabled);
+      update(toBoundary);
       ms -= toBoundary;
       if (afterUpdate && !afterUpdate(toBoundary / 1000.0)) {
         open = false;
         return;
       }
     }
-    updateSegment(ms, continueHatchesAfterTimeout, releaseEnabled);
+    update(ms);
     if (afterUpdate && !afterUpdate(ms / 1000.0))
       open = false;
   };

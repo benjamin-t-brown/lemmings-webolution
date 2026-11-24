@@ -27,7 +27,8 @@ namespace webo::app {
 class FrontendSession {
  public:
   static std::expected<FrontendSession, std::string> create(
-      const AssetLibrary& library, std::shared_ptr<save::SaveStore> store = nullptr);
+      const AssetLibrary& library, std::shared_ptr<save::SaveStore> store = nullptr,
+      std::shared_ptr<save::SaveSink> languageFile = nullptr);
   // Save diagnostics describe a failed load or write. A successful write clears its error.
   const std::optional<std::string>& saveLoadError() const { return saveLoadError_; }
   const std::optional<std::string>& saveError() const { return saveError_; }
@@ -60,7 +61,7 @@ class FrontendSession {
   shell::Screen screen() const { return state_.screen(); }
   int constructionCounter() const { return state_.counter(); }
   shell::Outcome pressReturn();
-  shell::Outcome pressEscapeInOptions();
+  shell::Outcome pressEscape();
   void hoverMenu(int x, int y);
   bool moveMenuFocus(int direction);
   int menuFocus() const { return state_.highlight(); }
@@ -109,6 +110,7 @@ class FrontendSession {
   mutable int menuImageHighlight_ = 0;
   Image menuBackdrop_, confirmBackdrop_;
   mutable Image confirm_;
+  Image languageImage_;
   Image mapImage_;
   mutable int confirmImageFocus_ = 0;
   std::vector<std::string> menuLabels_;
@@ -119,6 +121,7 @@ class FrontendSession {
   // Half-open hit regions follow the rendered panels. The shell owns focus.
   std::array<std::array<int, 4>, 5> menuBoxes_{};
   std::array<std::array<int, 4>, 2> confirmBoxes_{};
+  std::array<std::array<int, 4>, 1> languageBoxes_{};
   std::array<int, 4> mapFooterBox_{};
   MapScene map_;
   RuntimeCursor cursor_;
@@ -128,6 +131,7 @@ class FrontendSession {
   // Persistence. savedGame_ is the full original-layout image so unmapped records,
   // A, B and the flag survive load -> complete -> save unchanged.
   std::shared_ptr<save::SaveStore> store_;
+  std::shared_ptr<save::SaveSink> languageFile_;
   save::SavedGame savedGame_;
   std::optional<std::string> saveLoadError_, saveError_;
   int saveCount_ = 0;

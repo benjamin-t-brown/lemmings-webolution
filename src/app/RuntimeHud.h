@@ -38,9 +38,10 @@ class RuntimeSimState {
   // dt. Returns true if at least one update executed.
   bool advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion = false,
                       const std::function<void()>& afterTick = {}, int stallCapMs = kStallCapMs);
-  // Explicit elapsed-time path with a start-only hatch gate.
+  // The start-only hatch gate can open partway through the first pass.
   bool advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion,
-                      const std::function<void()>& afterTick, int stallCapMs, bool releaseEnabled);
+                      const std::function<void()>& afterTick, int stallCapMs, bool releaseEnabled,
+                      std::optional<double> releaseOpensAfter = {});
   static constexpr int kStallCapMs = 100;  // 0x45D927-0x45DA3C
   // Last pass budget, discarded stall time and carried fractional milliseconds.
   int lastPassMs() const { return lastPassMs_; }

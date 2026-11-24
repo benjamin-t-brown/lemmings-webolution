@@ -308,11 +308,12 @@ int main() {
         confirmProgress->completionFlags() == std::array<std::int32_t, 102>{},
         "fresh Yes clears source nonzero progress after keyboard No");
   {
-    shell::Frontend unsupported;
-    unsupported.setHighlight(2);
-    check(unsupported.press(shell::Key::Return) == shell::Outcome::Unobserved &&
-          unsupported.screen() == Screen::Menu && unsupported.counter() == 3,
-          "unimplemented row action is unobserved, not a native ignored-input claim");
+    shell::Frontend language;
+    language.setHighlight(2);
+    check(language.press(shell::Key::Return) == shell::Outcome::Handled &&
+          language.screen() == Screen::Language && language.counter() == 4 &&
+          language.highlight() == 0 && language.nodeVtable() == shell::kVtableLanguage,
+          "Language Selection activates page 0x0C with English focused");
   }
   shell::Frontend soundMenu;
   soundMenu.setHighlight(3);
@@ -391,13 +392,19 @@ int main() {
                 "half-open right/bottom and adjacent exterior pixels preserve page/focus/progress");
         }
         for (const auto& [x, y] : {std::pair{320, 348}, {320, 349}, {320, 377}, {320, 378},
-                                  {320, 392}, {0, 0}, {639, 479}}) {
+                                  {0, 0}, {639, 479}}) {
           auto miss = menu;
           check(!miss.click(x, y) && miss.screen() == Screen::Menu &&
                 miss.menuFocus() == priorFocus && miss.constructionCounter() == counter &&
                 miss.completionFlags() == flags && miss.mapStates() == states && !miss.selectedLevel(),
-                "inter-row gaps, unsupported row 2 and distant exterior do not mutate menu");
+                "inter-row gaps and distant exterior do not mutate menu");
         }
+        auto language = menu;
+        check(language.click(320, 392) && language.screen() == Screen::Language &&
+              language.constructionCounter() == counter + 1 && language.menuFocus() == 0 &&
+              language.completionFlags() == flags && language.mapStates() == states &&
+              !language.selectedLevel(),
+              "Language Selection click opens the page from every prior focus and preserves progress");
         auto sound = menu;
         check(sound.click(320, 421) && sound.screen() == Screen::SoundOptions &&
               sound.constructionCounter() == counter + 1 && sound.menuFocus() == 0 &&

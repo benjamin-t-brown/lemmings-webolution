@@ -81,15 +81,15 @@ int main() {
   check(menu.isOpen() && menu.focusedIndex() == 0 &&
         menu.focusedAction() == LevelMenuAction::Resume,
         "open focuses Resume");
-  // UK content rectangles are (L,T,R,B) and exclude their edges.
+  // Content rectangles are (L,T,R,B) and exclude their edges.
   const std::array<std::array<int, 4>, 5> rects{{
       {{281, 100, 360, 129}}, {{271, 129, 369, 158}},
-      {{300, 158, 341, 187}}, {{282, 187, 359, 216}},
-      {{279, 216, 362, 245}},
+      {{282, 158, 359, 187}}, {{249, 187, 391, 216}},
+      {{300, 216, 341, 245}},
   }};
   const std::array<LevelMenuAction, 5> actions{{
       LevelMenuAction::Resume, LevelMenuAction::Retry,
-      LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions, LevelMenuAction::Examine,
+      LevelMenuAction::SoundOptions, LevelMenuAction::Examine, LevelMenuAction::MapQuit,
   }};
   for (std::size_t i = 0; i < rects.size(); ++i) {
     const auto& r = rects[i];
@@ -109,9 +109,9 @@ int main() {
     menu.moveFocus(1);
   }
   menu.moveFocus(-1);
-  check(menu.focusedAction() == LevelMenuAction::Examine, "up from Resume wraps to Examine");
+  check(menu.focusedAction() == LevelMenuAction::MapQuit, "up from Resume wraps to Quit");
   menu.moveFocus(1);
-  check(menu.focusedAction() == LevelMenuAction::Resume, "down from Examine wraps to Resume");
+  check(menu.focusedAction() == LevelMenuAction::Resume, "down from Quit wraps to Resume");
 
   menu.hover(320, 140);
   check(menu.focusedIndex() == 1 && menu.focusedAction() == LevelMenuAction::Retry,
@@ -123,19 +123,19 @@ int main() {
   menu.hover(252, 141); // panel edge, but outside the text/content hit rectangle
   check(menu.focusedIndex() == 1 && menu.focusedAction() == LevelMenuAction::Retry,
         "miss preserves prior focus");
-  menu.hover(320, 200);
-  check(menu.focusedIndex() == 3 && menu.focusedAction() == LevelMenuAction::SoundOptions,
+  menu.hover(320, 170);
+  check(menu.focusedIndex() == 2 && menu.focusedAction() == LevelMenuAction::SoundOptions,
         "focused Options requests sound settings");
-  menu.hover(320, 230);
-  check(menu.focusedIndex() == 4 && menu.focusedAction() == LevelMenuAction::Examine,
-        "hovering Examine updates focus");
+  menu.hover(320, 200);
+  check(menu.focusedIndex() == 3 && menu.focusedAction() == LevelMenuAction::Examine,
+        "hovering Examine Level updates focus");
 
   Image frame = before;
   menu.draw(frame);
-  const std::vector<std::string> labels{"Resume", "Try Again", "Quit", "Options", "Examine"};
+  const std::vector<std::string> labels{"Resume", "Try Again", "Options", "Examine Level", "Quit"};
   shell::MenuParams params;
   params.baseY = 100;
-  params.highlight = 4;
+  params.highlight = 3;
   auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");
   check(static_cast<bool>(font), "load font for independent render comparison");
   if (!font) return 1;

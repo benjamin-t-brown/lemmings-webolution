@@ -1,6 +1,6 @@
 #include "app/FrontendSession.h"
 
-#include "assets/GameData.h"
+#include "app/EnglishStrings.h"
 #include "shell/HudText.h"
 #include "shell/MenuRender.h"
 
@@ -13,7 +13,8 @@
 namespace webo::app {
 
 std::expected<FrontendSession, std::string> FrontendSession::create(
-    const AssetLibrary& library, std::shared_ptr<save::SaveStore> store) {
+    const AssetLibrary& library, std::shared_ptr<save::SaveStore> store,
+    std::shared_ptr<save::SaveSink> languageFile) {
   // Missing saves start empty. Unreadable or wrong-size saves report a
   // diagnostic and remain on disk until a successful write.
   save::SavedGame loadedImage;
@@ -37,7 +38,7 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   auto logo = loadTexture(library, "TEXTURES\\MAIN_LOGO.BMP");
   auto background = loadTexture(library, "TEXTURES\\SMALL_BACK.BMP");
   auto font = loadTexture(library, "TEXTURES\\^FONT.BMP");
-  auto strings = loadStrings(library, "UK");
+  auto strings = loadEnglishStrings(library);
   auto map = MapScene::build(library, loadedFlags);
   auto cursor = RuntimeCursor::load(library);
   if (!logo) return std::unexpected(logo.error());
@@ -68,6 +69,15 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
     result.menuBoxes_[row] = {left - menuParams.panelPadX, top,
         left + shell::textWidth(label, cells) + menuParams.panelPadX, top + menuParams.panelHeight};
   }
+
+  // Selector 0x0C uses MAIN_LOGO and the shared row origin (0x48E197).
+  // UK[115] is the original first choice and the clone's only current language.
+  const std::array english{std::string((*strings)[115])};
+  const shell::MenuParams languageParams;
+  result.languageImage_ = shell::renderMainMenu(*logo, *font, english, languageParams, cells);
+  result.languageBoxes_[0] = shell::menuPlateBounds(
+      shell::labelLeft(english[0], cells, languageParams.xWord), languageParams.baseY,
+      shell::textWidth(english[0], cells), languageParams);
 
   // READ 0x49BB6B: base200 + shared row offset100, table 0x4C4514 = {21,22}.
   // Factory selector0x24 binds SMALL_BACK at 0x4879AD (pointer 0x4C08F0).
@@ -107,6 +117,7 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   result.mapFooterLabel_ = footerLabels[0];
   result.completionFlags_ = loadedFlags;
   result.store_ = std::move(store);
+  result.languageFile_ = std::move(languageFile);
   result.savedGame_ = loadedImage;
   result.saveLoadError_ = std::move(loadError);
   return result;
@@ -173,6 +184,7 @@ const Image& FrontendSession::image() const {
         confirmImageFocus_ = menuFocus();
       }
       return confirm_;
+    case shell::Screen::Language: return languageImage_;
     case shell::Screen::SoundOptions:
       soundImage_ = renderSoundOptions(menuBackdrop_);
       return soundImage_;
@@ -199,6 +211,16 @@ Image FrontendSession::composeFrame() const {
 }
 
 shell::Outcome FrontendSession::pressReturn() {
+  if (screen() == shell::Screen::Language) {
+    const auto outcome = state_.press(shell::Key::Return);
+    if (outcome == shell::Outcome::Handled && languageFile_) {
+      // This sidecar holds only an explicit choice. Display already uses UK.
+      if (auto written = languageFile_->write(std::as_bytes(std::span(kEnglishLanguageCode)));
+          !written)
+        std::fprintf(stderr, "language settings: %s\n", written.error().c_str());
+    }
+    return outcome;
+  }
   if (screen() == shell::Screen::SoundOptions) {
     if (menuFocus() == SoundMenu::Accept) return closeSoundOptions(true);
     if (menuFocus() == SoundMenu::KeyboardShortcuts) return state_.openKeyboardShortcuts();
@@ -215,9 +237,9 @@ shell::Outcome FrontendSession::pressReturn() {
   return state_.press(shell::Key::Return);
 }
 
-shell::Outcome FrontendSession::pressEscapeInOptions() {
-  if (screen() == shell::Screen::KeyboardShortcuts) return state_.press(shell::Key::Esc);
-  return closeSoundOptions(false);
+shell::Outcome FrontendSession::pressEscape() {
+  if (screen() == shell::Screen::SoundOptions) return closeSoundOptions(false);
+  return state_.press(shell::Key::Esc);
 }
 
 bool FrontendSession::moveMenuFocus(int direction) {
@@ -336,10 +358,12 @@ void FrontendSession::hoverMenu(int x, int y) {
 bool FrontendSession::click(int x, int y) {
   if (screen() == shell::Screen::Menu) {
     const int row = shell::menuPanelAt(menuBoxes_, x, y);
-    if (row < 0 || row == 2) return false; // Row 2 can take focus; its page is unsupported.
+    if (row < 0) return false;
     state_.setHighlight(row);
     return pressReturn() == shell::Outcome::Handled;
   }
+  if (screen() == shell::Screen::Language)
+    return shell::menuPanelAt(languageBoxes_, x, y) == 0 && pressReturn() == shell::Outcome::Handled;
   if (screen() == shell::Screen::SoundOptions) {
     const auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_, windowScaleMenu_);
     if (!hit) return false;

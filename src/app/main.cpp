@@ -28,6 +28,7 @@
 #include "app/Camera.h"
 #include "app/CameraIntro.h"
 #include "app/EntryStartCue.h"
+#include "app/EnglishStrings.h"
 #include "app/LevelStartSequence.h"
 #include "app/LemmingAnim.h"
 #include "app/LemmingMotion.h"
@@ -359,7 +360,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                             [[maybe_unused]] app::SdlWindow* sharedWindow,
                             [[maybe_unused]] audio::CuePlayback* cues,
                             std::optional<app::LevelOutcome>& completed, LegDisposition& disposition) {
-  // Direct play shares the menu session while retaining the diagnostic simulation path.
+  // Direct play shares the menu session. Map play owns the intro and results.
   const bool mapPlay = persistentFrontend && args.frontend;
 #ifdef __EMSCRIPTEN__
   const bool logLevelDetails = true;
@@ -644,15 +645,17 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   app::LemmingMotionTracker lemmingMotion;
   std::optional<sim::World> world;
   int terrainHeight = 0;
+  const bool gateReleaseOnDoors = mapPlay ||
+      (persistentFrontend && args.simTicks == 0 && entranceExitPresentation.has_value());
   if (args.sim) {
     auto setup = sim::loadRetailLevel(*library, args.level);
     if (!setup) {
       std::fprintf(stderr, "sim: %s\n", setup.error().c_str());
       return 1;
     }
-    // Connected play gates the 1.3 s first countdown on entry presentation.
+    // The live door clip supplies the arming delay for a fresh level.
     // Recurring release intervals still come from World.
-    if (mapPlay) setup->releaseArmSeconds = 0.0;
+    if (gateReleaseOnDoors) setup->releaseArmSeconds = 0.0;
     world.emplace(*setup);
     world->setDeathObserver([&](const sim::Lemming& lemming, bool explosion,
         std::span<const std::array<int, 2>> removed) {
@@ -1176,7 +1179,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   std::optional<app::LevelMenu> levelMenu;
   std::string entryCueText;
   if (args.sim && world) {
-    // Direct play uses the short entry clock for music. Map entry owns the entry cue and release gate.
+    // Direct play uses the short entry clock for music. Map play also draws the cue.
     entryCue.emplace(mapPlay && persistentFrontend->levelIntroEnabled());
     auto loadedFont = loadTexture(*library, "TEXTURES\\^FONT.BMP");
     auto loadedPanel = app::RetailSkillPanel::create(*library, args.level);
@@ -1204,12 +1207,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     panelIconAnimation = std::move(*loadedIcons);
     runtimeCursor = std::move(*loadedCursor);
     if (mapPlay) {
-      auto strings = loadStrings(*library, "UK");
+      auto strings = app::loadEnglishStrings(*library);
       if (!strings || strings->size() <= 71) {
         std::fprintf(stderr, "entry cue: missing localized string71\n");
         return 1;
       }
       entryCueText = (*strings)[71]; // READ45CAEA pushes hex47: Let's Go!, not Continue/name.
+    }
+    if (gateReleaseOnDoors) {
       double doorSeconds = 0.0;
       if (entranceExitPresentation)
         for (const auto& hatch : entranceExitPresentation->entrances)
@@ -1862,7 +1867,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
       if (!entryCue->active() && cues) cues->playLevelMusic();
     }
-    if (levelStart) levelStart->advance(elapsed, focused && !runtimeSim.paused());
+    const auto releaseOpensAfter = levelStart ? levelStart->advance(elapsed, focused && !runtimeSim.paused()) :
+                                               std::nullopt;
     if (args.sim && world) {
       // Convert elapsed time to integer ms and cap wall-clock stalls at 100 ms.
       // --frames and frameSeconds use the supplied budget without the cap.
@@ -1872,11 +1878,11 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         drainCues(); lemmingMotion.observe(*world);
         scene->advanceDeathParticles(world->levelClockMs());
       };
-      // Hold hatch release until both entry text and the full door clip have finished.
-      const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryCue && entryCue->active());
+      const bool releaseEnabled = !levelStart || levelStart->releaseEnabled();
       simTicked = runtimeSim.advanceElapsed(*world, elapsed, mapPlay, afterUpdate,
-                                            ownedClock ? 0 : app::RuntimeSimState::kStallCapMs, releaseEnabled);
-      if (recorder && simTicked) recorder->advanced(*world, runtimeSim, releaseEnabled);
+                                            ownedClock ? 0 : app::RuntimeSimState::kStallCapMs,
+                                            releaseEnabled, releaseOpensAfter);
+      if (recorder && simTicked) recorder->advanced(*world, runtimeSim, releaseEnabled, releaseOpensAfter);
       // Advance animation with the admitted integer-ms budget times the pass
       // count, or zero when paused. Provisional frame-end transitions receive
       // the full animation delta.
@@ -1889,8 +1895,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       options.injectedWalkers = app::injectedWalkersFromWorld(
           *world, terrainHeight, args.noActorAnim ? nullptr : &lemmingAnim, &lemmingMotion);
       if (backdrop && entranceExitPresentation) {
-        // Connected entry samples the full clip (25 keys/s) with provisional cue
-        // sequencing. Direct diagnostics normalize door progress by releaseArmSeconds.
+        // Fresh play samples the full clip (25 keys/s). Pre-advanced
+        // diagnostics normalize door progress by releaseArmSeconds.
         const double arm = world->setup().releaseArmSeconds;
         hatchOpeningProgress = levelStart ? levelStart->openingProgress() :
             (arm > 0 ? world->levelClockMs()/1000.0/arm : 1.0);
@@ -2240,10 +2246,15 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   audio::CuePlayback* cues = nullptr;
   save::SoundSettings sound;
   std::shared_ptr<save::SaveSink> soundFile;
+  std::shared_ptr<save::SaveSink> languageFile;
   if (options.useDefaultSaveStore && !options.saveStore && args.shot.empty()) {
     if (auto base = save::localAppDataDirectory()) {
       const auto path = save::soundSettingsPathUnder(*base);
       soundFile = std::make_shared<save::FileSaveSink>(path, args.gameDir);
+      if (connected) {
+        const auto languagePath = save::cloneSavePathUnder(*base).parent_path() / "Language.dat";
+        languageFile = std::make_shared<save::FileSaveSink>(languagePath, args.gameDir);
+      }
       if (auto loaded = save::SoundSettings::load(*soundFile); loaded)
         sound = *loaded;
       else {
@@ -2290,7 +2301,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
       std::fprintf(stderr, "save: %s; progress will not be saved\n", made.error().c_str());
     }
   }
-  auto session = FrontendSession::create(*library, store);
+  auto session = FrontendSession::create(*library, store, std::move(languageFile));
   if (!session) { std::fprintf(stderr, "frontend: %s\n", session.error().c_str()); return 1; }
   std::function<void(save::SoundSettings, bool)> preview;
 #if WEBOLUTION_HAVE_SDL2

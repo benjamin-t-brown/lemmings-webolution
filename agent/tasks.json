@@ -37162,7 +37162,7 @@
     {
       "id": "level-start-timing-001",
       "title": "Level start: first lemming at about 4.08 s with Let\u2019s Go! still showing, as in the original (user request 2026-11-23)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "keyboard-shortcuts-001"
       ],
@@ -37176,12 +37176,175 @@
         "The report gives the clone times before and after the change on map entry and Retry for the level timer start, Let\u2019s Go! first draw and removal, door end and first lemming, from runs logged under build/, and cites the static release-start evidence or labels the rule as provisional.",
         "After the change, on map entry Let\u2019s Go! first draws 2.0 s and is gone 4.5 s after the level timer starts, and the first lemming leaves the hatch between 4.04 and 4.12 s while the title is still shown, with the same rule applied on Retry and direct entry.",
         "Release rate, hatch order, the door clip, title drawing and music start are otherwise unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261123T220259-17640-d029ee2e",
+      "started": "2026-11-23T22:02:59.535970+00:00",
+      "finished": "2026-11-23T22:14:04.226683+00:00",
+      "last_run": "build/agent-runs/20261123T220259-17640-d029ee2e",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The retained runs match the target at the sampled frame rates, but the release gate drops the part of the frame after the door finishes. With 30 ms frames, the source path first reports Out = 1 at 4.140 s, outside the required bracket. Apply the retained door-remainder rule at the transition. Also account for the legacy camera-entry fixture, which still expects the old direct-entry door timing.",
+        "checks": [
+          {
+            "criterion": "The report gives the clone times before and after the change on map entry and Retry for the level timer start, Let\u2019s Go! first draw and removal, door end and first lemming, from runs logged under build/, and cites the static release-start evidence or labels the rule as provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/level-start-timing-001.md",
+                "detail": "The Just Climb measurements anchor level time at entry and record the first HUD decrement moving from 0.20 to 1.00 s. The report includes title, door and first-release times for map entry and Retry, and labels frame-boundary arming provisional."
+              },
+              {
+                "path": "build/level-start-timing-001/before-front.csv",
+                "detail": "Map entry logs title draw and removal at 2.00 and 4.50 s, door completion at 2.80 s and first release at 5.80 s. Retry logs those events at 0.02, 2.50, 2.80 and 4.10 s."
+              },
+              {
+                "path": "build/level-start-timing-001/after-frontend.csv",
+                "detail": "After the change, the first HUD decrement occurs at 1.00 s on both routes. Title and door times at this sampling rate match the baseline, and both routes first release at 4.10 s."
+              },
+              {
+                "path": "build/level-start-timing-001/static/read_function_instructions-0x425A95.json",
+                "detail": "The instructions agree with the retained pseudocode. Hatch update 0x425A95 calls the model update through 0x425B04, reads clip completion at 0x425B17, reads the elapsed remainder at 0x425B3B, loads the 1.3 s seed at 0x425B44\u20130x425B56 and subtracts the remainder at 0x425B8A. The hatch countdown branch contains no title-clock check."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, on map entry Let\u2019s Go! first draws 2.0 s and is gone 4.5 s after the level timer starts, and the first lemming leaves the hatch between 4.04 and 4.12 s while the title is still shown, with the same rule applied on Retry and direct entry.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/level-start-timing-001/after-realtime.csv",
+                "detail": "The variable-frame map run samples title draw at 2.002 s, first release at 4.105 s with the title visible, and title removal at 4.502 s. Retry samples first release at 4.108 s."
+              },
+              {
+                "path": "build/level-start-timing-001/after-direct.csv",
+                "detail": "Fresh direct entry opens the doors at 2.800 s and first releases at 4.100 s in the 20 ms run."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The three entry routes share the door gate. The frame loop samples completion once, then sends one Boolean for the whole World advance. With 30 ms frames, the 2.8 s door boundary falls inside the advance from 2.790 to 2.820 s."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The first enabled update arms release and returns without decrementing the 1.3 s countdown. In the 30 ms source trace, only 1.290 s has been credited at 4.110 s, so the first actor appears on the 4.140 s update. Crediting the 20 ms after clip completion would let the first release appear on the 4.110 s update. This finding comes from the source path, without a new run."
+              }
+            ]
+          },
+          {
+            "criterion": "Release rate, hatch order, the door clip, title drawing and music start are otherwise unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-start-timing-001/source.patch",
+                "detail": "The application diff changes release arming and applies the existing full door clip to fresh direct play. The recurring release logic, hatch iteration, clip keys, title renderer and cue-expiry music trigger are preserved."
+              },
+              {
+                "path": "build/level-start-timing-001/replays.csv",
+                "detail": "All 32 promoted recordings have exit code zero and reproduce their recorded outcomes. The set includes 31 wins and the playtest 29 Lone Ranger attempt, which returns to the map at step 12893."
+              },
+              {
+                "path": "build/agent-runs/20261123T213831-17640-6fa81511/verification.log",
+                "detail": "The supervisor built smoke_tests and logged 95 passing smoke checks, including the level sweep, and 84 passing recovery checks."
+              },
+              {
+                "path": "docs/scratch/level-start-timing-001.md",
+                "detail": "The report ends with the Just Climb map and Try again actions and their expected title, hatchling and HUD timings."
+              },
+              {
+                "path": "src/__test__/test_cameraentry.cpp",
+                "detail": "The legacy camera-entry check still compares fresh direct --level --sim frames against the arm-normalized fixture, although this route now samples the full door clip. This stale expectation is source-traced and falls outside the smoke profile."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The retained runs match the target at the sampled frame rates, but the release gate drops the part of the frame after the door finishes. With 30 ms frames, the source path first reports Out = 1 at 4.140 s, outside the required bracket. Apply the retained door-remainder rule at the transition. Also account for the legacy camera-entry fixture, which still expects the old direct-entry door timing.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revised gate credits the portion of the frame after the doors finish. Just Climb now releases its first lemming at 4.10\u20134.11 s in the retained runs, with Let\u2019s Go! visible on map entry. All 32 promoted replays reproduced, and the supervisor\u2019s smoke profile passed. Visible cue times depend on frame sampling. The revised legacy camera and hatch tests were built and remain deferred to milestone sign-off.",
+        "checks": [
+          {
+            "criterion": "The report gives the clone times before and after the change on map entry and Retry for the level timer start, Let\u2019s Go! first draw and removal, door end and first lemming, from runs logged under build/, and cites the static release-start evidence or labels the rule as provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/level-start-timing-001.md",
+                "detail": "The Playtest 30 W5 report identifies Just Climb and anchors both routes at level time zero. It gives all five timing observations before and after the change and explains that Retry retains its shorter cue."
+              },
+              {
+                "path": "build/level-start-timing-001/before-front.csv",
+                "detail": "Both routes show 05:00 on the first 20 ms frame and first decrement at 0.20 s. Map title draw and removal occur at 2.00 and 4.50 s, the doors finish at 2.80 s, and the first lemming appears at 5.80 s. Retry logs those events at 0.02, 2.50, 2.80, and 4.10 s."
+              },
+              {
+                "path": "build/level-start-timing-001/revision-frontend-20ms.csv",
+                "detail": "The first HUD decrement moves to 1.00 s on both routes. The title and door samples match the baseline, and both routes first show Out = 1 at 4.10 s."
+              },
+              {
+                "path": "build/level-start-timing-001/static/revision-read_function_instructions-0x425A95.json",
+                "detail": "For registered EXE SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the instructions agree with the retained pseudocode. The hatch checks clip completion at 0x425B17, reads the remainder at 0x425B3B, loads the 1.3 s seed at 0x425B44\u20130x425B56, and debits the remainder at 0x425B8A. This countdown branch has no title-clock check."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, on map entry Let\u2019s Go! first draws 2.0 s and is gone 4.5 s after the level timer starts, and the first lemming leaves the hatch between 4.04 and 4.12 s while the title is still shown, with the same rule applied on Retry and direct entry.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-start-timing-001/revision-frontend-20ms.csv",
+                "detail": "Map entry first draws the title at 2.000 s and clears it at 4.500 s. The first lemming appears at 4.100 s with the title drawn and the HUD reading 04:56. Retry also releases at 4.100 s."
+              },
+              {
+                "path": "build/level-start-timing-001/revision-frontend-30ms.csv",
+                "detail": "The doors finish in the update from 2.790 to 2.820 s. Both map entry and Retry first show Out = 1 at 4.110 s, correcting the prior 4.140 s source trace. The title is drawn on the map release frame."
+              },
+              {
+                "path": "build/level-start-timing-001/revision-direct-30ms.csv",
+                "detail": "Fresh windowed direct entry shows the same door transition and first release at 4.110 s."
+              },
+              {
+                "path": "build/level-start-timing-001/revision-source.patch",
+                "detail": "Map entry, Retry, and fresh windowed direct entry use LevelStartSequence and pass the opening offset through RuntimeSimState to World. World credits approximately 20 ms to the countdown in the 30 ms opening frame."
+              }
+            ]
+          },
+          {
+            "criterion": "Release rate, hatch order, the door clip, title drawing and music start are otherwise unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-start-timing-001/revision-source.patch",
+                "detail": "The diff preserves the recurring release calculation, hatch iteration order, door clip keys, title renderer, and music trigger at cue expiry. Fresh direct entry now samples the existing full clip, and the legacy camera fixture checks that path."
+              },
+              {
+                "path": "build/level-start-timing-001/revision-replays.csv",
+                "detail": "All 32 files under docs/playtest/replays are accounted for with exit code zero. The results reproduce 31 wins and the Lone Ranger return to the map at step 12893."
+              },
+              {
+                "path": "build/level-start-timing-001/revision-direct-replay.log",
+                "detail": "A new version 3 direct recording carrying the opening offset replays successfully through step 207."
+              },
+              {
+                "path": "build/agent-runs/20261123T220259-17640-d029ee2e/verification.log",
+                "detail": "The supervisor built smoke_tests and logged 95 passing smoke checks, including the installed-level sweep, and 84 passing recovery checks."
+              },
+              {
+                "path": "docs/scratch/level-start-timing-001.md",
+                "detail": "The report ends by asking the player to open Just Climb from the map and check Out = 1 with the title visible at about 4.1 s, then use Try again and check title clearance at about 2.5 s and first release at about 4.1 s."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-23T22:16:51.117659+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261123T220259-17640-d029ee2e\\verification.log",
+        "verified_content": "9e93116072e28c7a649f197d1621cbdd449c367bc4768261749661394e3ccf0d"
+      }
     },
     {
       "id": "language-page-001",
       "title": "The main-menu Language button opens a Language page that offers English only (user request 2026-11-23)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "level-start-timing-001"
       ],
@@ -37195,12 +37358,103 @@
         "The report cites the original row 2 dispatch, the language loader 0x486670 and the Language page builder, and the clone Language page follows that layout while offering only English as the current choice, shown by clone frames under build/.",
         "Click, Return and touch tap on the main-menu Language row open the page and choosing English, Return or Escape returns to the main menu, every production string load uses the UK table, and a stored non-UK language displays English without failing, resetting or silently rewriting the save.",
         "No production path lists, selects or loads another language, the other menus are unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261123T221651-17640-ab46771f",
+      "started": "2026-11-23T22:16:51.786979+00:00",
+      "finished": "2026-11-23T22:33:39.868235+00:00",
+      "last_run": "build/agent-runs/20261123T221651-17640-ab46771f",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by the production source, retained clone frames and input logs, and the supervisor\u2019s smoke results. The original layout is supported by static evidence. Escape is a provisional clone binding because the input that triggers the original gated back path remains unconfirmed.",
+        "checks": [
+          {
+            "criterion": "The report cites the original row 2 dispatch, the language loader 0x486670 and the Language page builder, and the clone Language page follows that layout while offering only English as the current choice, shown by clone frames under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/language-page-001.md",
+                "detail": "The Playtest 30 W4 report identifies the registered executable and cites the row 2 dispatch at 0x48ED89, language loader at 0x486670, and page builder at 0x48E197."
+              },
+              {
+                "path": "build/language-page-001/rea-dispatch-and-page.json",
+                "detail": "The retained instructions agree with the dispatch pseudocode. The row comparison at 0x48EDDB leads to selector 0x0C at 0x48EDEE. The builder passes label indices 115\u2013119 to the shared row builder, sets the base to 0xDC, and focuses the first row. The factory binds MAIN_LOGO.BMP."
+              },
+              {
+                "path": "build/language-page-001/rea-loader-and-settings.json",
+                "detail": "The loader instructions show 0x486670 reading five names, formatting Language\\%s.ltx, and storing each table pointer. The default slot is 2, Uk. The shared geometry adds 0x64 to the first-row base for Y=320, and the shared plate routine supplies the focused orange fill."
+              },
+              {
+                "path": "build/language-page-001/main-menu-language-focused.png",
+                "detail": "The clone frame shows the five main-menu plates with Language Selection highlighted in the third row."
+              },
+              {
+                "path": "build/language-page-001/language-page.png",
+                "detail": "The clone frame shows MAIN_LOGO and one centered orange English plate at the shared first-row position."
+              }
+            ]
+          },
+          {
+            "criterion": "Click, Return and touch tap on the main-menu Language row open the page and choosing English, Return or Escape returns to the main menu, every production string load uses the UK table, and a stored non-UK language displays English without failing, resetting or silently rewriting the save.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/language-page-001/frontend-input.log",
+                "detail": "The retained production SDL run records click, keyboard Return, and queued finger-tap entry. Click, tap, and Return select English and return to the main menu. Escape returns while preserving the seeded FRENCH setting, and explicit selection writes UK."
+              },
+              {
+                "path": "build/language-page-001/language_probe.cpp",
+                "detail": "The probe uses private LocalAppData, seeds a FRENCH sidecar and GERMAN legacy progress, and asserts that both the retail-layout save and legacy progress remain byte-identical throughout. It also checks that Escape preserves the sidecar timestamp and that keyboard and touch entry render the same English image."
+              },
+              {
+                "path": "src/app/EnglishStrings.h",
+                "detail": "The sole production language-table loader fixes the code to UK. The frontend, map, level menu, entry cue, and results all call this helper."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "The page always renders UK label 115. Only explicit activation of English writes UK to the clone settings sidecar. Escape has no write path, and neither the sidecar nor legacy language values participate in display selection."
+              }
+            ]
+          },
+          {
+            "criterion": "No production path lists, selects or loads another language, the other menus are unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/language-page-001/implementation.diff",
+                "detail": "The task adds a single English choice and replaces existing UK loads with the fixed UK helper. The other main-menu actions, Options behavior, level-menu behavior, and in-level touch Menu plate retain their existing paths. No task hunk changes simulation or replay logic."
+              },
+              {
+                "path": "build/agent-runs/20261123T221651-17640-ab46771f/before-status.txt",
+                "detail": "The implementation-entry snapshot already lists the World, RuntimeHud, Replay, and level-start timing changes visible in the working tree."
+              },
+              {
+                "path": "build/language-page-001/promoted-replays.csv",
+                "detail": "All 32 repository replay files are represented and passed with exit code 0. The results include 31 wins and The Lone Ranger\u2019s recorded return to the map at step 12893."
+              },
+              {
+                "path": "build/agent-runs/loop-d9c559c67410437aacac3a3d93c3b841/0001-verify-ae4b2a/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 of 95 main smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/language-page-001.md",
+                "detail": "The closing what-to-check note names the startup menu and Just Climb. It asks the player to open Language Selection by each input method, confirm the single highlighted English plate, return to the menu, and verify English entry text in the level."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T16:44:01.937910+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-d9c559c67410437aacac3a3d93c3b841/0001-verify-ae4b2a/verification.log",
+        "verified_content": "ec099dfbdec3b18030df8b011010f72a6019c85b766f287f88920649aae52d86"
+      }
     },
     {
       "id": "shortcuts-simplify-001",
       "title": "Keyboard Shortcuts screen keeps only the Level Play rows, without their heading (user decision 2026-11-23)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "language-page-001"
       ],
@@ -37214,12 +37468,122 @@
         "The Keyboard Shortcuts screen shows only the five Level Play rows for 1 to 8, P, Enter or Pause/Break, Keypad Enter and Escape, on one page with no section heading and Examine Level as the description of both Examine rows, shown by before and after clone frames under build/.",
         "Back, Escape and Return still return to Options with pending edits kept, and the legacy shortcuts check now verifies that every listed key is handled by the level input code, with the change justified in the report.",
         "Input handling, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261124T164402-52984-37f7aaa3",
+      "started": "2026-11-24T16:44:02.652238+00:00",
+      "finished": "2026-11-24T16:54:20.586233+00:00",
+      "last_run": "build/agent-runs/20261124T164402-52984-37f7aaa3",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported by the retained clone frames, source review, and supervisor smoke results. Human confirmation in the web build remains pending.",
+        "checks": [
+          {
+            "criterion": "The Keyboard Shortcuts screen shows only the five Level Play rows for 1 to 8, P, Enter or Pause/Break, Keypad Enter and Escape, on one page with no section heading and Examine Level as the description of both Examine rows, shown by before and after clone frames under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/shortcuts-simplify-001/before/main-shortcuts.png",
+                "detail": "The main-menu Options route previously displayed two columns of shortcut sections, including the Level Play heading and two rows labeled Examine."
+              },
+              {
+                "path": "build/shortcuts-simplify-001/after/main-shortcuts.png",
+                "detail": "The main-menu Options route shows exactly the five requested rows in one column, with Examine Level on both Examine rows. The title, menu font, and Back plate are visible."
+              },
+              {
+                "path": "build/shortcuts-simplify-001/before/level-shortcuts.png",
+                "detail": "Sound Options in Just Climb previously displayed the same two-column shortcut list and section headings."
+              },
+              {
+                "path": "build/shortcuts-simplify-001/after/level-shortcuts.png",
+                "detail": "Sound Options in Just Climb shows the same five-row page as the main-menu route, with both Examine Level descriptions and a Back plate."
+              },
+              {
+                "path": "src/app/SoundMenu.cpp",
+                "detail": "The shared renderer draws a flat five-entry table, the screen title, and Back. It has no section-heading branch or paging control."
+              },
+              {
+                "path": "build/shortcuts-simplify-001/rea-instructions.json",
+                "detail": "Retained Ghidra instructions for the registered x86 reference, SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, agree with the Options builder pseudocode at 0x0048E5B4. The instructions at 0x0048E62F, 0x0048E678, and 0x0048E6B4 pass label positions 1, 3, and 5. Those at 0x0048E767 and 0x0048E7E4 pass meter positions 2 and 4. This static evidence describes the original Options layout. The clone frames establish the shortcut page behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "Back, Escape and Return still return to Options with pending edits kept, and the legacy shortcuts check now verifies that every listed key is handled by the level input code, with the change justified in the report.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/shortcuts-simplify-001/after/probe.log",
+                "detail": "The retained clone probe passed Back, Escape, and Return from both Options routes. It confirmed that the pending value survived each return, persisted when accepted on the main-menu route, and left the simulation tick frozen in Just Climb."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Back routes through pressReturn. Return and Escape on the shortcuts page delegate to the frontend state without finishing the pending Options edit."
+              },
+              {
+                "path": "src/shell/Frontend.cpp",
+                "detail": "Both Return and Escape replace the Keyboard Shortcuts page with Sound Options."
+              },
+              {
+                "path": "src/__test__/keyboard_shortcuts.cmake",
+                "detail": "The legacy check requires each documented scancode to appear in the gameplay keydown branch. Source review confirmed that the metadata for all five visible rows matches the 13 scancodes handled there."
+              },
+              {
+                "path": "build/shortcuts-simplify-001/shortcuts-coverage.log",
+                "detail": "The retained positive run passed all 13 listed scancodes."
+              },
+              {
+                "path": "build/shortcuts-simplify-001/shortcuts-menu-only-negative.log",
+                "detail": "The retained negative run rejected SDL_SCANCODE_UP, confirming that a key handled by menus alone fails the gameplay check."
+              },
+              {
+                "path": "docs/scratch/shortcuts-simplify-001.md",
+                "detail": "The report explains why playtest W6 replaces exhaustive app-wide key coverage with a check that the shorter list contains only gameplay keys."
+              }
+            ]
+          },
+          {
+            "criterion": "Input handling, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261124T164402-52984-37f7aaa3/before-source-hashes.json",
+                "detail": "Comparison with the worker's after snapshot distinguishes pre-existing runtime edits from this task's changes."
+              },
+              {
+                "path": "build/agent-runs/20261124T164402-52984-37f7aaa3/after-source-hashes.json",
+                "detail": "The only production source change relative to the worker baseline is SoundMenu.cpp, where the diff is confined to the shortcut table and renderer. The gameplay input, simulation, and replay source hashes match the baseline."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Replay playback dispatches to replayLevel before frontend construction, so no recorded level route reaches the changed page."
+              },
+              {
+                "path": "build/agent-runs/20261124T164402-52984-37f7aaa3/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the 102-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261124T164402-52984-37f7aaa3/result.json",
+                "detail": "The supervisor recorded verification exit code 0 for the content digest supplied for this review."
+              },
+              {
+                "path": "docs/scratch/shortcuts-simplify-001.md",
+                "detail": "The report ends with a Just Climb check covering the five rows, both Examine Level descriptions, and retention of pending settings and pause state after each return path."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T16:56:17.035919+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T164402-52984-37f7aaa3\\verification.log",
+        "verified_content": "322c5d7c3d44904236a8fa8ac8b462d6465cade8d0574eb10baa8d53e4228490"
+      }
     },
     {
       "id": "level-menu-order-001",
       "title": "Level menu: Examine becomes Examine Level and Quit moves to the bottom (user request 2026-11-23)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "shortcuts-simplify-001"
       ],
@@ -37228,12 +37592,175 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "User request (2026-11-23, recorded in docs/playtest/2026-11-23-playtest-30.md as W7): in the level menu, rename the Examine row to Examine Level and move the Quit row to the bottom of the list. User-directed deviation from the original row order. Today src/app/LevelMenu.cpp lists kActions Resume, Retry, MapQuit, SoundOptions, Examine, with the first four labels from UK strings 44, 48, 43 and 3 (kLabelIndices) and the clone label Examine. After the change the rows read, top to bottom: Resume, Try Again (Retry), Sound Options, Examine Level, Quit (MapQuit), with the native labels unchanged and Examine Level as the clone label. Every action keeps its behaviour; only the order and that one label change. Drawing, pointer and touch hit testing, keyboard focus movement and the initially focused row (state which row is focused on open, keeping Resume if it is today), actionAt, focusedAction, the level name heading of level-menu-title-001 and its line budget all follow the new order through the one row table, so drawn rows and hit areas stay aligned. The touch Menu plate, Options and the main menu are unchanged. Presentation only: simulation and replays stay unchanged. Update the legacy level menu tests only where they encode the old order or label, with before and after justification. Evidence under build/<task-id>/: before and after clone frames of the open level menu, and a log choosing each row by click, keyboard and injected touch. Difficulty: routine. Recommended model: Sonnet. Reason: reordering one menu table. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
+      "scope": "User request (2026-11-23, recorded in docs/playtest/2026-11-23-playtest-30.md as W7): in the level menu, rename the Examine row to Examine Level and move the Quit row to the bottom of the list. User-directed deviation from the original row order. Today src/app/LevelMenu.cpp lists kActions Resume, Retry, MapQuit, SoundOptions, Examine, with the first four labels from UK strings 44, 48, 43 and 3 (kLabelIndices) and the clone label Examine. After the change the rows read, top to bottom: Resume, Try Again (Retry), Options (SoundOptions), Examine Level, Quit (MapQuit), with the native labels unchanged and Examine Level as the clone label. Every action keeps its behaviour; only the order and that one label change. Drawing, pointer and touch hit testing, keyboard focus movement and the initially focused row (state which row is focused on open, keeping Resume if it is today), actionAt, focusedAction, the level name heading of level-menu-title-001 and its line budget all follow the new order through the one row table, so drawn rows and hit areas stay aligned. The touch Menu plate, Options and the main menu are unchanged. Presentation only: simulation and replays stay unchanged. Update the legacy level menu tests only where they encode the old order or label, with before and after justification. Evidence under build/<task-id>/: before and after clone frames of the open level menu, and a log choosing each row by click, keyboard and injected touch. Difficulty: routine. Recommended model: Sonnet. Reason: reordering one menu table. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result. Disk space: never copy the game installation or its large files (lemmings.box, the AVI files, the disc image); read them from the registered Lemmings Revolution folder, or hard-link them with os.link when a separate game folder is needed. Before finishing, delete the probe and scratch executables and object files you built under build/<task-id>/; keep their sources, logs and frames.",
       "acceptance": [
-        "The open level menu lists Resume, Try Again, Sound Options, Examine Level and Quit from top to bottom with the native labels unchanged, shown by before and after clone frames under build/.",
+        "The open level menu lists Resume, Try Again, Options, Examine Level and Quit from top to bottom with the native labels unchanged, shown by before and after clone frames under build/.",
         "Click, keyboard focus and injected touch on each row perform that row action, hit areas match the drawn rows, and the level name heading still fits above them, shown by a log under build/ and the level menu tests.",
         "The touch Menu plate, Options and main menu are unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261124T165617-52984-022ef64d",
+      "started": "2026-11-24T16:56:17.563882+00:00",
+      "finished": "2026-11-24T17:08:01.014165+00:00",
+      "last_run": "build/agent-runs/20261124T165617-52984-022ef64d",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261124T165617-52984-022ef64d",
+          "review": {
+            "decision": "blocked",
+            "reason": "The first criterion requires the visible text \u201cSound Options\u201d and preservation of the native label. The installed UK label is \u201cOptions,\u201d and the task authorizes renaming only Examine. The project lead must confirm which wording governs acceptance. The input, layout, replay, and smoke checks passed.",
+            "checks": [
+              {
+                "criterion": "The open level menu lists Resume, Try Again, Sound Options, Examine Level and Quit from top to bottom with the native labels unchanged, shown by before and after clone frames under build/.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/level-menu-order-001/before/just-climb.png",
+                    "detail": "The Just Climb menu shows Resume, Try Again, Quit, Options, Examine, with Resume highlighted."
+                  },
+                  {
+                    "path": "build/level-menu-order-001/after/just-climb.png",
+                    "detail": "The same route now shows Resume, Try Again, Options, Examine Level, Quit. The order and Examine rename are correct, and the visible third row still reads \u201cOptions.\u201d"
+                  },
+                  {
+                    "path": "build/level-menu-order-001/before/probe.log",
+                    "detail": "The installed UK strings are 44 Resume, 48 Try Again, 3 Options, and 43 Quit. Preserving index 3 preserves the visible text \u201cOptions.\u201d"
+                  },
+                  {
+                    "path": "build/level-menu-order-001/rea.json",
+                    "detail": "Retained Ghidra pseudocode at 0x0048F51B agrees with the instructions at 0x0048F530 and 0x0048F532, which push five entries and table address 0x004C4228. The table decodes to 44, 48, 43, 3, 0 in the registered x86 executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. This establishes the native label indices through static evidence."
+                  }
+                ]
+              },
+              {
+                "criterion": "Click, keyboard focus and injected touch on each row perform that row action, hit areas match the drawn rows, and the level name heading still fits above them, shown by a log under build/ and the level menu tests.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/level-menu-order-001/after/probe.log",
+                    "detail": "All 15 selections in Just Climb passed. Click, keyboard, and injected SDL touch each resumed play, started a fresh retry, opened paused sound settings, entered paused Examine mode, and returned to the map through their respective rows."
+                  },
+                  {
+                    "path": "src/__test__/test_levelmenu.cpp",
+                    "detail": "Checks the strict content bounds of every row, Resume focus on open, wrapping between Resume and Quit, and matching draw and hit offsets when the heading wraps."
+                  },
+                  {
+                    "path": "build/agent-native/main/agent-results.xml",
+                    "detail": "The retained levelmenu result records 44 executed checks with zero failures."
+                  },
+                  {
+                    "path": "build/level-menu-order-001/after/longest-title.png",
+                    "detail": "The full installed E17_KF_1 title, \u201cBuild 'em up ....then bring em down,\u201d fits on one line above Resume and all four following rows."
+                  }
+                ]
+              },
+              {
+                "criterion": "The touch Menu plate, Options and main menu are unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261124T165617-52984-022ef64d/after-diff.txt",
+                    "detail": "Compared with the worker's before-diff snapshot, the production changes are confined to LevelMenu.cpp and LevelMenu.h. The Menu plate rendering and hit bounds, action dispatcher, Options and main menu implementation, simulation, and replay code carry forward unchanged for this task."
+                  },
+                  {
+                    "path": "build/agent-runs/20261124T165617-52984-022ef64d/verification.log",
+                    "detail": "The supervisor built smoke_tests with the registered UCRT64 toolchain and passed all 95 main smoke tests, including the 102-level sweep, plus all 84 recovery tests."
+                  },
+                  {
+                    "path": "build/level-menu-order-001/promoted-replays.tsv",
+                    "detail": "All 32 promoted recordings reproduced their expected outcomes, including 31 wins and The Lone Ranger's recorded return to the map at step 12893."
+                  },
+                  {
+                    "path": "docs/scratch/level-menu-order-001.md",
+                    "detail": "The report ends with a Just Climb playtest note covering Escape and touch Menu entry, initial Resume focus, Up and Return to quit to the map, and the paused Examine Level caption. Physical touch and human confirmation remain pending."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "The first criterion requires the visible text \u201cSound Options\u201d and preservation of the native label. The installed UK label is \u201cOptions,\u201d and the task authorizes renaming only Examine. The project lead must confirm which wording governs acceptance. The input, layout, replay, and smoke checks passed."
+        }
+      ],
+      "lead_note": " 2026-11-24: the review blocked only on the lead's wording Sound Options in criterion 1; the native label UK string 3 reads Options and the task keeps native labels, which governs. The user asked only for Examine Level and Quit at the bottom. The work is unchanged. Returned to needs_review. Previous criterion 1: The open level menu lists Resume, Try Again, Sound Options, Examine Level and Quit from top to bottom with the native labels unchanged, shown by before and after clone frames under build/.",
+      "review": {
+        "decision": "accept",
+        "reason": "Playtest 30 W7 is implemented as requested. The clone preserves the native Options label, all 15 input and action combinations passed, and the supervisor\u2019s smoke profile passed. Physical touch and human playtest confirmation remain pending.",
+        "checks": [
+          {
+            "criterion": "The open level menu lists Resume, Try Again, Options, Examine Level and Quit from top to bottom with the native labels unchanged, shown by before and after clone frames under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-menu-order-001/before/just-climb.png",
+                "detail": "The Just Climb menu shows Resume, Try Again, Quit, Options, and Examine, with Resume highlighted."
+              },
+              {
+                "path": "build/level-menu-order-001/after/just-climb.png",
+                "detail": "The same route shows Resume, Try Again, Options, Examine Level, and Quit in the requested order, with Resume still highlighted."
+              },
+              {
+                "path": "build/level-menu-order-001/before/probe.log",
+                "detail": "The installed UK table resolves indices 44, 48, 3, and 43 to Resume, Try Again, Options, and Quit respectively."
+              },
+              {
+                "path": "build/level-menu-order-001/rea.json",
+                "detail": "Retained Ghidra pseudocode for 0x0048F51B agrees with the count and table pointer pushed at 0x0048F530 and 0x0048F532. The table at 0x004C4228 decodes to 44, 48, 43, 3, 0 in the registered x86 executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. This establishes the native label indices through static inspection."
+              }
+            ]
+          },
+          {
+            "criterion": "Click, keyboard focus and injected touch on each row perform that row action, hit areas match the drawn rows, and the level name heading still fits above them, shown by a log under build/ and the level menu tests.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-menu-order-001/after/probe.log",
+                "detail": "Click, keyboard selection, and injected SDL touch each resumed play, started a fresh retry, opened paused sound settings, entered paused Examine mode, and returned to the map through the corresponding rows in Just Climb. All 15 cases passed."
+              },
+              {
+                "path": "src/__test__/test_levelmenu.cpp",
+                "detail": "The test checks each row\u2019s strict content bounds and action, initial Resume focus, wrapping between Resume and Quit, and agreement between drawing and hit positions when the heading wraps."
+              },
+              {
+                "path": "build/agent-native/main/agent-results.xml",
+                "detail": "The levelmenu test ran 44 checks with zero failures."
+              },
+              {
+                "path": "build/level-menu-order-001/after/longest-title.png",
+                "detail": "The full installed E17_KF_1 heading, \u201cBuild 'em up ....then bring em down,\u201d fits above Resume and all four following rows."
+              }
+            ]
+          },
+          {
+            "criterion": "The touch Menu plate, Options and main menu are unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261124T165617-52984-022ef64d/after-diff.txt",
+                "detail": "Compared with the worker\u2019s before-diff, the production changes are confined to LevelMenu.cpp and LevelMenu.h. The touch Menu plate\u2019s drawing and hit bounds, the Options and main menu implementations, the action dispatcher, simulation, and replay code are unchanged by W7."
+              },
+              {
+                "path": "build/agent-runs/loop-caa7257efdfe48258024b3a04cc7a5e7/0001-verify-9d6933/verification.log",
+                "detail": "The supervisor built smoke_tests with the registered UCRT64 toolchain. All 95 main smoke tests passed, including levelmenu and the 102-level sweep, and all 84 recovery tests passed."
+              },
+              {
+                "path": "build/level-menu-order-001/promoted-replays.tsv",
+                "detail": "All 32 promoted recordings reproduced their expected outcomes, including 31 wins and the recorded MM_TELE_003 return to the map at step 12893."
+              },
+              {
+                "path": "docs/scratch/level-menu-order-001.md",
+                "detail": "The report ends with a Just Climb playtest note covering entry with Escape or the touch Menu plate, initial Resume focus, Up and Return to quit to the map, and the paused Examine Level caption."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T17:25:18.214961+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-caa7257efdfe48258024b3a04cc7a5e7/0001-verify-9d6933/verification.log",
+        "verified_content": "edc27b3a34092c17b320be8e63fa044f0424d0a15b6389e43eba51926fb76906"
+      }
     }
   ]
 }

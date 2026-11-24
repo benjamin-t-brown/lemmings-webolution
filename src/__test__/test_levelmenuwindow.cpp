@@ -112,8 +112,8 @@ int main() {
         ok &= key(SDL_SCANCODE_ESCAPE);
       } else if (n == 1) {
         ok &= f.world.tickCount() == frozenTick && f.entryCueSeconds == frozenCue;
-        // Menu misses, Options and gameplay bindings must not leak through.
-        ok &= click(10, 130) && click(320, 200) && click(320, 240, SDL_BUTTON_RIGHT);
+        // Menu misses, including the Options content edge, and gameplay bindings must not leak through.
+        ok &= click(10, 130) && click(282, 170) && click(320, 240, SDL_BUTTON_RIGHT);
         ok &= key(SDL_SCANCODE_2) && key(SDL_SCANCODE_SPACE) && key(SDL_SCANCODE_P);
       } else if (n == 2) {
         ok &= f.world.tickCount() == frozenTick && f.entryCueSeconds == frozenCue &&
@@ -179,7 +179,7 @@ int main() {
           ok &= retryFrame.rgba == f.image.rgba;
         }
         if (phase == 3) { phase = 4; ok &= click(320, 140); } // non-first-level Retry
-        else { phase = phase == 1 ? 2 : 5; ok &= click(320, 170); } // Quit to map
+        else { phase = phase == 1 ? 2 : 5; ok &= click(320, 230); } // Quit to map
       } else ok = false;
     } else ok = false;
     if (!ok) { std::cerr << "menu mismatch phase=" << phase << " frame=" << f.frame << '\n'; quit(); }
@@ -243,7 +243,7 @@ int main() {
         traceOk &= key(SDL_SCANCODE_ESCAPE);
       } else if (tracePhase == 1 && f.frame == 1) {
         traceOk &= f.frontendConstructionCounter == 7 && f.levelMenuOpen && f.paused;
-        tracePhase = 2; traceOk &= click(320, 170);
+        tracePhase = 2; traceOk &= click(320, 230);
       } else if (tracePhase < 2 || tracePhase > 5) traceOk = false;
     };
     std::vector<std::string> traceArgs{"level-menu-prefix", "--frontend", "--frames", "8", "--game-dir", game};
@@ -339,7 +339,7 @@ int main() {
       if (f.world.tickCount() > 2) { tracePhase = 7; traceOk &= key(SDL_SCANCODE_ESCAPE); }
     } else if (tracePhase == 7) {
       traceOk &= f.levelName == "MM_CLIMB_002" && f.frontendConstructionCounter == 11 && f.levelMenuOpen && f.paused;
-      traceOk &= click(320, 170) && release(320, 170); tracePhase = 8;
+      traceOk &= click(320, 230) && release(320, 230); tracePhase = 8;
     } else if (tracePhase == 5) traceOk = false;
   };
   std::vector<std::string> traceArgs{"level-menu-no-resume", "--frontend", "--frames", "24",

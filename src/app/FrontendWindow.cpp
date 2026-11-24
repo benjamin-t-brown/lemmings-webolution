@@ -56,7 +56,7 @@ void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event,
     else if (!event.key.repeat) {
       if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
       else if (key == SDLK_RETURN) session.pressReturn();
-      else if (key == SDLK_ESCAPE) session.pressEscapeInOptions();
+      else if (key == SDLK_ESCAPE) session.pressEscape();
     }
   }
 }
@@ -109,6 +109,8 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
       const auto key = event.key.keysym.sym;
       if (key == SDLK_RETURN) session.pressReturn();
+      else if (key == SDLK_ESCAPE && session.screen() == shell::Screen::Language)
+        session.pressEscape();
       else if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
     }
   };

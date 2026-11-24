@@ -31,8 +31,8 @@ SOURCE_GROUPS = {
         ActorSprite.cpp ActorSprite.h ActorTerrain.cpp ActorTerrain.h ActorVisibility.cpp
         ActorVisibility.h AppEntry.h BackdropScene.cpp BackdropScene.h BuilderBrick.h Camera.cpp
         Camera.h CameraInput.cpp CameraInput.h CameraIntro.cpp CameraIntro.h CrtRand.cpp
-        CrtRand.h CursorPolicy.cpp CursorPolicy.h DeathParticles.h EntryStartCue.cpp
-        EntryStartCue.h ExitBalloon.h FrontendSession.cpp FrontendSession.h
+        CrtRand.h CursorPolicy.cpp CursorPolicy.h DeathParticles.h EnglishStrings.h
+        EntryStartCue.cpp EntryStartCue.h ExitBalloon.h FrontendSession.cpp FrontendSession.h
         FrameConsumption.h FrameProfile.h FrontendWindow.cpp FrontendWindow.h GameDataLocation.cpp
         GameDataLocation.h HatchAnimation.cpp
         HatchAnimation.h HoverFeedback.h

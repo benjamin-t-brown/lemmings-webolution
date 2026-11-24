@@ -282,18 +282,15 @@ int main() {
     runStatic("entry-yaw229-frame" + std::to_string(kSamples[i]), op, kSamples[i], entryStatic[i]);
 #ifndef CAMERAENTRY_FROZEN
     if (!entryStatic[i].empty()) {
-      // Compare the fixture with the explicit-camera frame using the arm mapping,
-      // then compose the connected frame with the full 2.8 s clip.
-      auto& sample = entryStatic[i].back();
+      // Both fresh windowed paths sample the full 2.8 s door clip.
+      const auto& sample = entryStatic[i].back();
       const double openingMs = (kSamples[i] + 1) * kFrameSeconds * 1000.0;
       const auto control = test::hatchEntryFixture(*library, sample.pose,
-            static_cast<int>(sample.tick), openingMs, false, kLevel, true, openingMs / 1000.0);
+            static_cast<int>(sample.tick), openingMs, true, kLevel, true, openingMs / 1000.0);
       expect(changedPixels(control, sample.image) == 0,
              "static camera frame " + std::to_string(kSamples[i]) +
-             " exactly matches the independent diagnostic hatch compositor");
-      png("diagnostic-entry-yaw229-frame" + std::to_string(kSamples[i]) + ".png", sample.image);
-      sample.image = test::hatchEntryFixture(*library, sample.pose,
-            static_cast<int>(sample.tick), openingMs, true, kLevel, true, openingMs / 1000.0);
+             " exactly matches the independent full-clip hatch compositor");
+      png("direct-entry-yaw229-frame" + std::to_string(kSamples[i]) + ".png", sample.image);
     }
 #endif
   }
@@ -360,7 +357,7 @@ int main() {
     } else if (t.legs == 2) {
       if (f.frame == 0) { t.retryFrame0 = capture(f); if (!pushEscape()) t.fail("retry menu", report); }
       else if (f.frame == 1) {
-        if (!f.levelMenuOpen || !pushClick(320, 170)) t.fail("Quit-to-map click", report);  // Quit to map
+        if (!f.levelMenuOpen || !pushClick(320, 230)) t.fail("Quit-to-map click", report);  // Quit to map
       } else t.fail("leg 2 ran past Quit", report);
     } else if (t.legs == 3) {
       if (f.frame == 0) { t.reentryFrame0 = capture(f); if (pushQuit()) ++t.quits; else t.fail("final quit", report); }

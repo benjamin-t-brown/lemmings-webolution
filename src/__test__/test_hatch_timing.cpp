@@ -130,8 +130,8 @@ int entry(const fs::path& out) {
       if (doorEnd < 0 && opening >= 1.0) { doorEnd=elapsed; shot=true; }
       if (cueEnd < 0 && f.entryCueSeconds < -1.0) { cueEnd=elapsed; shot=true; }
       if (!before) {
-        if (f.entryCueSeconds >= -1.0 || opening < 1.0)
-          check(f.world.spawned() == 0, "no birth until cue retired AND doors open");
+        if (opening < 1.0)
+          check(f.world.spawned() == 0, "no birth before the doors finish");
         check(opening + 1e-9 >= priorOpening, "door sample monotonic");
         if (f.paused) check(opening == priorOpening, "pause freezes doors");
       }
@@ -139,9 +139,12 @@ int entry(const fs::path& out) {
       if (f.world.spawned() > spawned) {
         check(f.world.spawned() == spawned + 1, "one release per observed frame");
         releases.push_back(f.world.levelClockMs()); spawned=f.world.spawned();
-        if (first < 0) { first=elapsed; png(dir / "first-release.png", test::inspectedImage(f)); }
-        if (!before) check(cueEnd >= 0 && doorEnd >= 0 && first > doorEnd,
-                           "first release after cue and fully open doors");
+        if (first < 0) {
+          first=elapsed;
+          if (!before) check(f.entryCueFrame.has_value() && doorEnd >= 0 && first > doorEnd,
+                             "first map release with the cue visible and the doors fully open");
+          png(dir / "first-release.png", test::inspectedImage(f));
+        }
         shot = true;
       }
       if (shot) png(dir / ("frame-" + std::to_string(f.frame) + ".png"), test::inspectedImage(f));
@@ -288,7 +291,7 @@ int retry(const fs::path& out) {
     trace<<f.frame<<','<<f.world.levelClockMs()<<','<<f.entryCueSeconds<<','<<f.hatchOpeningProgress<<','<<f.world.spawned()<<'\n';
     if(cueEnd<0 && f.entryCueSeconds < -1) {cueEnd=t;png(out/"cue-retired.png",f.image);}
     if(doorEnd<0 && f.hatchOpeningProgress>=1) {doorEnd=t;png(out/"doors-open.png",f.image);}
-    if(f.entryCueSeconds>=-1 || f.hatchOpeningProgress<1) check(f.world.spawned()==0,"Retry holds release until both gates finish");
+    if(f.hatchOpeningProgress<1) check(f.world.spawned()==0,"Retry holds release until the doors finish");
     if(f.world.spawned()>0) {first=t;png(out/"first-release.png",f.image);quit();}
   };
   std::vector<std::string> args{"hatch-timing-retry","--frontend","--native","--frames","100","--game-dir",game.string()};
@@ -498,11 +501,25 @@ int units(const fs::path& game) {
   }
   app::LevelStartSequence start(2.8);
   start.advance(2.8,true);
-  check(start.openingProgress()==1 && !start.releaseEnabled(true) && start.releaseEnabled(false),
-        "full clip and cue retirement both required");
+  check(start.openingProgress()==1 && start.releaseEnabled(),
+        "full clip enables release");
   app::LevelStartSequence retry(2.8); retry.advance(2.5,true);
-  check(!retry.releaseEnabled(false), "short Retry cue still waits for doors");
+  check(!retry.releaseEnabled(), "short Retry cue still waits for doors");
   retry.advance(20,false); check(retry.openingProgress()<1,"paused door clock");
+
+  setup->releaseArmSeconds = 0;
+  sim::World live(*setup);
+  app::RuntimeSimState liveClock;
+  app::LevelStartSequence doors(2.799999952316284);
+  while (live.levelClockMs() < 4080) {
+    const auto opensAfter = doors.advance(0.030, true);
+    liveClock.advanceElapsed(live, 0.030, false, {}, 0, doors.releaseEnabled(), opensAfter);
+  }
+  check(live.spawned() == 0, "30 ms updates do not release by 4.080 s");
+  const auto opensAfter = doors.advance(0.030, true);
+  liveClock.advanceElapsed(live, 0.030, false, {}, 0, doors.releaseEnabled(), opensAfter);
+  check(live.levelClockMs() == 4110 && live.spawned() == 1,
+        "credit the remainder of the door-opening update and release by 4.110 s");
   return failures ? 1 : 0;
 }
 }

@@ -14,12 +14,13 @@
 #include "sim/RetailLevel.h"
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace webo::test {
 inline Image hatchEntryFixture(const AssetLibrary& library,
                                const app::CameraParams& cameraParams,
-                               int hudTicks, double openingMs, bool connectedEntry = false,
+                               int hudTicks, double openingMs, bool liveEntry = false,
                                const std::string& levelName = "MM_CLIMB_002", bool hoverFeedback = false,
                                double panelSeconds = 0) {
   const auto require = []<class T>(std::expected<T, std::string> value) -> T {
@@ -34,15 +35,24 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   auto backdrop = require(app::BackdropScene::build(library, bytes, levelName));
   const auto effects = require(backdrop.entranceExitPresentation(bytes));
   sim::World world(require(sim::loadRetailLevel(library, levelName)));
-  for (int i = 0; i < hudTicks; ++i) world.tick();
+  if (!std::isfinite(openingMs) || openingMs < 0 || openingMs > std::numeric_limits<int>::max())
+    throw std::runtime_error("invalid hatch entry fixture time");
+  const int levelMs = static_cast<int>(std::floor(openingMs + 1e-6));
+  if (liveEntry) {
+    // The live HUD consumes whole elapsed seconds. At 208 ms the World has
+    // stepped once and the countdown still shows its initial value.
+    world.advanceElapsedMs(levelMs);
+  } else {
+    for (int i = 0; i < hudTicks; ++i) world.tick();
+  }
   // These entry fixtures precede release. Actors would require their own
   // animation/motion clocks, so refuse to silently fake a later gameplay frame.
-  if (world.spawned() != 0 || !std::isfinite(openingMs) || openingMs < 0)
+  if (world.spawned() != 0)
     throw std::runtime_error("hatch entry fixture is restricted to pre-release frames");
-  // Connected entry uses the full door clip. Direct-level diagnostics map it to the arm interval.
-  const double arm = connectedEntry ? 2.799999952316284 : world.setup().releaseArmSeconds;
+  // Live entry uses the full clip. Pre-advanced diagnostics map it to the arm interval.
+  const double arm = liveEntry ? 2.799999952316284 : world.setup().releaseArmSeconds;
   // Sample the exit balloon at whole milliseconds. Doors use a separate sub-millisecond clock.
-  const double levelSeconds = std::floor(openingMs + 1e-6) / 1000.0;
+  const double levelSeconds = levelMs / 1000.0;
   backdrop.setEntranceExitPresentation(effects, arm > 0 ? openingMs / 1000.0 / arm : 1, 0,
                                       levelSeconds);
   app::SceneOptions options;
@@ -83,7 +93,7 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   icons.advanceIcons(panelSeconds, 0, -1);
   panel.draw(image, panel.initialCounts(), 0, false, &icons);
   // Window frames with hover feedback include all three HUD icons.
-  if (connectedEntry || hoverFeedback) {
+  if (liveEntry || hoverFeedback) {
     app::compositeIconRegion(image, require(loadTexture(library, "TEXTURES\\^OUT.BMP")),
                              {557, 15, 0, 0, 26, 32});
     app::compositeIconRegion(image, require(loadTexture(library, "TEXTURES\\^SAVED.BMP")),

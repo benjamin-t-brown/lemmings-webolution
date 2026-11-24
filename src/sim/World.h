@@ -796,9 +796,11 @@ public:
   // afterUpdate receives each segment's seconds. False ends the frame early.
   void advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout = false,
                         const std::function<bool(double)>& afterUpdate = {});
-  // Pause hatch timing during level entry while other clocks advance.
+  // Pause hatch timing during level entry while other clocks advance. When the
+  // doors open during this pass, releaseOpensAfter is the closed prefix in seconds.
   void advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterTimeout,
-                        bool releaseEnabled, const std::function<bool(double)>& afterUpdate = {});
+                        bool releaseEnabled, const std::function<bool(double)>& afterUpdate = {},
+                        std::optional<double> releaseOpensAfter = {});
 
   std::uint64_t tickCount() const { return tick_; }
   // tickCount() divides the shared level clock by msPerTick().
@@ -927,7 +929,8 @@ private:
   // Hatch release for one update; `tickBoundary` gates only the integer-tick release model.
   void stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout);
   // One world update of the explicit path (<= one tick boundary), see advanceElapsedMs.
-  void updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool releaseEnabled);
+  void updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool releaseEnabled,
+                     std::optional<double> openingRemainder = {});
   // Explicit-path lemming step: the full per-tick step on a tick-boundary update, otherwise
   // only continuous movement with this update's dt.
   void stepElapsed(Lemming& l, bool tickBoundary);

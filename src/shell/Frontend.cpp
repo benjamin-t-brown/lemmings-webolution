@@ -19,6 +19,7 @@ Outcome Frontend::beginFrontend(Screen page) {
   switch (page) {
     case Screen::Menu:
     case Screen::Confirm:
+    case Screen::Language:
     case Screen::SoundOptions:
     case Screen::KeyboardShortcuts:
     case Screen::Map:
@@ -57,6 +58,12 @@ Outcome Frontend::press(Key key, int holdFrames) {
       if (key == Key::Return) {
         if (highlight_ == 0) return replacePage(Screen::Confirm);
         if (highlight_ == 1) return replacePage(Screen::Map);
+        if (highlight_ == 2) {
+          // 48EDDB..48EDFC selects page 0x0C. Its builder focuses the first row.
+          const auto outcome = replacePage(Screen::Language);
+          if (outcome == Outcome::Handled) highlight_ = 0;
+          return outcome;
+        }
         if (highlight_ == 3) return openSoundOptions();
         if (highlight_ == 4) {
           // At 48EE41..48EE4C, activating [menu+50] sets the application exit flag byte4E3581.
@@ -68,6 +75,14 @@ Outcome Frontend::press(Key key, int holdFrames) {
       return Outcome::Unobserved;
     case Screen::Confirm:
       if (key == Key::Return) return confirmChoice(highlight_ == 0);
+      return Outcome::Unobserved;
+    case Screen::Language:
+      if (key == Key::Return || key == Key::Esc) {
+        // 48E326 replaces the page with selector 7, whose builder focuses row 0.
+        const auto outcome = replacePage(Screen::Menu);
+        if (outcome == Outcome::Handled) highlight_ = 0;
+        return outcome;
+      }
       return Outcome::Unobserved;
     case Screen::Map:
       if (key == Key::MapNodeClick) return enterLevel();
@@ -146,6 +161,7 @@ std::uint32_t Frontend::nodeVtable() const {
   switch (screen_) {
     case Screen::Menu: return kVtableMenu;
     case Screen::Confirm: return kVtableConfirm;
+    case Screen::Language: return kVtableLanguage;
     case Screen::Map: return kVtableMap;
     case Screen::Level: return 0;
     case Screen::Dialog: return kVtableDialog;

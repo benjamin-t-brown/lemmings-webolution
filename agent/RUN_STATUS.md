@@ -10,6 +10,14 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
+- gl-boundary-001: **ready** — OpenGL phase 1: prepared-frame boundary with software as its first consumer
+- gl-presenter-native-001: **ready** — OpenGL phase 2a: renderer selector and the native OpenGL 3.3 presenter with readback
+- gl-presenter-web-001: **ready** — OpenGL phase 2b: WebGL2 presenter, Start-page renderer choice and software fallback
+- gl-opaque-meshes-001: **ready** — OpenGL phase 3: tube and backdrop opaque meshes in comparison mode
+- gl-scene-passes-001: **ready** — OpenGL phase 4: billboards, secondary sprites, pipes, fluid, counter gates and sky fill
+- gl-actors-001: **ready** — OpenGL phase 5: actor bodies, attachments and displayed-frame queries on GL
+- gl-effects-001: **ready** — OpenGL phase 6: explosion marks, drowning, debris and particles on GL
+- gl-2d-play-001: **ready** — OpenGL phase 7: 2D compositor and ordinary play on the GL renderer
 
 ## Recently completed queue entries
 

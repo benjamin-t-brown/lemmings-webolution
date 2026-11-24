@@ -123,4 +123,9 @@ The lead can review the plan now. The next production decision is whether to aut
   low-end reference. Exact GPUs, browsers and vsync are recorded when the performance phase runs.
 - **1 W1/A4:** open; the user will report the level and camera position when the clipping case recurs
   in play.
-Implementation still waits for playable v1 unless the user pulls phases forward.
+Implementation waited for playable v1 until the user pulled phases forward (below).
+
+### User request (2026-11-24)
+The user pulled phases 1 to 7 forward ahead of playable v1, on the `opengl` branch
+([request](playtest/2026-11-24-opengl-request.md)). Phase 8 waits for a reported W1 pose and
+phase 9 for the user's hardware runs.

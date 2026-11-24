@@ -7,7 +7,7 @@ Order below is the lead's suggestion, not a commitment.
 
 ## Presentation and input
 - OpenGL renderer in place of the software rasterizer. The user pulled a master plan forward on
-  2026-11-18 (opengl-plan-001, plan only; implementation still waits for the user's approval). Expected to remove the minor z clipping
+  2026-11-18 (opengl-plan-001); phases 1 to 7 were pulled forward on 2026-11-24 on the opengl branch. Expected to remove the minor z clipping
   seen in playtest 7 (W1) and to make higher resolutions cheap.
 - Drawing at other resolutions (beyond the current 2x window scale).
 - Hardware mouse cursor, so the pointer does not lag behind the system cursor.

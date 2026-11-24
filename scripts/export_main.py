@@ -46,8 +46,8 @@ SOURCE_GROUPS = {
         SceneDispatch.cpp SceneDispatch.h SceneFrame.h SceneMaterialFlags.h SceneMeshSource.cpp
         SceneMeshSource.h SceneRaster.cpp SceneRaster.h SceneVertexPack.cpp SceneVertexPack.h
         SdlShutdown.hpp SdlWindow.hpp SimClock.cpp SimClock.h SkillPanel.cpp SkillPanel.h
-        SoundMenu.cpp SoundMenu.h TubeScene.cpp TubeScene.h Version.rc.in WindowScale.h main.cpp
-        AppIconResource.h WindowsWindowIcon.cpp WindowsWindowIcon.h webolution.rc
+        SoundMenu.cpp SoundMenu.h TouchInput.cpp TouchInput.h TubeScene.cpp TubeScene.h Version.rc.in
+        WindowScale.h main.cpp AppIconResource.h WindowsWindowIcon.cpp WindowsWindowIcon.h webolution.rc
     """),
     "assets": ("Original data decoding or asset lookup.", """
         Bitmap.cpp Bitmap.h Box.cpp Box.h CellMesh.cpp CellMesh.h CollisionGrid.cpp

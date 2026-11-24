@@ -39,9 +39,9 @@ at a switch to see what it controls. **P** or **Esc** resumes play.
 ## Play on Windows or Linux
 
 Download and extract the Windows x64 zip or Linux x64 tarball. On Windows,
-run `webolution.exe`. On Linux, install system SDL2 2.0.22 or later with
+run `lemmings_webolution.exe`. On Linux, install system SDL2 2.0.22 or later with
 `sudo apt install libsdl2-2.0-0` or your distribution's equivalent, then run
-`./webolution`. [GitHub Releases](https://github.com/benjamin-t-brown/lemmings-webolution/releases)
+`./lemmings_webolution`. [GitHub Releases](https://github.com/benjamin-t-brown/lemmings-webolution/releases)
 
 Place `lemmings.box` and `patch.box` (any filename case), or a Lemmings
 Revolution CD image (`.iso` or raw `.bin`), beside the executable. Use

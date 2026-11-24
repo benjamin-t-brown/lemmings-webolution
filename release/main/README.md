@@ -4,6 +4,21 @@ An unofficial reimplementation of **Lemmings Revolution** (2000) in C++23.
 It uses SDL2 and a software 3D renderer. This project is independent of the
 owners of Lemmings Revolution and has no affiliation with them.
 
+This project was created with a vast amount of help from AI development tools.
+
+The game aims for 1 to 1 replication of the original Lemmings Revolution with some small quality of life improvements.  It is close, but not there yet. 
+
+What's implemented:
+  - All mechanics implemented: every level is completable
+  - Resolution scaling
+  - Pause to examine
+  - Unlock all levels button
+
+What's missing:
+  - Languages beside English
+  - Exact 1 to 1 timings between retail and project
+  - .avi cutscenes
+
 ## Play in your browser
 
 Open the [browser game](https://benjamin-t-brown.github.io/lemmings-webolution/).

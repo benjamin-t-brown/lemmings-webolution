@@ -81,10 +81,14 @@ int menuPanelAt(std::span<const std::array<int, 4>> boxes, int x, int y) {
   return -1;
 }
 
-webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet,
-                           std::span<const std::string> labels, const MenuParams& params,
-                           std::span<const GlyphCell> cells) {
-  webo::Image out = backdrop;
+std::array<int, 4> menuPlateBounds(int textX, int textY, int width, const MenuParams& params) {
+  const int top = textY + params.panelTop;
+  return {textX - params.panelPadX, top, textX + width + params.panelPadX,
+          top + params.panelHeight};
+}
+
+void drawMenuRows(webo::Image& out, const webo::Image& sheet, std::span<const std::string> labels,
+                  const MenuParams& params, std::span<const GlyphCell> cells) {
   out.alpha = webo::AlphaMode::Opaque;
   for (std::size_t row = 0; row < labels.size(); ++row) {
     const std::string_view text = labels[row];
@@ -93,8 +97,7 @@ webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet
     const int width = textWidth(text, cells);
 
     // Draw the panel border before the fill.
-    const int px0 = left - params.panelPadX, px1 = left + width + params.panelPadX;
-    const int py0 = textY + params.panelTop, py1 = py0 + params.panelHeight;
+    const auto [px0, py0, px1, py1] = menuPlateBounds(left, textY, width, params);
     const auto& fill = static_cast<int>(row) == params.highlight ? params.panelHighlight
                                                                  : params.panelNormal;
     fillRect(out, px0, py0, px1, py1, params.panelBorder);
@@ -128,6 +131,13 @@ webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet
         x += c->width;
     }
   }
+}
+
+webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet,
+                          std::span<const std::string> labels, const MenuParams& params,
+                          std::span<const GlyphCell> cells) {
+  auto out = backdrop;
+  drawMenuRows(out, sheet, labels, params, cells);
   return out;
 }
 

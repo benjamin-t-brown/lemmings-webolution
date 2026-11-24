@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <span>
 
 namespace webo::app {
 
@@ -51,7 +52,8 @@ class ActorOcclusionPlane {
 // cylinder template (32 sectors, 8 collision columns per sector) to reject
 // pixels in solid cells even when the plane bulges beyond the visible surface.
 inline bool actorTexelInsideTerrain(const CylinderMesh& mesh, const CollisionGrid& grid,
-                                   const std::array<double, 3>& p) {
+                                   const std::array<double, 3>& p,
+                                   std::span<const double> gateThickness = {}) {
   if (mesh.angularSteps != 32 || mesh.ringCount < 2 || grid.width != 256 ||
       mesh.vertices.size() < mesh.ringCount * 64 || !std::isfinite(p[0]) ||
       !std::isfinite(p[1]) || !std::isfinite(p[2]) || p[1] < 0 || p[1] >= grid.height)
@@ -82,9 +84,13 @@ inline bool actorTexelInsideTerrain(const CylinderMesh& mesh, const CollisionGri
   const double thickness2 = dx*dx + dz*dz;
   if (!(thickness2 > 0)) return false;
   const double layer = ((p[0]-ix)*dx + (p[2]-iz)*dz) / thickness2;
-  // Match CellMesh opacity by testing solid and door flags.
-  return layer >= 0 && layer <= 1 &&
-      (grid.at((sector*8 + int(u*8)) & 255, int(p[1])) & (kCellSolid | kCellFlag0x400)) != 0;
+  const int x = (sector * 8 + int(u * 8)) & 255;
+  const int y = int(p[1]);
+  const auto cell = std::size_t(y) * grid.width + x;
+  const double outerLayer = cell < gateThickness.size() ? gateThickness[cell] : 1.0;
+  // A fully retracted door has no volume. Its inner face still supplies scene depth.
+  return outerLayer > 0 && layer >= 0 && layer <= outerLayer &&
+      (grid.at(x, y) & (kCellSolid | kCellFlag0x400)) != 0;
 }
 
 }  // namespace webo::app

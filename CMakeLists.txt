@@ -123,7 +123,8 @@ if(NOT EMSCRIPTEN AND (WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
   else()
     set(release_docs "${CMAKE_CURRENT_SOURCE_DIR}")
   endif()
-  install(TARGETS webolution RUNTIME DESTINATION .)
+  install(PROGRAMS "$<TARGET_FILE:webolution>" DESTINATION .
+    RENAME "lemmings_webolution${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
 if(WIN32 AND NOT EMSCRIPTEN)

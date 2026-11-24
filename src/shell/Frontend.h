@@ -11,7 +11,7 @@
 namespace webo::shell {
 
 // Dialog is the in-level menu (48F4E0, selector1F).
-enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog, Results, SoundOptions };
+enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog, Results, SoundOptions, KeyboardShortcuts };
 
 enum class Key : std::uint8_t { Return, Esc, P, O, MapNodeClick };
 
@@ -59,6 +59,7 @@ class Frontend {
   Outcome confirmChoice(bool yes);
   // At 0x49B1E4, event0 from the map footer constructs selector7. The app binds the input.
   Outcome activateMapFooter();
+  Outcome enterLevel();
   // Changes result pages at semantic actions. Original input timing and end delay are unmodeled.
   Outcome showResults(bool success);
   Outcome activateResultsContinue();
@@ -71,6 +72,7 @@ class Frontend {
   Outcome retryLevelMenu();
   Outcome openSoundOptions();
   Outcome returnFromSoundOptions();
+  Outcome openKeyboardShortcuts();
   // Shared menu/Confirm focus; page construction/return starts at row0.
   void setHighlight(int highlight) { highlight_ = highlight; }
   // Leave the level for the map without assuming a physical input binding.

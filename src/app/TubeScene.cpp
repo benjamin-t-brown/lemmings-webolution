@@ -70,7 +70,6 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
 
   TubeScene scene;
   scene.mesh_ = mesh;
-  bool hasCounterGates = false;
   if (auto grid = findCollisionGrid(levelBytes)) {
     scene.collision_ = std::move(*grid);
     scene.haveCollision_ = true;
@@ -90,7 +89,6 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     }
     for (const auto& t : level.world.integer_triples)
       scene.counterGateCoordinates_.push_back({static_cast<int>(t[0]), static_cast<int>(t[1]), static_cast<int>(t[2])});
-    hasCounterGates = !level.gadgets.entities_424187.empty();
     const auto points = [](int first, int last, int stride) {
       std::vector<int> out{first};
       for (int p = (first / stride + 1) * stride; p < last; p += stride) out.push_back(p);
@@ -171,10 +169,10 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     const auto build = [&](std::span<const std::uint32_t> keys, std::vector<std::array<int, 3>>* missing) {
       return buildCellMeshes(keys, scene.counterGateCoordinates_, scene.collision_, scene.mesh_.surface.size(), missing);
     };
-    auto built = build(grid0, hasCounterGates ? &missingKeys : nullptr);
+    auto built = build(grid0, &missingKeys);
     if (built && !missingKeys.empty()) {
-      // Stamping the gate rectangle can split nearby static faces at edges absent
-      // from the stored key table. Supply both layers as 0x43A31D would at mesh build.
+      // 0x43A31D creates ordinary corner vertices absent from the stored key
+      // table. Supply the requested layers before rebuilding the faces.
       scene.editKeys_.assign(grid0.begin(), grid0.end());
       for (const auto& [x, y, layer] : missingKeys)
         scene.ensureTerrainVertex(x, y, layer);
@@ -536,7 +534,7 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
 
 void clipBodyFootprint(Image& body, const ActorSpritePlacement& p,
     const ActorOcclusionPlane& plane, const CameraBasis& camera,
-    const CylinderMesh& mesh, const CollisionGrid& collision) {
+    const CylinderMesh& mesh, const CollisionGrid& collision, std::span<const double> gateThickness) {
   profile::Scope profileFootprint(profile::BodyFootprint);
   for (int y = std::max(0, int(std::ceil(p.top)));
        y < std::min(body.height, int(std::ceil(p.bottom))); ++y)
@@ -544,7 +542,7 @@ void clipBodyFootprint(Image& body, const ActorSpritePlacement& p,
          x < std::min(body.width, int(std::ceil(p.right))); ++x) {
       auto& alpha = body.rgba[(std::size_t(y) * body.width + x) * 4 + 3];
       if (actorSpriteAlphaTestPasses(alpha) &&
-          actorTexelInsideTerrain(mesh, collision, plane.worldAt(camera,x+.5,y+.5))) alpha = 0;
+          actorTexelInsideTerrain(mesh, collision, plane.worldAt(camera,x+.5,y+.5), gateThickness)) alpha = 0;
     }
 }
 
@@ -596,6 +594,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     Image* spriteTarget = nullptr,
     const Texture* brickTexture = nullptr,
     const CylinderMesh* footprintMesh = nullptr, const CollisionGrid* footprintGrid = nullptr,
+    std::span<const double> gateThickness = {},
     const ActorPoseResult* airbornePose = nullptr) {
   if (!airbornePose && !options.composeSkipActorVisibility &&
       !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
@@ -751,7 +750,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     if (!drawActorSprite(bodyTarget, frame, prepared.sheet(), *placement, selection.mirrored, tint,
                          true, prepared.inverted)) return std::nullopt;
     if (sceneClip && footprintMesh && footprintGrid)
-      clipBodyFootprint(bodyTarget, *placement, plane, camera, *footprintMesh, *footprintGrid);
+      clipBodyFootprint(bodyTarget, *placement, plane, camera, *footprintMesh, *footprintGrid, gateThickness);
     if (brickTexture) {
       for (int y = std::max(0,int(std::ceil(placement->top)));
            y < std::min(body.height,int(std::ceil(placement->bottom))); ++y)
@@ -819,7 +818,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
     const bool clipped = physicalActors || brickTexture;
     auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
         options, *it, lib, bounds, raster.depthBuffer(), &sprite,
-        brickTexture, &mesh_, haveCollision_ ? &collision_ : nullptr);
+        brickTexture, &mesh_, haveCollision_ ? &collision_ : nullptr, gateThickness_);
     if (!prepared)
       continue;
     if (it->drownFluidKind >= 0 && clipped) {
@@ -857,7 +856,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
           {it->plus8X, it->plus8Y, it->plus8Z}, it->facing);
       const ActorOcclusionPlane plane(camera, pose.modelPosition);
       if (physicalActors && haveCollision_)
-        clipBodyFootprint(sprite,prepared->placement,plane,camera,mesh_,collision_);
+        clipBodyFootprint(sprite,prepared->placement,plane,camera,mesh_,collision_,gateThickness_);
       clipActorToScene(sprite, prepared->placement,
           options.fluidDrownSceneDepth.empty() ? raster.depthBuffer() : options.fluidDrownSceneDepth,
           &plane, options.pipeSceneDepth);
@@ -1110,10 +1109,13 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
   deathClockMs_ = clockMs;
   const int gravityDir = lemming.verticalDir < 0 ? -1 : 1;
   const int facing = static_cast<int>(lemming.facing);
+  const bool digging = lemming.state == sim::State::Digger;
+  const bool longThrow = digging || lemming.state == sim::State::Miner;
   // Bash 40C1C5 (passes 0/3), mine 418B69 (rows -1/+1) and dig 415BE8
   // construct 40C960. 40DBF0 selects velocity mode 4; 40C9B5 sets 12 slots.
-  // Provisional clone arcs use four chunks per removed cell and local
-  // deterministic gravity. Digger debris fans both ways.
+  // The provisional arcs use four chunks per removed cell. Diggers scatter
+  // them in a wider fan and miners throw them farther backward. The longer
+  // lifetime lets the chunks travel below the cut in the direction of gravity.
   for (const auto& cell : removedCells) {
     constexpr std::size_t maxParticles = 4096;
     if (deathParticles_.size() > maxParticles - 4)
@@ -1125,12 +1127,13 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
       DeathParticle p;
       p.origin = {double(cell[0]), double(row) + 0.5,
                   gravityDir < 0 ? 0.55 : 0.75};
-      p.vx = lemming.state == sim::State::Digger ? (i - 1.5) * 3.0 : -facing * (3.0 + i);
-      p.vy = gravityDir * (9.0 + i * 1.5);
+      if (digging) p.vx = (i - 1.5) * 10.0;
+      else p.vx = -facing * (longThrow ? 10.0 + i * 2.0 : 3.0 + i);
+      p.vy = gravityDir * (longThrow ? 11.0 + i * 1.75 : 9.0 + i * 1.5);
       p.vz = (i - 1.5) * 0.04;
-      p.gravity = -gravityDir * 16.0;
+      p.gravity = -gravityDir * (longThrow ? 20.0 : 16.0);
       p.bornMs = clockMs;
-      p.lifetime = 1.6 + i * 0.1;
+      p.lifetime = (longThrow ? 1.7 : 1.6) + i * 0.1;
       p.size = 0.65 + (i % 2) * 0.2;
       p.colour = kTerrainChunkFallback;
       p.verticalDir = gravityDir;
@@ -1194,12 +1197,11 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
   for (int i = 0; i < 6; ++i)
     add(origin, i, clips[i], {255, 255, 255}, 1.6, 2.0,
         fan(i, 6, explosion ? 15.0 : 12.0, explosion ? 17.0 : 10.0));
-  // READ 43F510/40B3EC and 492E33: the 100 red blast particles and
-  // 10 pink splat particles share a point-list renderer. Use small tumbling
-  // solid flecks as a provisional clone presentation for both bursts.
-  const int count = explosion ? 100 : 10;
-  // The blast scatters in three axes. Keep the generator local to this burst
-  // so camera, scenery and simulation cannot affect its launch or palette.
+  // READ 43F510/40B3EC and 492E33: 100 red blast points and 10 pink splat
+  // points share a renderer. User-directed deviation (2026-11-21, S3):
+  // emit 20 brown tumbling blast flecks for both Bomber and nuke deaths.
+  const int count = explosion ? 20 : 10;
+  // Keep the three-axis blast scatter local to this burst.
   CrtRand burstRandom(std::uint32_t(clockMs) ^ (unsigned(lemming.x) * 73u + unsigned(lemming.y) * 151u));
   for (int i = 0; i < count; ++i) {
     std::array<double, 3> velocity;
@@ -1208,9 +1210,23 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
       velocity = {36.0 * (burstRandom.unit() - .5),
                   gravityDir * (5.0 + 14.0 * burstRandom.unit()),
                   0.32 * (burstRandom.unit() - .5)};
-      colour = {std::uint8_t(96.0 + 159.0 * burstRandom.unit()),
-                std::uint8_t(16.0 + 16.0 * burstRandom.unit()),
-                std::uint8_t(16.0 + 16.0 * burstRandom.unit())};
+      colour = kTerrainChunkFallback;
+      if (!removedCells.empty()) {
+        const auto& cell = removedCells[i * removedCells.size() / count];
+        const auto material = terrainDebrisMaterial(cell, terrainHeight);
+        const auto* tile = findTile(true, material % 8, material / 8);
+        if (tile && !tile->texture.empty()) {
+          // The first quarter-cell UV patch ends at the cell centre.
+          const auto uv = terrainChunkUv(cell[0], terrainHeight - 1 - cell[1], 0);
+          const auto& tex = tile->texture;
+          const int x = int(uv[2] * tex.width), y = int(uv[1] * tex.height);
+          const auto* rgb = tex.rgb.data() + (std::size_t(y) * tex.width + x) * 3;
+          const int luminance = (3 * rgb[0] + 6 * rgb[1] + rgb[2]) / 10;
+          // Let the source texel shade the brown even on brightly painted terrain.
+          for (auto& channel : colour)
+            channel = std::uint8_t(channel * (3 * 255 + 2 * luminance) / (4 * 255));
+        }
+      }
     } else {
       velocity = fan(i, count, 8.0 + (i % 11), 5.0);
       colour = {255, 127, 127};
@@ -1316,7 +1332,7 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
             if (drawn &&
                 clipActorToScene(overlay, *box, depth, p.minerAxe ? &plane : nullptr)) {
               if (p.minerAxe && haveCollision_)
-                clipBodyFootprint(overlay,*box,plane,camera,mesh_,collision_);
+                clipBodyFootprint(overlay,*box,plane,camera,mesh_,collision_,gateThickness_);
               const double z = actorPhysicalDepth(*box,camera.width);
               for (int y = std::max(0,int(std::ceil(box->top)));
                    y < std::min(buffer.height,int(std::ceil(box->bottom))); ++y)
@@ -1415,7 +1431,7 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
     sprite.rotationPhase = phase - std::floor(phase);
     const auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
         flightOptions, sprite, lib, bounds, depth, &overlay,
-        nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr, &pose);
+        nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr, gateThickness_, &pose);
     if (!prepared) continue;
     const ActorOcclusionPlane plane(camera, pose.modelPosition);
     const auto rect = spriteRect(overlay, prepared->placement);
@@ -1449,7 +1465,7 @@ bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker, const Camer
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
   const auto prepared = prepareInjectedWalker(poseLevel_, *sprites, ActorLightMap{}, camera,
       options, injected, lib, bounds, sceneRaster.depthBuffer(), &sprite,
-      nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr);
+      nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr, gateThickness_);
   if (!prepared || sprite.rgba.empty()) return false;
 
   const ActorOcclusionPlane plane(camera, prepared->worldPosition);
@@ -1944,8 +1960,16 @@ void TubeScene::syncCounterGates(std::span<const sim::CounterGate> gates) {
   counterGateMeshedBlocks_ = terrainBlocksRebuilt_;
   ++counterGateRevision_;
   counterGateVertexOwners_.assign(mesh_.surface.size(), {});
+  if (haveCollision_) gateThickness_.assign(collision_.cells.size(), 1.0);
   for (std::size_t i = 0; i < gates.size(); ++i) {
     const auto& g = gates[i];
+    if (haveCollision_) {
+      // Keep the mesh topology stamped closed. For actor clipping, fill only
+      // the volume from the inner shell to this frame's eased gate surface.
+      for (int y = std::max(g.bottom, 0); y < std::min(g.top, collision_.height); ++y)
+        for (int x = g.left; x < g.right; ++x)
+          gateThickness_[std::size_t(y) * collision_.width + (x & (CollisionGrid::kWidth - 1))] = fractions[i];
+    }
     const auto inside = [&](int x, int y) {
       return y >= g.bottom && y <= g.top &&
           collision_.width > 0 && (x - g.left + collision_.width) % collision_.width <= g.right - g.left;

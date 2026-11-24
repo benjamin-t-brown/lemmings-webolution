@@ -12,6 +12,8 @@
 
 namespace webo::app {
 
+class ActorDepth;
+
 struct SceneRgbaImage {
   int width = 0;
   int height = 0;
@@ -74,6 +76,8 @@ struct SceneRasterOptions {
   // Textured marks use the unlit texel, as with a hovered lemming. Vertex-
   // coloured surfaces such as water retain the colour of their geometry.
   bool highlightTextureRgb = false;
+  // Optional actor silhouette depth, used when drawing light over the scene.
+  const ActorDepth* actorDepth = nullptr;
 };
 
 // Opt-in diagnostic only. The caller supplies a fixed, tightly-packed mask;

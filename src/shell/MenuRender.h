@@ -78,6 +78,10 @@ int textWidth(std::string_view text, std::span<const GlyphCell> cells);
 // label at halve(xWord). 0x48A720 does not test 0x800.
 int labelLeft(std::string_view text, std::span<const GlyphCell> cells, int xWord);
 
+std::array<int, 4> menuPlateBounds(int textX, int textY, int width, const MenuParams& params);
+void drawMenuRows(webo::Image& frame, const webo::Image& sheet, std::span<const std::string> labels,
+                  const MenuParams& params, std::span<const GlyphCell> cells);
+
 // Composites the five labels (UK indices 125 126 120 3 43, supplied as text) over the
 // backdrop. `sheet` is the ^Font image with its alpha plane applied.
 webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet,

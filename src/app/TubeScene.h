@@ -303,6 +303,7 @@ class TubeScene {
   std::vector<std::array<std::int32_t, 3>> counterGateCoordinates_;
   std::vector<SceneHighlightId> counterGateVertexOwners_;
   std::vector<double> counterGateFractions_;
+  std::vector<double> gateThickness_;  // per-cell actor footprint, 1 outside gate bounds
   std::uint64_t counterGateRevision_ = 0;
   std::size_t counterGateMeshedBlocks_ = static_cast<std::size_t>(-1);
   std::array<SceneRgbaImage, 11> counterTextures_;

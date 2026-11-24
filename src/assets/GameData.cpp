@@ -2,6 +2,7 @@
 
 #include "Box.h"
 
+#include <algorithm>
 #include <cstring>
 #include <format>
 
@@ -272,6 +273,14 @@ auto loadWith(const AssetLibrary& lib, const char* path, Fn parse)
 
 std::expected<std::vector<LevelInfo>, std::string> loadLevelMap(const AssetLibrary& lib) {
   return loadWith(lib, kLevelMapPath, parseLevelMap);
+}
+
+const LevelInfo* findLevelMapEntry(std::span<const LevelInfo> levels, std::string_view id) {
+  const auto key = normaliseAssetName(id);
+  const auto entry = std::ranges::find_if(levels, [&](const LevelInfo& info) {
+    return normaliseAssetName(info.id) == key;
+  });
+  return entry == levels.end() ? nullptr : &*entry;
 }
 
 std::expected<LevelTable, std::string> loadLevelTable(const AssetLibrary& lib) {

@@ -47,6 +47,26 @@
   canvas[data-window-scale="2"] { width: 1280px; }
   canvas[data-window-scale="3"] { width: 1920px; }
   canvas:focus { outline: none; }
+  html.phone-play, .phone-play body {
+    overflow: hidden; overscroll-behavior: none;
+  }
+  .phone-play main {
+    position: fixed; inset: 0; width: auto; min-height: 0;
+    display: grid; place-items: center; gap: 0; background: #141414;
+    touch-action: none; -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .phone-play main > :not(#canvas, #rotate-phone) { display: none; }
+  .phone-play #canvas {
+    width: min(100vw, calc(100vh * 4 / 3));
+    width: min(100dvw, calc(100dvh * 4 / 3));
+  }
+  .phone-play #canvas[inert] { pointer-events: none; }
+  .phone-play #rotate-phone:not([hidden]) {
+    position: absolute; inset: 0; z-index: 1; margin: 0; padding: 1rem;
+    display: grid; place-items: center; text-align: center;
+    background: #141414; color: white;
+  }
   [hidden] { display: none; }
 </style>
 <main>
@@ -96,6 +116,7 @@
   <p id="data-notes" role="status" hidden></p>
   <button id="start" type="button" hidden>Start game</button>
   <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Lemmings Webolution" hidden></canvas>
+  <p id="rotate-phone" role="status" hidden>Turn your phone sideways to play. The game keeps running.</p>
   <button id="change-data" type="button" hidden>Change game data</button>
 </main>
 <script>
@@ -109,6 +130,13 @@
   const notesLine = document.querySelector('#data-notes');
   const transfer = document.querySelector('#transfer');
   const bytesLine = document.querySelector('#bytes-downloaded');
+  const phone = isMobileDevice(window);
+  const portrait = phone ? window.matchMedia('(orientation: portrait)') : null;
+  const gamePage = document.querySelector('main');
+  const rotatePrompt = document.querySelector('#rotate-phone');
+  const viewport = document.querySelector('meta[name="viewport"]');
+  const setupViewport = viewport.content;
+  let phonePlaying = false;
   let gameData;
   let dataTools;
   let transferController;
@@ -125,7 +153,7 @@
   // SDL button events reuse the last pointer position. Refresh it after scroll or resize
   // changes the canvas position under a stationary pointer.
   function refreshMousePosition(event) {
-    if (document.pointerLockElement === canvas) return;
+    if (!rotatePrompt.hidden || document.pointerLockElement === canvas) return;
     canvas.dispatchEvent(new MouseEvent('mousemove', {
       clientX: event.clientX, clientY: event.clientY, buttons: event.buttons,
     }));
@@ -150,7 +178,7 @@
   }
 
   function showMobileWarning() {
-    if (!isMobileDevice(window)) return;
+    if (!phone) return;
     const key = 'webolution-mobile-warning-dismissed';
     try {
       if (window.localStorage.getItem(key) === '1') return;
@@ -164,6 +192,48 @@
         // This dismissal lasts for the current visit.
       }
     };
+  }
+
+  function updatePhoneOrientation() {
+    const blocked = phonePlaying && portrait.matches;
+    if (blocked === !rotatePrompt.hidden) return;
+    rotatePrompt.hidden = !blocked;
+    canvas.inert = blocked;
+    // SDL listens for focus on window. Losing focus clears held controls, but the level keeps running.
+    if (blocked) {
+      window.dispatchEvent(new Event('blur'));
+    } else if (phonePlaying && document.hasFocus()) {
+      canvas.focus({preventScroll: true});
+      window.dispatchEvent(new Event('focus'));
+    }
+  }
+
+  if (phone) {
+    portrait.addEventListener('change', updatePhoneOrientation);
+    // A touch already in progress still targets the canvas, and SDL reads keys from window.
+    // Let input releases through so SDL can clear its button and touch state.
+    for (const type of ['keydown', 'mousedown', 'mousemove', 'touchstart', 'touchmove', 'wheel']) {
+      window.addEventListener(type, event => {
+        if (rotatePrompt.hidden) return;
+        if (event.key !== 'Escape') event.preventDefault();
+        event.stopImmediatePropagation();
+      }, {capture: true, passive: false});
+    }
+  }
+
+  async function exitGameFullscreen() {
+    if (document.fullscreenElement !== gamePage) return;
+    try { await document.exitFullscreen(); } catch { /* The browser may already be exiting. */ }
+  }
+
+  async function enterPhoneFullscreen() {
+    // Fullscreen must be requested in the Start gesture. Some browsers require it before locking.
+    try { await gamePage.requestFullscreen?.(); } catch { /* Use the viewport instead. */ }
+    if (!phonePlaying) {
+      await exitGameFullscreen();
+      return;
+    }
+    try { await window.screen.orientation?.lock?.('landscape'); } catch { /* Show the rotation prompt. */ }
   }
 
   function offerStart(notes) {
@@ -181,7 +251,16 @@
     changeButton.hidden = true;
     notesLine.hidden = true;
     canvas.hidden = false;
-    canvas.focus();
+    if (phone) {
+      phonePlaying = true;
+      document.documentElement.classList.add('phone-play');
+      viewport.content = setupViewport + ', maximum-scale=1, user-scalable=no';
+      updatePhoneOrientation();
+      if (rotatePrompt.hidden) canvas.focus({preventScroll: true});
+      void enterPhoneFullscreen();
+    } else {
+      canvas.focus();
+    }
     try {
       // Open audio in the click gesture and hold the save lock until main returns across Asyncify yields.
       const code = await Module.ccall('main', 'number', ['number', 'number'], [0, 0], {async: true});
@@ -192,6 +271,14 @@
     } finally {
       releaseStore();
       canvas.hidden = true;
+      if (phone) {
+        phonePlaying = false;
+        updatePhoneOrientation();
+        document.documentElement.classList.remove('phone-play');
+        viewport.content = setupViewport;
+        try { window.screen.orientation?.unlock?.(); } catch { /* The browser owns the lock. */ }
+        void exitGameFullscreen();
+      }
       changeButton.hidden = false;
     }
   };

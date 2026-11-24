@@ -14,7 +14,7 @@ class SoundMenu {
  public:
   static std::expected<SoundMenu, std::string> load(const AssetLibrary& library,
                                                      const StringTable& strings);
-  enum Row { Music, Sfx, UnlockAll, WindowSize, Accept, RowCount };
+  enum Row { Music, Sfx, UnlockAll, WindowSize, KeyboardShortcuts, Accept, RowCount };
   struct Hit {
     int row;
     int direction; // +/-1 for arrows and volume labels, zero for the other actions
@@ -23,6 +23,8 @@ class SoundMenu {
                          const WindowScaleMenu& window) const;
   Image render(const Image& backdrop, const Image& font, int baseY, int focus,
                save::SoundSettings settings, const WindowScaleMenu& window) const;
+  static Image renderShortcuts(const Image& backdrop, const Image& font);
+  static bool shortcutsBackAt(int x, int y);
 
  private:
   std::array<std::string, RowCount> labels(save::SoundSettings settings,

@@ -4,14 +4,15 @@ Lemmings Webolution for Windows (x64)
 Extract the whole zip to a folder. Then do one of the following:
 
 * Copy lemmings.box and patch.box from your Lemmings Revolution installation
-  or the CD root (LEMMINGS.BOX and PATCH.BOX) next to webolution.exe. Filename
-  case can vary. Both the 1.0 and 1.1 patch.box are supported.
+  or the CD root (LEMMINGS.BOX and PATCH.BOX) next to lemmings_webolution.exe.
+  Filename case can vary. Both the 1.0 and 1.1 patch.box are supported.
 * Place your Lemmings Revolution CD image (.iso or raw .bin) next to
-  webolution.exe. On its first start, the game prepares a copy of the boxes
-  in %LOCALAPPDATA%\LemmingsWebolution\GameData.
+  lemmings_webolution.exe. On its first start, the game prepares a copy of the
+  boxes in %LOCALAPPDATA%\LemmingsWebolution\GameData.
 
-Run webolution.exe. Use --game-dir PATH to select another folder containing
-both boxes. Saved progress is in %LOCALAPPDATA%\LemmingsWebolution\SavedGame.dat.
+Run lemmings_webolution.exe. Use --game-dir PATH to select another folder
+containing both boxes. Saved progress is in
+%LOCALAPPDATA%\LemmingsWebolution\SavedGame.dat.
 
 Press Enter on New Game and again on Continue?, then click an unlocked
 level on the map.

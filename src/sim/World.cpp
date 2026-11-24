@@ -1112,17 +1112,16 @@ void World::stepMiner(Lemming& l) {
     return;
   const int dir = static_cast<int>(l.facing);
 
-
-
-
-
+  // The original checks each cell separately. Provisional clone rule: refuse
+  // the whole stroke before clearing any terrain.
   for (int dx = 1; dx <= rules_.minerReach; ++dx)
     for (int arg = -1; arg <= 3; ++arg) {
       if (arg == 2 && dx == 1)
         continue;
       const int cx = l.x + dx * dir;
       const int cy = l.y - arg;
-      if (setup_.terrain.at(cx, cy) == Material::Steel) {
+      if (setup_.terrain.at(cx, cy) == Material::Steel ||
+          setup_.terrain.bashRefused(cx, cy, dir)) {
         // 0x418AC2..0x418ADA: MineMetal, distinct from successful Mine.
         cueSample("MineMetal", l);
         if (minerRefusalObserver_) minerRefusalObserver_(l);

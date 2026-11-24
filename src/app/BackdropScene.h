@@ -100,6 +100,10 @@ struct GravityPresentation {
 };
 // Gadget clips use the level clock. Contacts notify presentation, which never feeds simulation.
 struct GadgetPresentation {
+  struct TeleportHoverBinding {
+    std::size_t root;
+    int partnerEntityIndex;  // Serialized teleport index, or -1 for an unlinked base.
+  };
   struct Spin { std::size_t node; unsigned axis; double turnsPerSecond; };
   struct Clip {
     HatchAnimation transforms;
@@ -117,6 +121,7 @@ struct GadgetPresentation {
     double activeUntil = -std::numeric_limits<double>::infinity();
   };
   std::vector<Binding> bindings;
+  std::vector<TeleportHoverBinding> teleportHover;
 };
 struct BackdropStats {
   std::size_t roots=0, meshRecords=0, stageMeshRecords=0, meshTriangles=0,
@@ -154,7 +159,7 @@ class BackdropScene {
  public:
   // FluidGate draws base Fluid only with live entities_42acac receiver state.
   // Frame order at 0x441845 is tube, +0x160/+0x164, base Fluid, +0x15C, secondary.
-  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe, GadgetEffect };
+  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe, GadgetEffect, TeleportEffect };
   // Provisional clone fluid depth defaults to LessWriteOn. Original ZENABLE,
   // ZWRITEENABLE, ZFUNC and device ZBIAS are unresolved.
   enum class FluidDepthPolicy { LessWriteOn, LessWriteOff, DepthDisabled };
@@ -223,6 +228,7 @@ class BackdropScene {
   std::optional<PickBox> exitHoverTarget(const CameraBasis&, const Raster&, int x, int y) const;
   bool drawSwitchHover(Image&, const CameraBasis&, const Raster&, const sim::LevelSetup&,
                        const LeverPresentation*, const PressurePadPresentation*,
+                       std::span<const GadgetPresentation::TeleportHoverBinding>,
                        int pointerX, int pointerY,
                        const std::function<void(const sim::OccupancySensor&)>& drawSensor) const;
   // Overrides Secondary visibility byte +0x110, which 0x45DA0D toggles on

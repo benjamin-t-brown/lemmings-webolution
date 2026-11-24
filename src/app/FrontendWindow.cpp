@@ -56,7 +56,7 @@ void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event,
     else if (!event.key.repeat) {
       if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
       else if (key == SDLK_RETURN) session.pressReturn();
-      else if (key == SDLK_ESCAPE) session.closeSoundOptions(false);
+      else if (key == SDLK_ESCAPE) session.pressEscapeInOptions();
     }
   }
 }
@@ -91,32 +91,50 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
   session.setButtons(false, false);
   bool running = true;
   int frames = 0;
+  TouchInput touch;
   std::optional<Image> lastPresented;
+  const auto routeEvent = [&](const SDL_Event& event) {
+    updateFrontendCursorInput(session, event);
+    if (!session.focused()) return;
+    if (event.type == SDL_MOUSEMOTION) session.setPointer(event.motion.x, event.motion.y);
+    if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
+      session.setPointer(event.button.x, event.button.y);
+    if (session.screen() == shell::Screen::SoundOptions ||
+        session.screen() == shell::Screen::KeyboardShortcuts) {
+      handleSoundOptionsInput(session, event, presentation);
+    } else if (event.type == SDL_MOUSEMOTION) {
+      session.hoverMenu(session.pointerX(), session.pointerY());
+    } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+      session.click(session.pointerX(), session.pointerY());
+    } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
+      const auto key = event.key.keysym.sym;
+      if (key == SDLK_RETURN) session.pressReturn();
+      else if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
+    }
+  };
   while (running && (options.maxFrames == 0 || frames < options.maxFrames)) {
     bool displayChanged = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+      if (isTouchMouseEvent(event)) continue;
+      if (event.type == SDL_QUIT) { running = false; break; }
       displayChanged |= event.type == SDL_WINDOWEVENT &&
                         event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED;
-      presentation.gameCoordinates(event);
-      if (event.type == SDL_QUIT) { running = false; break; }
-      updateFrontendCursorInput(session, event);
-      if (session.focused()) {
-        if (event.type == SDL_MOUSEMOTION) session.setPointer(event.motion.x, event.motion.y);
-        if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
-          session.setPointer(event.button.x, event.button.y);
-        if (session.screen() == shell::Screen::SoundOptions) {
-          handleSoundOptionsInput(session, event, presentation);
-        } else if (event.type == SDL_MOUSEMOTION) {
-          session.hoverMenu(session.pointerX(), session.pointerY());
-        } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-          session.click(session.pointerX(), session.pointerY());
-        } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
-          const auto key = event.key.keysym.sym;
-          if (key == SDLK_RETURN) session.pressReturn();
-          else if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
+      const auto screen = session.screen();
+      if (isFingerEvent(event.type)) {
+        const auto point = presentation.touchCoordinates(event.tfinger);
+        if (!point || !session.focused() || session.leftHeld() || session.rightHeld()) continue;
+        const auto action = presentation.feedTouch(touch, event.tfinger, *point);
+        if (action.kind == TouchActionKind::Tap) {
+          routeEvent(touchButton(SDL_MOUSEBUTTONDOWN, action.point, event.tfinger.timestamp));
+          routeEvent(touchButton(SDL_MOUSEBUTTONUP, action.point, event.tfinger.timestamp));
         }
+      } else {
+        if (event.type == SDL_MOUSEBUTTONDOWN) touch.reset();
+        presentation.gameCoordinates(event);
+        routeEvent(event);
       }
+      if (!session.focused() || screen != session.screen()) touch.reset();
       if (session.selectedLevel()) return session.selectedLevel();
       if (session.quitRequested()) return std::optional<std::string>{};
     }

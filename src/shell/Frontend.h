@@ -11,7 +11,9 @@
 namespace webo::shell {
 
 // Dialog is the in-level menu (48F4E0, selector1F).
-enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog, Results, SoundOptions, KeyboardShortcuts };
+enum class Screen : std::uint8_t {
+  Menu, Confirm, Map, Level, Dialog, Results, SoundOptions, KeyboardShortcuts, Language
+};
 
 enum class Key : std::uint8_t { Return, Esc, P, O, MapNodeClick };
 
@@ -31,6 +33,7 @@ struct Policy {
 // Original vtables for the single page node. An empty list returns 0.
 inline constexpr std::uint32_t kVtableMenu = 0x4B2528;
 inline constexpr std::uint32_t kVtableConfirm = 0x4B3F38;
+inline constexpr std::uint32_t kVtableLanguage = 0x4B2420;
 inline constexpr std::uint32_t kVtableMap = 0x4B3EB8;
 inline constexpr std::uint32_t kVtableDialog = 0x4B26B0;
 // Result constructors 485DF0/4862F0 use selectors21/20 respectively.

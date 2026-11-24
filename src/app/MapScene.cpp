@@ -1,6 +1,6 @@
 #include "app/MapScene.h"
+#include "app/EnglishStrings.h"
 #include "assets/Bitmap.h"
-#include "assets/GameData.h"
 #include "assets/Lrz.h"
 #include "app/SkillPanel.h"
 #include "shell/HudText.h"
@@ -299,7 +299,7 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   if(!levels) return std::unexpected("map level table: "+levels.error());
   auto titles=loadLevelMap(lib);
   if(!titles) return std::unexpected("map level titles: "+titles.error());
-  auto strings=loadStrings(lib,"UK");
+  auto strings = loadEnglishStrings(lib);
   if(!strings || strings->size()<=123)
     return std::unexpected("map hover requires UK string 123 (Save)");
   if(auto v=validateImage(*bg,"background");!v) return std::unexpected(v.error());

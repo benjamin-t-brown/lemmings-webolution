@@ -3,7 +3,9 @@
 #include "shell/HudText.h"
 
 #include <array>
+#include <cstddef>
 #include <expected>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -16,7 +18,7 @@ namespace webo::app {
 
 enum class LevelMenuAction { None, Resume, Retry, MapQuit, SoundOptions, Examine };
 
-// The four labelled UI2 rows followed by the clone's Examine action.
+// The four labelled UI2 actions and the clone's Examine Level action.
 // The native empty selector-19 widget stays unsupported.
 class LevelMenu {
  public:
@@ -36,10 +38,24 @@ class LevelMenu {
   void drawTouchButton(Image& frame) const;
 
  private:
+  struct Row {
+    LevelMenuAction action;
+    std::optional<std::size_t> labelIndex;
+    std::string_view cloneLabel;
+  };
+
+  static constexpr std::array kRows{
+      Row{LevelMenuAction::Resume, 44, {}},
+      Row{LevelMenuAction::Retry, 48, {}},
+      Row{LevelMenuAction::SoundOptions, 3, {}},
+      Row{LevelMenuAction::Examine, std::nullopt, "Examine Level"},
+      Row{LevelMenuAction::MapQuit, 43, {}},
+  };
+
   void layoutTitle(std::string_view title);
 
   Image font_;
-  std::array<std::string, 5> labels_{};
+  std::array<std::string, kRows.size()> labels_{};
   std::vector<shell::HudLine> titleLines_;
   int rowBaseY_ = 0;
   bool open_ = false;

@@ -23,8 +23,9 @@
 namespace webo::app {
 
 // Provisional clone recording format. Store the integer dt after clamp and carry,
-// plus the hatch gate, for each admitted advanceElapsed call. Playback passes the
-// stored budget through fast-forward and zero-ms updates, without wall time or picking.
+// plus the hatch gate and its opening offset, for each admitted advanceElapsed call.
+// Playback passes the stored budget through fast-forward and zero-ms updates,
+// without wall time or picking.
 inline const std::string& replayBuildIdentity() {
   // Hash the clone executable once per process with FNV-1a for identification.
   static const std::string identity = [] {
@@ -80,7 +81,10 @@ class ReplayRecorder {
     recorder.partial_ += ".partial";
     recorder.output_.open(recorder.partial_, std::ios::binary | std::ios::trunc);
     if (!recorder.output_) return std::unexpected("cannot open " + recorder.partial_.string());
-    recorder.output_ << "WEBOLUTION_REPLAY 1\n" << std::quoted(level) << ' '
+    // Version 3 carries the opening offset for a fresh door-gated start.
+    const bool doorGatedStart = initialTicks == 0 && world.setup().releaseArmSeconds == 0.0;
+    recorder.output_ << "WEBOLUTION_REPLAY " << (doorGatedStart ? 3 : 1) << '\n'
+        << std::quoted(level) << ' '
         << std::quoted(replayBuildIdentity()) << ' ' << connected << ' ' << initialTicks << '\n';
     recorder.output_.flush();
     if (!recorder.output_) return std::unexpected("cannot write replay header");
@@ -117,10 +121,13 @@ class ReplayRecorder {
     }
   }
 
-  void advanced(const sim::World& world, const RuntimeSimState& runtime, bool releaseEnabled) {
+  void advanced(const sim::World& world, const RuntimeSimState& runtime, bool releaseEnabled,
+                std::optional<double> releaseOpensAfter) {
     auto& row = append('t', {runtime.lastPassMs(), releaseEnabled, world.spawned(),
-                            world.saved(), world.dead(), static_cast<int>(runtime.endTransition().phase())});
+                            world.saved(), world.dead(), static_cast<int>(runtime.endTransition().phase()),
+                            releaseOpensAfter.has_value()});
     row.clockMs = world.levelClockMs();
+    row.seconds = releaseOpensAfter.value_or(0.0);
     ++step_;
   }
 
@@ -176,13 +183,14 @@ inline int replayLevel(const AssetLibrary& library, const std::filesystem::path&
         << ": DIVERGED " << why << '\n';
     return 1;
   };
-  if (!(input >> magic >> version) || magic != "WEBOLUTION_REPLAY" || version != 1 ||
+  if (!(input >> magic >> version) || magic != "WEBOLUTION_REPLAY" || version < 1 || version > 3 ||
       !(input >> std::quoted(level) >> std::quoted(build) >> connected >> initialTicks) ||
-      (connected != 0 && connected != 1) || initialTicks < 0 || initialTicks > 1000000)
+      (connected != 0 && connected != 1) || initialTicks < 0 || initialTicks > 1000000 ||
+      (version == 2 && connected != 0) || (version >= 2 && initialTicks != 0))
     return fail("invalid header/version");
   auto setup = sim::loadRetailLevel(library, level);
   if (!setup) return fail(setup.error());
-  if (connected) setup->releaseArmSeconds = 0.0;
+  if (connected || version >= 2) setup->releaseArmSeconds = 0.0;
   sim::World world(std::move(*setup));
   for (int i = 0; i < initialTicks; ++i) { world.tick(); world.takeCues(); }
   RuntimeSimState runtime;
@@ -265,8 +273,15 @@ inline int replayLevel(const AssetLibrary& library, const std::filesystem::path&
       case 't': {
         if (v[0] < 0 || v[0] > 60000 || (v[1] != 0 && v[1] != 1) || runtime.paused())
           return fail("invalid simulation budget/gate");
+        std::optional<double> releaseOpensAfter;
+        if (version == 3) {
+          if ((v[6] != 0 && v[6] != 1) ||
+              (v[6] ? (!v[1] || row.seconds < 0.0) : row.seconds != 0.0))
+            return fail("invalid door opening offset");
+          if (v[6]) releaseOpensAfter = row.seconds;
+        }
         // Pass the stored integer budget directly to the clock.
-        if (!runtime.advanceElapsed(world, v[0] / 1000.0, connected, drain, 0, v[1]))
+        if (!runtime.advanceElapsed(world, v[0] / 1000.0, connected, drain, 0, v[1], releaseOpensAfter))
           return fail("simulation update refused");
         if (world.spawned() != v[2] || world.saved() != v[3] || world.dead() != v[4] ||
             world.levelClockMs() != row.clockMs || static_cast<int>(runtime.endTransition().phase()) != v[5]) {

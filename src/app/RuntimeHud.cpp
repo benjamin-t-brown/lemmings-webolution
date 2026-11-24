@@ -78,8 +78,15 @@ shell::HudValues runtimeHudValues(const sim::World& world) {
   values.out = world.spawned() - world.saved() - world.dead();
   values.saved = world.saved();
   values.saveTarget = world.setup().saveTarget;
-  values.secondsRemaining = static_cast<int>(
-      world.timeRemainingTicks() / world.rules().ticksPerSecond);
+  if (world.explicitUpdateCount() > 0) {
+    // Live play follows the repeating level-second event (0x4458B0).
+    const int limitSeconds = std::max(0, world.setup().timeLimitTicks / world.rules().ticksPerSecond);
+    const auto secondsElapsed = std::min<std::uint64_t>(world.levelSecondEvents(), limitSeconds);
+    values.secondsRemaining = limitSeconds - static_cast<int>(secondsElapsed);
+  } else {
+    values.secondsRemaining = static_cast<int>(
+        world.timeRemainingTicks() / world.rules().ticksPerSecond);
+  }
   return values;
 }
 
@@ -117,7 +124,8 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
 }
 
 bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion,
-                                     const std::function<void()>& afterTick, int stallCapMs, bool releaseEnabled) {
+                                     const std::function<void()>& afterTick, int stallCapMs, bool releaseEnabled,
+                                     std::optional<double> releaseOpensAfter) {
   if (paused()) return false;
   if (trackCompletion && end_.phase() == LevelEndPhase::Results) return false;
   // Integer milliseconds with the sub-ms fraction carried (the epsilon absorbs the binary
@@ -139,7 +147,7 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
   bool updated = false;
   for (int pass = 0; pass < passes; ++pass) {
     if (pass > 0 && trackCompletion && end_.phase() == LevelEndPhase::Results) break;
-    world.advanceElapsedMsWithReleaseGate(dtMs, trackCompletion, releaseEnabled, [&](double segmentSeconds) {
+    const auto afterUpdate = [&](double segmentSeconds) {
       updated = true;
       if (afterTick) afterTick();
       if (trackCompletion) {
@@ -157,7 +165,9 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
         if (end_.phase() == LevelEndPhase::Results) return false;
       }
       return true;
-    });
+    };
+    world.advanceElapsedMsWithReleaseGate(dtMs, trackCompletion, releaseEnabled, afterUpdate,
+                                          pass == 0 ? releaseOpensAfter : std::nullopt);
   }
   return updated;
 }

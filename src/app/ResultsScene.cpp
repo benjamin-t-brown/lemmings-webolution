@@ -1,6 +1,6 @@
 #include "app/ResultsScene.h"
 
-#include "assets/GameData.h"
+#include "app/EnglishStrings.h"
 #include "shell/HudText.h"
 #include "shell/MenuRender.h"
 
@@ -15,7 +15,7 @@ std::expected<ResultsScene, std::string> ResultsScene::build(
     const AssetLibrary& library, const LevelOutcome& outcome) {
   auto background = loadTexture(library, "TEXTURES\\SMALL_BACK.BMP");
   auto font = loadTexture(library, "TEXTURES\\^FONT.BMP");
-  auto strings = loadStrings(library, "UK");
+  auto strings = loadEnglishStrings(library);
   if (!background) return std::unexpected(background.error());
   if (!font) return std::unexpected(font.error());
   if (!strings) return std::unexpected(strings.error());

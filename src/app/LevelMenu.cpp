@@ -1,24 +1,18 @@
 #include "app/LevelMenu.h"
 
+#include "app/EnglishStrings.h"
 #include "app/WindowScale.h"
-#include "assets/GameData.h"
 
 #include <utility>
 
 namespace webo::app {
 namespace {
 
-constexpr std::array kActions{
-    LevelMenuAction::Resume, LevelMenuAction::Retry,
-    LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions, LevelMenuAction::Examine};
-constexpr std::array<std::size_t, 4> kLabelIndices{44, 48, 43, 3};
 constexpr int kMenuBaseY = 100;
 constexpr int kTitleTop = 60;
 constexpr int kTitleShadow = 2;
 constexpr int kTitleLineStep = shell::kLineHeight + kTitleShadow;
 constexpr int kTitleMaxWidth = kGameWidth - 2 * (16 + kTitleShadow);
-constexpr int kTitleMaxLines = 1 + (kGameHeight - kMenuBaseY -
-    static_cast<int>(kActions.size()) * shell::kLineHeight) / kTitleLineStep;
 constexpr shell::MenuParams kTouchButtonParams{.xWord = kGameWidth, .baseY = 8, .highlight = -1};
 const std::array<std::string, 1> kTouchButtonLabel{"Menu"};
 
@@ -56,16 +50,17 @@ std::expected<LevelMenu, std::string> LevelMenu::load(const AssetLibrary& librar
                                                       std::string_view levelId) {
   auto font = loadTexture(library, "TEXTURES\\^FONT.BMP");
   if (!font) return std::unexpected(font.error());
-  auto strings = loadStrings(library, "UK");
+  auto strings = loadEnglishStrings(library);
   if (!strings) return std::unexpected(strings.error());
   if (font->width != 256 || font->height != 240 || strings->size() <= 48)
     return std::unexpected("level menu requires native ^FONT and UK strings through label 48");
 
   LevelMenu menu;
   menu.font_ = std::move(*font);
-  for (std::size_t i = 0; i < kLabelIndices.size(); ++i)
-    menu.labels_[i] = std::string((*strings)[kLabelIndices[i]]);
-  menu.labels_.back() = "Examine";
+  for (std::size_t i = 0; i < kRows.size(); ++i) {
+    const auto& row = kRows[i];
+    menu.labels_[i] = row.labelIndex ? (*strings)[*row.labelIndex] : row.cloneLabel;
+  }
   const auto levels = loadLevelMap(library);
   const auto* level = levels ? findLevelMapEntry(*levels, levelId) : nullptr;
   menu.layoutTitle(level && !level->name.empty() ? std::string_view(level->name) : levelId);
@@ -73,6 +68,8 @@ std::expected<LevelMenu, std::string> LevelMenu::load(const AssetLibrary& librar
 }
 
 void LevelMenu::layoutTitle(std::string_view title) {
+  constexpr int kTitleMaxLines = 1 + (kGameHeight - kMenuBaseY -
+      static_cast<int>(kRows.size()) * shell::kLineHeight) / kTitleLineStep;
   rowBaseY_ = kMenuBaseY;
   // Clone heading: centre the map hover's black-over-red text above the rows.
   // Wrap on spaces when possible, or at a glyph boundary in a long word.
@@ -108,13 +105,13 @@ void LevelMenu::close() { open_ = false; }
 
 void LevelMenu::moveFocus(int direction) {
   if (!open_ || (direction != -1 && direction != 1)) return;
-  constexpr int rows = static_cast<int>(kActions.size());
+  constexpr int rows = static_cast<int>(kRows.size());
   focusedIndex_ = (focusedIndex_ + rows + direction) % rows;
 }
 
 void LevelMenu::hover(int x, int y) {
   if (!open_) return;
-  for (std::size_t i = 0; i < kActions.size(); ++i) {
+  for (std::size_t i = 0; i < kRows.size(); ++i) {
     if (containsStrict(x, y, rowBaseY_, i, labels_[i])) {
       focusedIndex_ = static_cast<int>(i);
       return;
@@ -125,15 +122,15 @@ void LevelMenu::hover(int x, int y) {
 
 LevelMenuAction LevelMenu::actionAt(int x, int y) const {
   if (!open_) return LevelMenuAction::None;
-  for (std::size_t i = 0; i < kActions.size(); ++i)
-    if (containsStrict(x, y, rowBaseY_, i, labels_[i])) return kActions[i];
+  for (std::size_t i = 0; i < kRows.size(); ++i)
+    if (containsStrict(x, y, rowBaseY_, i, labels_[i])) return kRows[i].action;
   return LevelMenuAction::None;
 }
 
 LevelMenuAction LevelMenu::focusedAction() const {
-  if (!open_ || focusedIndex_ < 0 || focusedIndex_ >= static_cast<int>(kActions.size()))
+  if (!open_ || focusedIndex_ < 0 || focusedIndex_ >= static_cast<int>(kRows.size()))
     return LevelMenuAction::None;
-  return kActions[static_cast<std::size_t>(focusedIndex_)];
+  return kRows[static_cast<std::size_t>(focusedIndex_)].action;
 }
 
 void LevelMenu::draw(Image& frame) const {

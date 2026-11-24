@@ -22,54 +22,18 @@ bool hasArrows(int row) {
 
 struct ShortcutLine {
   std::string_view keys, action;
-  // The legacy coverage test compares these names with the SDL input handlers.
-  std::string_view scancodes = {};
+  // The legacy test checks these names against the gameplay key handler.
+  std::string_view scancodes;
 };
 
-constexpr ShortcutLine kShortcuts[][19]{
-    {
-        {"", "Level Play"},
-        {"1 to 8", "Select a stocked skill",
-         "SDL_SCANCODE_1 SDL_SCANCODE_2 SDL_SCANCODE_3 SDL_SCANCODE_4 "
-         "SDL_SCANCODE_5 SDL_SCANCODE_6 SDL_SCANCODE_7 SDL_SCANCODE_8"},
-        {"P", "Pause / resume", "SDL_SCANCODE_P"},
-        {"Enter / Pause/Break", "Examine", "SDL_SCANCODE_RETURN SDL_SCANCODE_PAUSE"},
-        {"Keypad Enter", "Examine", "SDL_SCANCODE_KP_ENTER"},
-        {"Escape", "Open level menu", "SDL_SCANCODE_ESCAPE"},
-        {"", "Camera in Play and Pause"},
-        {"Space / Ctrl", "Zoom", "SDL_SCANCODE_SPACE SDL_SCANCODE_LCTRL SDL_SCANCODE_RCTRL"},
-        {"Backspace", "Turn 180 degrees", "SDL_SCANCODE_BACKSPACE"},
-        {"Keypad 4 / 6", "Turn during drag", "SDL_SCANCODE_KP_4 SDL_SCANCODE_KP_6"},
-        {"Left Shift", "Faster keypad turn", "SDL_SCANCODE_LSHIFT"},
-        {"", "Both Pause Modes"},
-        {"P / Escape", "Resume", "SDL_SCANCODE_P SDL_SCANCODE_ESCAPE"},
-        {"O", "Open level menu", "SDL_SCANCODE_O"},
-        {"", "Standard Pause"},
-        {"1 to 8", "Select a stocked skill",
-         "SDL_SCANCODE_1 SDL_SCANCODE_2 SDL_SCANCODE_3 SDL_SCANCODE_4 "
-         "SDL_SCANCODE_5 SDL_SCANCODE_6 SDL_SCANCODE_7 SDL_SCANCODE_8"},
-        {"Examine keys", "Enter Examine", "SDL_SCANCODE_RETURN SDL_SCANCODE_KP_ENTER SDL_SCANCODE_PAUSE"},
-        {"", "Examine Pause"},
-        {"Examine keys", "Resume play", "SDL_SCANCODE_RETURN SDL_SCANCODE_KP_ENTER SDL_SCANCODE_PAUSE"},
-    },
-    {
-        {"", "Main Menu and Confirm"},
-        {"Up / Down", "Move focus", "SDL_SCANCODE_UP SDL_SCANCODE_DOWN"},
-        {"Enter", "Activate focused row", "SDL_SCANCODE_RETURN"},
-        {"", "Map"},
-        {"Enter", "Return to main menu", "SDL_SCANCODE_RETURN"},
-        {"", "Level Menu"},
-        {"Up / Down", "Move focus", "SDL_SCANCODE_UP SDL_SCANCODE_DOWN"},
-        {"Enter", "Activate focused row", "SDL_SCANCODE_RETURN"},
-        {"Escape", "Resume play", "SDL_SCANCODE_ESCAPE"},
-        {"O", "Close, stay paused", "SDL_SCANCODE_O"},
-        {"", "Options"},
-        {"Up / Down", "Move focus", "SDL_SCANCODE_UP SDL_SCANCODE_DOWN"},
-        {"Left / Right", "Change setting", "SDL_SCANCODE_LEFT SDL_SCANCODE_RIGHT"},
-        {"Enter", "Activate focused row", "SDL_SCANCODE_RETURN"},
-        {"Escape", "Discard edits, exit", "SDL_SCANCODE_ESCAPE"},
-        {"O", "Save and pause in level", "SDL_SCANCODE_O"},
-    },
+constexpr ShortcutLine kShortcuts[]{
+    {"1 to 8", "Select a stocked skill",
+     "SDL_SCANCODE_1 SDL_SCANCODE_2 SDL_SCANCODE_3 SDL_SCANCODE_4 "
+     "SDL_SCANCODE_5 SDL_SCANCODE_6 SDL_SCANCODE_7 SDL_SCANCODE_8"},
+    {"P", "Pause / resume", "SDL_SCANCODE_P"},
+    {"Enter / Pause/Break", "Examine Level", "SDL_SCANCODE_RETURN SDL_SCANCODE_PAUSE"},
+    {"Keypad Enter", "Examine Level", "SDL_SCANCODE_KP_ENTER"},
+    {"Escape", "Open level menu", "SDL_SCANCODE_ESCAPE"},
 };
 
 constexpr std::string_view kShortcutsLabel = "Keyboard Shortcuts", kBackLabel = "Back";
@@ -197,22 +161,13 @@ Image SoundMenu::renderShortcuts(const Image& backdrop, const Image& font) {
   constexpr shell::Rgb white{255, 255, 255}, gold{255, 216, 120};
   std::vector<shell::HudLine> lines{
       {std::string(kShortcutsLabel), shell::labelLeft(kShortcutsLabel, cells, 640), 5, gold}};
-  int x = 16;
-  for (const auto& column : kShortcuts) {
-    int y = 40;
-    for (const auto& line : column) {
-      if (line.action.empty()) break;
-      if (line.keys.empty()) {
-        lines.push_back({std::string(line.action), x, y, gold});
-      } else {
-        lines.push_back({std::string(line.keys), x, y, gold});
-        lines.push_back({std::string(line.action), x + shell::textWidth(line.keys, cells) + 12, y, white});
-      }
-      y += 21;
-    }
-    x += 320;
+  constexpr int x = 16;
+  int y = 40;
+  for (const auto& line : kShortcuts) {
+    lines.push_back({std::string(line.keys), x, y, gold});
+    lines.push_back({std::string(line.action), x + shell::textWidth(line.keys, cells) + 12, y, white});
+    y += 21;
   }
-  lines.push_back({"Enter / Escape", 386, kBackY, white});
   shell::drawHud(frame, font, lines, cells);
 
   shell::MenuParams params;

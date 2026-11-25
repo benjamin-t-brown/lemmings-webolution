@@ -11,6 +11,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
 - gl-presenter-web-001: **blocked** — OpenGL phase 2b: WebGL2 presenter, Start-page renderer choice and software fallback
+- gl-perf-001: **ready** — OpenGL performance: native GL frame cost far below software, no per-frame GPU stalls
 - gl-web-001: **blocked** — OpenGL web: the finished GL renderer on WebGL2, with the parked presenter of gl-presenter-web-001
 
 ## Recently completed queue entries

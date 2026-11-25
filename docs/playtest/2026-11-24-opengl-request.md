@@ -26,3 +26,10 @@ User decision (2026-11-24, after phase 2a): delay the browser until the native G
 gl-presenter-web-001 is parked unreviewed (its WebGL2 presenter code stays in the tree; the lead's
 browser run in build/gl-presenter-web-001/lead-browser-evidence.md passed), phases 3 to 7 are native
 only, and gl-web-001 brings the finished renderer to WebGL2 after gl-2d-play-001.
+
+User report (2026-11-24, after phase 7): native GL has obvious frame-rate problems on the 144 Hz main
+machine and is slower than software (user play of M01_KF_1: GL 18.2 ms mean, software 4.9 ms; most GL
+time is a GPU wait, not CPU work). The user expects thousands of frames per second. gl-perf-001 pulls the
+native performance part of phase 9 forward: measure GL and GPU time, remove every per-frame GPU wait from
+ordinary play and bring GL below software. gl-web-001 now follows it. Lead measurements:
+build/gl-perf-001/lead/summary.md.

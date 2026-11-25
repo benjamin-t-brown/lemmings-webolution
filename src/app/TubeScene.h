@@ -150,6 +150,7 @@ class TubeScene {
   void drawHoveredSensor(Image&, const CameraBasis&, const Raster&, const sim::OccupancySensor&) const;
   void prepareHoveredSensor(std::vector<HoverFragment>&, const CameraBasis&, const Raster&,
                             const sim::OccupancySensor&) const;
+  std::vector<SensorFragment> prepareSensorMarker(const CameraBasis&, const sim::OccupancySensor&) const;
   static std::expected<TubeScene, std::string> build(const AssetLibrary& lib,
                                                      const CylinderMesh& mesh,
                                                      std::span<const std::byte> levelBytes,
@@ -159,12 +160,21 @@ class TubeScene {
   void render(Raster& raster, const CameraBasis& camera, const SceneOptions& options,
               const AssetLibrary* composeAssets = nullptr) const;
   struct PreparedTube {
+    enum class Bank { Inner, Mesh0, Mesh4 };
+    struct BlockDraw {
+      std::size_t first, end;
+      int bucket, band;
+      Bank bank;
+      std::uint32_t material;
+    };
     std::vector<PreparedRasterTriangle> triangles;
+    std::vector<BlockDraw> blocks;
     // Diagnostic actors can be inserted before the cell route.
     std::size_t beforeRoute = 0;
     bool depthTest = true;
   };
-  PreparedTube prepareTube(const CameraBasis&, const SceneOptions&, bool trackHighlights) const;
+  PreparedTube prepareTube(const CameraBasis&, const SceneOptions&, bool trackHighlights,
+                           bool recordBlocks = false) const;
   static void drawTube(Raster&, const PreparedTube&);
 
   // Draw after scenery, terrain and fluid. Reset the actor coverage
@@ -180,7 +190,7 @@ class TubeScene {
       std::vector<PreparedRasterTriangle> attachment;
       std::vector<Bubble> bubbles;
       std::array<double, 3> drowningPosition{};
-      double drowningBrightness = 1.0;
+      std::uint8_t drowningGrey = 255;
       bool hasAttachment = false;
       bool drowning = false;
     };

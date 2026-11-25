@@ -70,7 +70,7 @@ class SdlWindow {
     if (initialized_) quitWindowSubsystems();
   }
   std::expected<void, std::string> ensure(
-      const char* title = "Lemmings Webolution " WEBOLUTION_VERSION_STRING) {
+      const char* title = "Lemmings Webolution " WEBOLUTION_VERSION_STRING, bool show = true) {
     if (renderer_ || gl_) return {};
     if (choice_ < 0 || choice_ > kMaxFixedWindowScale || runOverride_ < 0 ||
         runOverride_ > kMaxFixedWindowScale)
@@ -97,11 +97,11 @@ class SdlWindow {
     const auto configureWindow = [&] {
       if (desktop && setIcon_) setIcon_(window_);
       applyWindowScale();
-      if (desktop) SDL_ShowWindow(window_);
+      if (desktop && show) SDL_ShowWindow(window_);
     };
     std::string glFailure;
     if (requested_ != RendererChoice::Software) {
-      auto result = createGl_ ? createGl_(title, width, height, desktop) :
+      auto result = createGl_ ? createGl_(title, width, height, desktop || !show) :
           std::expected<std::unique_ptr<GlPresenter>, std::string>(
               std::unexpected("OpenGL presentation is unavailable in this build"));
       if (result) {
@@ -145,6 +145,20 @@ class SdlWindow {
   // The browser presenter retains ownership across a switch to software.
   bool usesGl() const { return bool(gl_); }
   bool gpuActive() const { return gl_ && gl_->gpuActive(); }
+  bool glContextLost() const { return gl_ && gl_->contextLost(); }
+  std::expected<bool, std::string> fallbackToSoftware(std::string_view reason = {}) {
+    if (gl_) return gl_->fallbackToSoftware(reason);
+    return false;
+  }
+  GlPresenter* glCompositor() const {
+    return gl_ && gl_->gpuComposition() ? gl_.get() : nullptr;
+  }
+  bool compareGlFrame(shell::Screen screen, int frame) const {
+    return comparison_ && comparison_->checkpoint && comparison_->compare && comparison_->checkpoint(screen, frame);
+  }
+  void reportGlFrame(shell::Screen screen, int frame, const Image& cpu, const Image& gpu) const {
+    comparison_->compare(screen, frame, cpu, gpu);
+  }
   std::expected<void, std::string> presentGl(
       const Image& image, shell::Screen screen, int frame, Image* shot = nullptr) {
     const bool compare = gl_->gpuActive() && comparison_ && comparison_->checkpoint && comparison_->compare &&

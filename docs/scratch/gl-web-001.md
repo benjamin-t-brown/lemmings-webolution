@@ -1,0 +1,27 @@
+# gl-web-001
+
+The November 24 OpenGL request brings the shared renderer to browser Start. `runFrontendWindow` submits prepared menu, map and results layers to the shared GL compositor. `runApplicationLeg` submits the prepared level to `SceneGpu`, resolves hatch, actor and hover queries from the displayed GPU targets, then composes the HUD, menus and cursor. `WebGlPresenter` presents that logical target on the canvas that owns the WebGL2 context. Explicit comparison checkpoints can render a software reference from the same prepared frame.
+
+ES 3.0 uses integer 2D textures for mesh records and four colour outputs for scene data. The shader bodies are shared with desktop GL. ES depth planes are prepared in binary64 and evaluated in binary32. The actor footprint projects around a point near the sprite to preserve the solid-cell decision at cylinder boundaries. The drowning visibility check reduces a GPU mask before drawing the body and bubbles. These are clone renderer decisions. The retained static reference is the registered x86 EXE with SHA-256 `32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f`. The earlier plan records the scene dispatch at `0x00441884`, `0x004418C2` and `0x0044190D` and the actor alpha setup at `0x00470F39`. [Request](../playtest/2026-11-24-opengl-request.md) · [Plan](../OPENGL_PLAN.md)
+
+Software starts by default and serves Node. Browser context failure selects SDL software. Context loss drops the GPU resources, reuses the same SDL input canvas and resumes frame production in the current level or frontend screen with the same session. Start owns the save lock, audio device and animation-frame loop across the switch.
+
+## Evidence and checks
+
+- Chrome opened its DevTools port in the worker, but the page target timed out at `Runtime.enable`, before Start. Live WebGL2, browser parity, creation failure and context loss remain unverified. The retained harness uses private profiles, captures canvas and same-frame RGBA, records terrain edits and skill stock, and checks focus, pause and the save lock. It masks the animated skill icon in the paused stability checks. [Worker attempt](../../build/gl-web-001/browser-worker-attempt.log) · [Chrome log](../../build/gl-web-001/browser-worker-chrome.log) · [Browser harness](../../build/gl-web-001/browser-check.mjs)
+- A source-built SDL adapter exercised the ES renderer on the local Radeon in an OpenGL ES 3.2 context using GLSL ES 3.00. The retained Just Climb (`MM_CLIMB_002`) route saved 10 with 1 required, showed results and returned to the map. Menu, map and results colour matched exactly. Sampled scene interiors were within one byte per channel at rest, across a full rotation and after Just Dig (`MM_DIG_000`) removed three cells at frame 24 after the Digger click at frame 22. Finite/clear coverage matched. Larger colour and numeric depth errors were in the edge band. The 13-byte Just Dig outlier before the edit came from competing `Models\exit\basket` triangles at (194,411). The first edited frame's final scenery pass peaked at four bytes on the edge band. Kriss Kross (`E19_KF_2`) matched actor coverage with one drowning body and 11 bubble pixels. [Probe build](../../build/gl-web-001/build-es-probe.py) · [Level return](../../build/gl-web-001/plane-es-level-return.log) · [Menu and results pixels](../../build/gl-web-001/plane-es-level-return/comparison.tsv) · [Dig route](../../build/gl-web-001/plane-es-after-dig.log) · [Per-pass parity](../../build/gl-web-001/es-final-parity-summary.tsv) · [Edge witnesses](../../build/gl-web-001/es-final-edge-witnesses.tsv)
+- The registered Emscripten and MinGW builds linked. Native `smoke_tests` built, 24 focused smoke-labelled checks passed on dummy drivers and all 32 promoted recordings reproduced their outcomes. The Node Wasm run wrote a software Just Climb PNG and the native clone wrote an OpenGL 3.3 PNG. The supervisor's smoke and recovery gate is pending. [Emscripten](../../build/gl-web-001/emscripten-build.log) · [Native build](../../build/gl-web-001/native-smoke-target-final.log) · [Focused smoke](../../build/gl-web-001/focused-smoke.log) · [Each replay](../../build/gl-web-001/replays.tsv) · [Node](../../build/gl-web-001/node-software.log) · [Native GL](../../build/gl-web-001/native-just-climb-gl.log)
+
+Changed `CMakeLists.txt`, `src/app/ActorGlShaders.h`, `FrontendWindow.cpp`, `NativeCompositor.h`, `NativeGlApi.h`, `NativeGlPresenter.cpp`, `NativeOpaqueComparison.cpp`, `OpaqueMeshShaders.h`, `OpaqueSceneComparison.h`, `PreparedLevelFrame.h`, `PresentationBackend.h`, `PresentationShaders.h`, `SdlWindow.hpp`, `main.cpp`, and `src/web/Browser.cpp`, `Browser.h` and `WebGlPresenter.cpp`.
+
+Run the retained browser harness from the lead session.
+
+```powershell
+& 'C:/progs/emsdk/node/22.16.0_64bit/bin/node.exe' build/gl-web-001/browser-check.mjs gl dig loss unavailable incomplete readback software 2>&1 |
+  Tee-Object -FilePath build/gl-web-001/browser-lead.log
+```
+
+**Handoff** — `gl-web-001` is `needs_review`. The supervisor's smoke and recovery gate is pending.  
+**Next action** — Review the lead browser run's log, colour outliers and canvas frames.
+
+**What to check** — Select OpenGL at Start, rotate Just Climb, assign Climber, win and choose Continue. Expect results and the updated map on WebGL2. In Just Dig, assign Digger and watch the opening appear. Lose the GL context during a paused level and expect the same paused level and skill selection on the focused software canvas, with P resuming that session.

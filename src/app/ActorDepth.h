@@ -14,6 +14,7 @@ namespace webo::app {
 class ActorDepth {
  public:
   static constexpr auto noOwner = std::numeric_limits<std::size_t>::max();
+  static constexpr auto firstParticleOwner = noOwner / 2;
   void reset(std::size_t pixels) {
     indices_.assign(pixels / blockSize + (pixels % blockSize != 0), noOwner);
     blocks_.clear();
@@ -42,6 +43,10 @@ class ActorDepth {
   double depthAt(std::size_t pixel) const {
     const auto* stored = lookup(pixel);
     return stored ? stored->depth : std::numeric_limits<double>::infinity();
+  }
+  std::size_t ownerAt(std::size_t pixel) const {
+    const auto* stored = lookup(pixel);
+    return stored ? stored->owner : noOwner;
   }
   std::size_t size() const { return indices_.empty() ? 0 : pixels_; }
 

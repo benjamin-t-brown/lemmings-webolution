@@ -47,6 +47,15 @@ struct SceneHighlightId {
   bool operator==(const SceneHighlightId&) const = default;
 };
 
+// High byte carries the kind, low bits carry the serialized root or gate index.
+inline std::uint32_t packSceneHighlight(SceneHighlightId id) {
+  return (std::uint32_t(id.kind) << 24) | id.index;
+}
+
+inline SceneHighlightId unpackSceneHighlight(std::uint32_t value) {
+  return {static_cast<SceneHighlightKind>(value >> 24), value & 0x00ffffffu};
+}
+
 // The completed frame keeps the last visible fragment and its additive RGB.
 struct SceneHighlightPixel {
   SceneHighlightId owner;

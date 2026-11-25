@@ -19,6 +19,7 @@ struct ActorSpritePlacement {
   double top = 0.0;
   double right = 0.0;
   double bottom = 0.0;
+  bool operator==(const ActorSpritePlacement&) const = default;
 };
 
 // Provisional clone occlusion uses physical view Z. Undo the normalized

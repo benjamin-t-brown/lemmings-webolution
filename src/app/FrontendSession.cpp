@@ -1,4 +1,5 @@
 #include "app/FrontendSession.h"
+#include "app/PreparedLevelLayers.h"
 
 #include "app/EnglishStrings.h"
 #include "shell/HudText.h"
@@ -141,6 +142,7 @@ void FrontendSession::refreshMap() {
   footer.baseY = 440;
   const std::array<std::string, 1> labels{mapFooterLabel_};
   mapImage_ = shell::renderMainMenu(map_.image(), font_, labels, footer, shell::fontCells());
+  ++mapRevision_;
 }
 
 shell::Outcome FrontendSession::confirmChoice(bool yes) {
@@ -167,6 +169,7 @@ const Image& FrontendSession::image() const {
         params.highlight = menuFocus();
         menu_ = shell::renderMainMenu(menuBackdrop_, font_, menuLabels_, params, shell::fontCells());
         menuImageHighlight_ = menuFocus();
+        ++menuRevision_;
       }
       return menu_;
     case shell::Screen::Confirm:
@@ -182,6 +185,7 @@ const Image& FrontendSession::image() const {
             {question, shell::labelLeft(question, shell::fontCells(), 640), 250, {255, 0, 0}}}};
         shell::drawHud(confirm_, font_, heading, shell::fontCells());
         confirmImageFocus_ = menuFocus();
+        ++confirmRevision_;
       }
       return confirm_;
     case shell::Screen::Language: return languageImage_;
@@ -208,6 +212,33 @@ Image FrontendSession::composeFrame() const {
   }
   cursor_.draw(composed, cursorState(), pointerX_, pointerY_);
   return composed;
+}
+
+PreparedPage FrontendSession::prepareFrame(PreparedLevelLayers& layers) const {
+  const auto page = screen();
+  const auto& base = page == shell::Screen::SoundOptions ? menuBackdrop_ : image();
+  std::uint64_t revision = 0;
+  switch (page) {
+    case shell::Screen::Menu: revision = menuRevision_; break;
+    case shell::Screen::Confirm: revision = confirmRevision_; break;
+    case shell::Screen::Results: revision = resultsRevision_ * 4 + (menuFocus() + 1); break;
+    case shell::Screen::SoundOptions:
+      layers.draws.emplace_back(prepareSoundOptions(base.width));
+      break;
+    case shell::Screen::Map:
+      revision = mapRevision_;
+      if (focused_) if (const auto node = map_.pickNode(pointerX_, pointerY_)) {
+        if (const auto lines = map_.layoutHover(*node)) {
+          layers.appendText(font_, *lines);
+          layers.draws.emplace_back(PreparedIconRegion{&map_.hoverClock(), {0,60,0,0,28,31}});
+        }
+      }
+      break;
+    default: break;
+  }
+  if (const auto icon = cursor_.prepare(cursorState(), pointerX_, pointerY_))
+    layers.draws.emplace_back(*icon);
+  return {&base, page, revision};
 }
 
 shell::Outcome FrontendSession::pressReturn() {
@@ -430,6 +461,7 @@ std::expected<void, std::string> FrontendSession::completeLevel(
   if (state_.showResults(outcome.success) != shell::Outcome::Handled)
     return std::unexpected("cannot present result outside a level");
   results_ = std::move(*results);
+  ++resultsRevision_;
   outcome_ = outcome;
   outcome_->level = *selectedLevel_;
   selectedLevel_.reset();

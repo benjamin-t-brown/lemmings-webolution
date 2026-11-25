@@ -38391,7 +38391,7 @@
     {
       "id": "gl-opaque-meshes-001",
       "title": "OpenGL phase 3: tube and backdrop opaque meshes in comparison mode",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "gl-presenter-native-001"
       ],
@@ -38405,12 +38405,199 @@
         "In comparison mode the GL backend draws the backdrop and tube opaque passes from the same prepared frame as software, with the depth interval, clear value and out-of-range count logged, and per-pass CPU, GPU and heatmap images saved under build/ for Just Climb at rest and through a full rotation, for Just Dig before and after a dig.",
         "Opaque coverage matches exactly, filtered interiors differ by at most one per channel per pixel, every edge-band mismatch is listed with its pass, competing depths and winner, and the maximum, histogram and pixel count are reported per pass, with any larger difference traced to its material or rounding step.",
         "Terrain edits update only the changed mesh blocks and the first edited frame shows the new hole in both backends, normal play still presents the software frame, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261124T204419-9332-0a66a12f",
+      "started": "2026-11-24T20:44:20.146144+00:00",
+      "finished": "2026-11-24T20:49:14.312598+00:00",
+      "last_run": "build/agent-runs/20261124T204419-9332-0a66a12f",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "All three native checks pass. The task scope also requires the Emscripten software build to keep compiling. The retained build stopped during dependency generation, and the existing WebAssembly artifact predates this change. Record a successful Emscripten compile and link for the reviewed source before acceptance.",
+        "checks": [
+          {
+            "criterion": "In comparison mode the GL backend draws the backdrop and tube opaque passes from the same prepared frame as software, with the depth interval, clear value and out-of-range count logged, and per-pass CPU, GPU and heatmap images saved under build/ for Just Climb at rest and through a full rotation, for Just Dig before and after a dig.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level loop renders software from `displayedFrame->scene` and passes that same prepared scene to the native comparison before presenting the composed software image."
+              },
+              {
+                "path": "src/app/OpaqueSceneComparison.cpp",
+                "detail": "The comparison consumes Primary, LegacyUnattributed and Tube in order. Each checkpoint writes CPU, GPU and heatmap PNGs per pass and records the camera, clock, viewport, driver, depth interval, clear value and out-of-range counts."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames-rotate.log",
+                "detail": "Just Climb starts at rest and reaches 256.67 yaw units of right drag against 256 units per turn. The retained captures cover 13 checkpoints across that run."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_CLIMB_002-001/frame-000077-summary.tsv",
+                "detail": "This in-turn checkpoint records three pass rows at 640\u00d7480 on the RX 9070 XT, depth mapped to [0, 0.5], clear depth 1 and zero out-of-range samples. The frame has all nine sibling images."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_DIG_000-001/frame-000024-summary.tsv",
+                "detail": "Frame 24 records the first three changed cells, all three pass rows, the depth interval, clear value 1 and zero out-of-range samples. Both frame 23 and frame 24 have complete CPU, GPU and heatmap sets."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/rea-static.json",
+                "detail": "Retained Ghidra instructions show the call at 0x00441884 to the tube dispatcher at 0x0043A4EC. Its calls at 0x0043A754, 0x0043A7F4, 0x0043A87C and 0x0043A8FA support the existing inner, right, left and centre order. The captures establish clone CPU-to-GPU parity."
+              }
+            ]
+          },
+          {
+            "criterion": "Opaque coverage matches exactly, filtered interiors differ by at most one per channel per pixel, every edge-band mismatch is listed with its pass, competing depths and winner, and the maximum, histogram and pixel count are reported per pass, with any larger difference traced to its material or rounding step.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-opaque-meshes-001/checkpoint-summary.tsv",
+                "detail": "All 51 pass snapshots report zero finite-coverage, visible pass-coverage and interior-over-one mismatches. Each row gives the per-channel maximum, error histogram and affected pixel count across 307,200 pixels."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_DIG_000-001/frame-000024-legacy-unattributed-mismatches.tsv",
+                "detail": "The 51 retained mismatch tables contain 824 edge rows. Here pixel (186, 411) lists CPU winner 1290, GPU winner 1074, both depths and the competing triangle samples."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/over-one-trace.tsv",
+                "detail": "All 100 pass-level differences above one byte, with a maximum of six, identify the exit-basket material. The competing depths encode to the same binary32 value, so strict Less keeps the earlier triangle on the GPU."
+              }
+            ]
+          },
+          {
+            "criterion": "Terrain edits update only the changed mesh blocks and the first edited frame shows the new hole in both backends, normal play still presents the software frame, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_DIG_000-001/frame-000024-uploads.tsv",
+                "detail": "The first edited frame uploads one tube block, (10, 4), with 2,080 vertex bytes and 224 index bytes. The other upload belongs to the animated backdrop exit."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/first-edit-pixels.tsv",
+                "detail": "The before-and-after tube images show the first hole at the same pose in both backends. After excluding backdrop changes, the edit shares 169 changed pixels, with six additional one-byte software changes."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames-dig.log",
+                "detail": "Digger is assigned at frame 22. Frame 24 removes cells (82, 21) through (84, 21) and the complete software presentation blit matches at that frame."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/replays.tsv",
+                "detail": "All 32 promoted replays reproduced their recorded outcomes. Just Climb won at step 1252 and Just Dig at step 1014. The source diff leaves the simulation and replay execution paths intact."
+              },
+              {
+                "path": "build/agent-runs/20261124T201337-9332-aa8fe2de/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the 102-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-opaque-meshes-001.md",
+                "detail": "The report ends with the two-line handoff and a what-to-check note naming Just Climb, Just Dig, the actions to take and the expected captures."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/emscripten-status.txt",
+                "detail": "The separate Emscripten software build stopped at C++ dependency generation after SDK activation cleared the cache override. It produced no compiler or linker result for this change."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "All three native checks pass. The task scope also requires the Emscripten software build to keep compiling. The retained build stopped during dependency generation, and the existing WebAssembly artifact predates this change. Record a successful Emscripten compile and link for the reviewed source before acceptance.",
+      "review": {
+        "decision": "accept",
+        "reason": "All three native acceptance criteria pass. The retained Emscripten 5.0.3 build compiled the affected sources and linked the software web target, resolving the prior review issue. Native parity was measured on the Radeon RX 9070 XT using the binary64 shader. The binary32-only native path remains unverified, and browser runtime is deferred to gl-web-001.",
+        "checks": [
+          {
+            "criterion": "In comparison mode the GL backend draws the backdrop and tube opaque passes from the same prepared frame as software, with the depth interval, clear value and out-of-range count logged, and per-pass CPU, GPU and heatmap images saved under build/ for Just Climb at rest and through a full rotation, for Just Dig before and after a dig.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level loop renders software from displayedFrame->scene and gives that same prepared scene to the native comparison before presenting the software composition."
+              },
+              {
+                "path": "src/app/OpaqueSceneComparison.cpp",
+                "detail": "The comparison consumes Primary, LegacyUnattributed and Tube in order. Each checkpoint saves CPU, GPU and heatmap PNGs per pass and logs the camera, viewport, clock, driver and depth diagnostics."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames-rotate.log",
+                "detail": "Just Climb begins at rest and reaches 256.67 yaw units against 256 units per revolution. The 13 retained checkpoints contain 117 PNGs, nine per checkpoint."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_CLIMB_002-001/frame-000077-summary.tsv",
+                "detail": "This mid-rotation checkpoint records all three passes at 640\u00d7480, maps the submitted depth interval to [0, 0.5], reserves 1 for infinity and reports zero out-of-range vertices and pixels."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_DIG_000-001/frame-000024-summary.tsv",
+                "detail": "Frame 24 records the first three changed terrain cells and zero out-of-range vertices and pixels. Frames 23 and 24 each have all nine companion PNGs at the same camera pose."
+              }
+            ]
+          },
+          {
+            "criterion": "Opaque coverage matches exactly, filtered interiors differ by at most one per channel per pixel, every edge-band mismatch is listed with its pass, competing depths and winner, and the maximum, histogram and pixel count are reported per pass, with any larger difference traced to its material or rounding step.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-opaque-meshes-001/checkpoint-summary.tsv",
+                "detail": "All 51 pass snapshots report zero finite-coverage mismatches, zero visible pass-coverage mismatches and zero interior errors above one byte. Each row gives the maximum error per RGB channel, the histogram and the affected pixel count."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_DIG_000-001/frame-000024-legacy-unattributed-mismatches.tsv",
+                "detail": "The 51 retained mismatch tables list 824 edge rows. At pixel (186, 411), this table identifies CPU winner 1290, GPU winner 1074, and the depths and coverage of the competing triangles."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/over-one-trace.tsv",
+                "detail": "All 100 pass-level errors above one byte are edge cases on the exit-basket material. The maximum is six bytes. Each competing depth pair rounds to the same binary32 depth code, so strict Less keeps the earlier GPU draw."
+              }
+            ]
+          },
+          {
+            "criterion": "Terrain edits update only the changed mesh blocks and the first edited frame shows the new hole in both backends, normal play still presents the software frame, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-opaque-meshes-001/frames/MM_DIG_000-001/frame-000024-uploads.tsv",
+                "detail": "The first edited frame uploads only tube block (10, 4), with 2,080 vertex bytes and 224 index bytes. The other upload is the independently animated backdrop exit."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/first-edit-pixels.tsv",
+                "detail": "The retained before-and-after tube images show the hole in both backends on frame 24. After accounting for backdrop changes, the edit changes the same 169 pixels in both outputs, with six additional one-byte software changes."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/frames-dig.log",
+                "detail": "Digger is assigned on frame 22. Frame 24 removes cells (82, 21) through (84, 21), and the complete software composition matches the presentation readback on that frame."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/replays.tsv",
+                "detail": "All 32 promoted replays reproduced their recorded outcomes. Just Climb won at step 1252 and Just Dig at step 1014. The reviewed source changes are in rendering and presentation, with the simulation and replay execution paths intact."
+              },
+              {
+                "path": "build/agent-runs/20261124T204419-9332-0a66a12f/verification.log",
+                "detail": "The supervisor built smoke_tests and passed all 95 main smoke tests, including the 102-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/emscripten-revision-build.log",
+                "detail": "The Emscripten Release build compiles Raster.cpp, TubeScene.cpp, BackdropScene.cpp and main.cpp and reaches the final link of webolution.js."
+              },
+              {
+                "path": "build/gl-opaque-meshes-001/emscripten-revision-result.txt",
+                "detail": "The build exited 0. The recorded JavaScript, Wasm and HTML outputs are present in the revision build directory."
+              },
+              {
+                "path": "docs/scratch/gl-opaque-meshes-001.md",
+                "detail": "The report ends with the two-line handoff and a what-to-check note that names Just Climb and Just Dig, gives the actions to take and describes the expected captures."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T20:51:21.233408+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T204419-9332-0a66a12f\\verification.log",
+        "verified_content": "94ceb540c4f4ddc62ec3c93d04f23775dba89940f70552711fe676b16b1beb5b"
+      }
     },
     {
       "id": "gl-scene-passes-001",
       "title": "OpenGL phase 4: billboards, secondary sprites, pipes, fluid, counter gates and sky fill",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "gl-opaque-meshes-001"
       ],
@@ -38424,12 +38611,110 @@
         "In comparison mode the billboard, secondary, pipe, fluid, counter gate and sky passes render on GL from the same prepared frame, with per-pass CPU, GPU and heatmap images under build/ for Introducing - Water Lemmings and Kriss Kross while turning and for One Way Ticket at rest.",
         "Each pass meets the parity rules or has every difference traced to its material or rounding step, latched sprites show the same frame in both backends, water and pipes sit on the same side of terrain, and pre-water depth is not overwritten, shown by the comparison logs.",
         "Normal play still presents the software frame, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261124T205121-9332-0115e591",
+      "started": "2026-11-24T20:51:21.744299+00:00",
+      "finished": "2026-11-24T21:11:50.841543+00:00",
+      "last_run": "build/agent-runs/20261124T205121-9332-0115e591",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by the retained native OpenGL comparisons, source review, replay results and supervisor smoke log. The largest colour difference was traced to a binary32 depth tie at a pipe grille. The native binary32-only shader fallback remains unverified.",
+        "checks": [
+          {
+            "criterion": "In comparison mode the billboard, secondary, pipe, fluid, counter gate and sky passes render on GL from the same prepared frame, with per-pass CPU, GPU and heatmap images under build/ for Introducing - Water Lemmings and Kriss Kross while turning and for One Way Ticket at rest.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level loop prepares the scene once for the displayed frame, renders it in software, and gives that same displayedFrame.scene to the native comparison."
+              },
+              {
+                "path": "src/app/OpaqueSceneComparison.cpp",
+                "detail": "The comparison consumes the prepared pass order, preserving billboard and sprite interleaving, and writes a CPU image, a GL readback and a heatmap at each pass boundary."
+              },
+              {
+                "path": "build/gl-scene-passes-001/frames/MM_W_012-001/frame-000052-fluid-heatmap.png",
+                "detail": "Introducing - Water Lemmings has 56 complete image triplets across seven checkpoints. This is the fluid heatmap at a turning checkpoint."
+              },
+              {
+                "path": "build/gl-scene-passes-001/frames/E19_KF_2-001/frame-000077-secondary-gpu.png",
+                "detail": "Kriss Kross has 56 complete image triplets across seven checkpoints. The CPU and GL secondary images at frame 77 show the same visible fire sprites. The native logs record 256.67 yaw units of rotation on each water level."
+              },
+              {
+                "path": "build/gl-scene-passes-001/frames/MM_ALL_8_001-001/frame-000012-blue-sky-gpu.png",
+                "detail": "One Way Ticket has 18 complete image triplets across two stationary checkpoints at yaw 76. The blue-sky image shows the late fill in the black sky regions visible in the preceding gate image."
+              },
+              {
+                "path": "build/gl-scene-passes-001/frames/M16_MG_1-001/frame-000012-counter-gates-gpu.png",
+                "detail": "The additional Lock In checkpoint shows the red counter rendered on GL. The pass summary records 1,501 gate pixels in each backend."
+              }
+            ]
+          },
+          {
+            "criterion": "Each pass meets the parity rules or has every difference traced to its material or rounding step, latched sprites show the same frame in both backends, water and pipes sit on the same side of terrain, and pre-water depth is not overwritten, shown by the comparison logs.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-scene-passes-001/pass-summary.tsv",
+                "detail": "All 146 pass snapshots agree on finite and visible pass coverage. No depth sample exceeded the logged quantization bound."
+              },
+              {
+                "path": "build/gl-scene-passes-001/over-one-trace.tsv",
+                "detail": "All 1,099 pass samples above one byte, at 199 distinct frame-pixels, trace to strict Less retaining the earlier triangle when competing depths map to the same binary32 value. At the largest difference, Water Lemmings frame 77 pixel (329, 415), the grille panel and backing both map to 3e0fc529 and both remain in front of terrain."
+              },
+              {
+                "path": "build/gl-scene-passes-001/frames/E19_KF_2-001/frame-000077-materials.tsv",
+                "detail": "The shared prepared draws record the keyed fire sheet, temporal frame and mirror state. Both backends consume the UVs selected by the single preparation-time latch. At this checkpoint the secondary pass has zero owner differences."
+              },
+              {
+                "path": "build/gl-scene-passes-001/depth-and-sky.tsv",
+                "detail": "Water Lemmings frame 52 matches 1,581 accepted pipe pixels and 13,265 water depth changes. Kriss Kross frame 77 matches 1,335 and 9,073 respectively. Every checkpoint reports zero pipe depth-order errors and preserved pre- and post-water snapshots. Each One Way Ticket checkpoint fills exactly 5,268 sky pixels and preserves depth and ownership."
+              },
+              {
+                "path": "build/gl-scene-passes-001/rea-static.json",
+                "detail": "Retained Ghidra instructions for the registered x86 reference with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f put the tube, pipe and base-fluid calls at 0x00441884, 0x004418C2 and 0x0044190D. The pipe pseudocode agrees with the two guarded calls in the instructions at 0x0042C560\u20130x0042C5A0. The sprite instructions show the latch check, conditional RNG call and latch store at 0x0047D391, 0x0047D39B and 0x0047D3FE. These are static ordering and latch findings."
+              }
+            ]
+          },
+          {
+            "criterion": "Normal play still presents the software frame, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The default renderer is Software. In comparison mode the GL presenter still receives the complete software-composed frame. Replay playback returns through replayLevel before window setup."
+              },
+              {
+                "path": "build/gl-scene-passes-001/frames-E19_KF_2.log",
+                "detail": "The native comparison log records exact software-frame presentation readback at all seven Kriss Kross checkpoints."
+              },
+              {
+                "path": "build/gl-scene-passes-001/replays.tsv",
+                "detail": "All 32 promoted recordings reproduced their recorded outcomes. Water Lemmings won at step 1742, Kriss Kross at step 6034 and One Way Ticket at step 13812."
+              },
+              {
+                "path": "build/agent-runs/20261124T205121-9332-0115e591/verification.log",
+                "detail": "Supervisor verification passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-scene-passes-001.md",
+                "detail": "The report ends with its two-line handoff and a what-to-check note specifying levels, camera actions and expected water, pipe, sky and counter results."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T21:15:05.567841+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T205121-9332-0115e591\\verification.log",
+        "verified_content": "21f62a560e63c07cf5f07f95a2a9ebd3ac66085817ad422f68b45b9d8d0afae4"
+      }
     },
     {
       "id": "gl-actors-001",
       "title": "OpenGL phase 5: actor bodies, attachments and displayed-frame queries on GL",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "gl-scene-passes-001"
       ],
@@ -38443,12 +38728,203 @@
         "In comparison mode actor bodies and attachments render on GL with per-pass images under build/ for Lems at Loggerheads rotating at the round object and Just Build across a bridge, including front and rear actors, bricks and feet, meeting the parity rules or with each difference traced.",
         "GL and software give the same actor boxes, owners, hatch rectangles and zoom point depths for those views, a skill assignment, a hatch hover and a zoom at the pointer pick the same targets under both backends, and query stalls are measured, shown by logs under build/.",
         "Normal play still presents the software frame unless every level pass is on GL, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261124T215024-9332-7b711479",
+      "started": "2026-11-24T21:50:25.278697+00:00",
+      "finished": "2026-11-24T21:58:35.039577+00:00",
+      "last_run": "build/agent-runs/20261124T215024-9332-7b711479",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The retained comparisons cover the Loggerheads wall turn at column 119 and the Just Build bridge. Capture paired per-pass images and query logs while rotating through the documented Loggerheads round-log contact at column 201, file row 17. The software presentation, replay, and smoke criteria pass.",
+        "checks": [
+          {
+            "criterion": "In comparison mode actor bodies and attachments render on GL with per-pass images under build/ for Lems at Loggerheads rotating at the round object and Just Build across a bridge, including front and rear actors, bricks and feet, meeting the parity rules or with each difference traced.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/actor-occlusion-002.md",
+                "detail": "Identifies the lower round log from installed cylinder geometry and records a walker turning against it at column 201, file row 17, at 42,005 ms in the promoted recording."
+              },
+              {
+                "path": "build/gl-actors-001/loggerheads-final.log",
+                "detail": "The comparison rotates around the approach at 15,225 ms near column 117 and the wall turn at 19,642 ms at column 119. The retained Loggerheads image summaries cover only those two clocks."
+              },
+              {
+                "path": "build/gl-actors-001/frames/MM_BUILD-001/frame-000007-actors-owners.tsv",
+                "detail": "At bridge yaw 195.046, walker 1 owns 46 pixels on both backends and two rear actors own zero. At yaw 99.046, walker 1 is fully occluded in the matching frame 9 owner tables."
+              },
+              {
+                "path": "build/gl-actors-001/frames/MM_BUILD-001/frame-000014-actors-owners.tsv",
+                "detail": "At yaw 192, builder 0 owns 382 pixels on both backends. The GL attachment labels 110 as body and 272 as carried brick from 12 prepared triangles."
+              },
+              {
+                "path": "build/gl-actors-001/scenery-winner-trace.tsv",
+                "detail": "Records the competing materials, depths, and shared normalized binary32 codes for 206 scenery winner differences. The maximum 36-byte channel difference comes from two exit-basket triangles in Just Build frame 11."
+              },
+              {
+                "path": "build/gl-actors-001/retained-static/submit-instructions.json",
+                "detail": "Cross-checks the registered EXE's retained pseudocode against the origin load and compare at 0x43CC94 and 0x43CC9A, depth subtraction at 0x43CCB5, and sprite submit call at 0x43CD4E. These instructions support placement preparation. The GL footprint and owner rules are clone policies."
+              }
+            ]
+          },
+          {
+            "criterion": "GL and software give the same actor boxes, owners, hatch rectangles and zoom point depths for those views, a skill assignment, a hatch hover and a zoom at the pointer pick the same targets under both backends, and query stalls are measured, shown by logs under build/.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/gl-actors-001/point-queries.tsv",
+                "detail": "All 102 sampled pointer, body, brick, and scene points agree on owner and finite or clear classification, with finite depth differences of at most one binary64 ULP. The Loggerheads rows cover the wall approach and wall turn poses. Query parity at the round-log contact remains unverified."
+              },
+              {
+                "path": "build/gl-actors-001/final-input-frames/MM_BUILD-001/frame-000001-queries.tsv",
+                "detail": "The shared actor boxes agree and both backends reduce the visible hatch to rectangle (491,137)\u2013(522,177). The pointer at (506,157) resolves to hatch 0 on both."
+              },
+              {
+                "path": "build/gl-actors-001/input-final.log",
+                "detail": "The application reports hatch 0 from both query paths, accepts Builder on actor 0 after both pickers choose it, and computes the same depth and zoom pose at (178,318). The final live zoom readback took 0.737 ms."
+              },
+              {
+                "path": "build/gl-actors-001/analysis.log",
+                "detail": "Records exact boxes and hatch bounds across 35 captured frames. Warm hatch readbacks had a 0.226 ms median and the slowest first diagnostic point read took 43.213 ms."
+              }
+            ]
+          },
+          {
+            "criterion": "Normal play still presents the software frame unless every level pass is on GL, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Defaults to software and sends the completed software image to the presenter even when comparison draws an offscreen GL scene. The replay entry still dispatches directly to replayLevel before presentation setup."
+              },
+              {
+                "path": "build/gl-actors-001/input-final.log",
+                "detail": "All five retained presentation readbacks match the completed software image byte for byte."
+              },
+              {
+                "path": "build/gl-actors-001/replays.tsv",
+                "detail": "All 32 promoted recordings reproduce their expected outcomes. Just Build wins 20/10 at step 1685 and Loggerheads wins 10/5 at step 2095."
+              },
+              {
+                "path": "build/agent-runs/20261124T211505-9332-cb63854e/verification.log",
+                "detail": "The supervisor reports 95 of 95 smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/gl-actors-001.md",
+                "detail": "Ends with a two-line handoff and a what-to-check note naming both levels, the rotation and input actions, and the expected render and query agreement."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The retained comparisons cover the Loggerheads wall turn at column 119 and the Just Build bridge. Capture paired per-pass images and query logs while rotating through the documented Loggerheads round-log contact at column 201, file row 17. The software presentation, replay, and smoke criteria pass.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision covers the documented Loggerheads round-log turn. Both levels meet the native clone parity rules for actor rendering and input, the scenery differences are traced, and the supervisor smoke and recovery gate passed for this revision.",
+        "checks": [
+          {
+            "criterion": "In comparison mode actor bodies and attachments render on GL with per-pass images under build/ for Lems at Loggerheads rotating at the round object and Just Build across a bridge, including front and rear actors, bricks and feet, meeting the parity rules or with each difference traced.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-actors-001/round-log-revision/loggerheads-round-log.log",
+                "detail": "The promoted recording reaches column 201, file row 17 at 42,005 ms, where actor 0 reverses from right to left. The capture covers 16 yaws through a full turn and six approach and departure views. Both backends use the current clone's radial layer of 0.5, compared with 0.75 in the earlier contact report."
+              },
+              {
+                "path": "build/gl-actors-001/round-log-revision/frames/MM_E1_3_SKILLS-001/frame-000016-actors-gpu.png",
+                "detail": "The GL actor image at yaw 153 matches the inspected software image at the lower log. The owner tables show 13 pixels for actor 0 on both backends at this yaw and zero at yaw 201."
+              },
+              {
+                "path": "build/gl-actors-001/round-log-revision/analysis.log",
+                "detail": "Across 22 paired checkpoints, 176 scenery pass comparisons and 4,356 body pixels, actor colour, coverage, owners and depth match. All 104 final scenery winner changes trace to normalized binary32 depth ties. The five final pixels that differ by more than one byte are traced to exit-basket edges."
+              },
+              {
+                "path": "build/gl-actors-001/final-spots/MM_BUILD-001/frame-000002-actors-owners.tsv",
+                "detail": "At bridge yaw 195.046, the inspected GL and software images agree on the visible walker's feet and actor 1 owns 103 pixels on each backend. At yaw 99.046, the paired frame 3 owner table records zero pixels for that actor on both."
+              },
+              {
+                "path": "build/gl-actors-001/final-spots/MM_BUILD-001/frame-000004-actors-owners.tsv",
+                "detail": "At yaw 192, builder 0 owns 382 pixels on both backends. GL identifies 110 body pixels and 272 carried-brick pixels from 12 prepared attachment triangles."
+              },
+              {
+                "path": "build/gl-actors-001/scenery-winner-trace.tsv",
+                "detail": "Records competing materials, depths and shared binary32 codes. The largest Just Build colour difference is 36 channel values at frame 11 pixel (210, 236), where exit-basket triangles 1300 and 1087 share depth code 3e0d314f and GL keeps the earlier draw."
+              },
+              {
+                "path": "build/gl-actors-001/retained-static/submit-instructions.json",
+                "detail": "For the registered EXE, the loads and compare at 0x43CC94 and 0x43CC9A, subtraction at 0x43CCB5, and call to 0x0047A75D at 0x43CD4E corroborate the retained placement pseudocode. The upright plane, footprint and owner policy are clone behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "GL and software give the same actor boxes, owners, hatch rectangles and zoom point depths for those views, a skill assignment, a hatch hover and a zoom at the pointer pick the same targets under both backends, and query stalls are measured, shown by logs under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-actors-001/round-log-revision/analysis.log",
+                "detail": "Actor boxes and hatch bounds match at all 22 checkpoints. Across 56 general and 17 contact point queries, owners and finite classification agree and depths differ by at most two binary64 ULPs. The first pointer read after actor submission took 0.902 ms median and 43.151 ms maximum. Warm hatch reads took 0.232 ms median."
+              },
+              {
+                "path": "build/gl-actors-001/round-log-revision/frames/MM_E1_3_SKILLS-001/frame-000015-queries.tsv",
+                "detail": "At yaw 137 both backends reduce hatch 0 to rectangle (112, 186)\u2013(131, 224) and resolve the pointer at (121, 205) to that hatch."
+              },
+              {
+                "path": "build/gl-actors-001/round-log-revision/contact-queries.tsv",
+                "detail": "At yaw 153 the pointer samples actor 0 on both backends with identical depth and zoom pose. At occluded yaws the query falls through to scene depth, with a maximum zoom pose difference under 2 \u00d7 10\u207b\u00b9\u2074 world units."
+              },
+              {
+                "path": "build/gl-actors-001/analysis.log",
+                "detail": "The bridge, wall and application captures agree on actor boxes and hatch bounds. All 102 sampled points agree in owner and depth within one binary64 ULP. The log separates cold and warm readback times."
+              },
+              {
+                "path": "build/gl-actors-001/input-final.log",
+                "detail": "The Just Build application hover reaches hatch 0 at (506, 157), and both hatch pickers return 0. Both skill pickers choose actor 0 and the application accepts Builder. The pointer zoom at (178, 318) returns identical actor depth and zoom pose on both paths, with a 0.737 ms GL readback."
+              },
+              {
+                "path": "build/gl-actors-001/actor-contract-binary32-final.log",
+                "detail": "The forced binary32 probe records the precision limit for a synthetic overlap. CPU selects owner 19 at 9.99999995 and GL selects owner 4 at 10 when the depths round to the same float. Exact ties select the lower owner in either draw order."
+              }
+            ]
+          },
+          {
+            "criterion": "Normal play still presents the software frame unless every level pass is on GL, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Software remains the default. In comparison mode the GL scene draws offscreen and the presenter receives the completed software image. The replay entry dispatches directly to replayLevel before window setup."
+              },
+              {
+                "path": "build/gl-actors-001/input-final.log",
+                "detail": "All five live presentation readbacks match the completed software frame byte for byte."
+              },
+              {
+                "path": "build/gl-actors-001/round-log-revision/replays.tsv",
+                "detail": "All 32 promoted recordings passed. Loggerheads won 10/5 at step 2095 and Just Build won 20/10 at step 1685."
+              },
+              {
+                "path": "build/agent-runs/20261124T215024-9332-7b711479/verification.log",
+                "detail": "The supervisor built the smoke_tests target and passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests. This supersedes the task report's pending-gate wording."
+              },
+              {
+                "path": "docs/scratch/gl-actors-001.md",
+                "detail": "The report ends after its two-line handoff with a what-to-check note naming both levels, the round-log and bridge rotations, the hatch hover, the Builder assignment, and the expected agreement on the zoom anchor."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T22:01:28.644790+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T215024-9332-7b711479\\verification.log",
+        "verified_content": "79d1ee1b0d4bc4c9a3597668f3818b037f1f7bfbd26c67c881fe4cdba14b9e35"
+      }
     },
     {
       "id": "gl-effects-001",
       "title": "OpenGL phase 6: explosion marks, drowning, debris and particles on GL",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "gl-actors-001"
       ],
@@ -38462,12 +38938,110 @@
         "In comparison mode explosion marks, drowning, debris and particles render on GL with per-pass images under build/ for a blast in Just Bomb, debris in Just Dig and a drowning in Kriss Kross, meeting the parity rules or with each difference traced.",
         "A blast mark stays behind later actors, debris crosses the same surfaces, and a drowning body shows through the intended fluid and is hidden by intervening scenery in both backends, shown by the comparison logs.",
         "Effects age only on level time and not per backend, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261124T220128-9332-97a88ddf",
+      "started": "2026-11-24T22:01:29.165219+00:00",
+      "finished": "2026-11-24T22:30:33.449721+00:00",
+      "last_run": "build/agent-runs/20261124T220128-9332-97a88ddf",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported by the retained native OpenGL comparisons, the production call path, and the supervisor\u2019s smoke result. The runtime evidence establishes clone software and OpenGL parity at the recorded checkpoints on the RX 9070 XT.",
+        "checks": [
+          {
+            "criterion": "In comparison mode explosion marks, drowning, debris and particles render on GL with per-pass images under build/ for a blast in Just Bomb, debris in Just Dig and a drowning in Kriss Kross, meeting the parity rules or with each difference traced.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-effects-001/final-frames/MM_BOMB-001/frame-000008-explosion-marks-gpu.png",
+                "detail": "The retained GL image shows the blast mark at 15,122 ms. The corresponding pass summary records 516 changed pixels in each backend and zero differences in the mark\u2019s colour contribution."
+              },
+              {
+                "path": "build/gl-effects-001/final-frames/MM_DIG_000-001/frame-000006-particles-heatmap.png",
+                "detail": "The retained debris heatmap corresponds to 130 particle-owned pixels in each backend, with exact ownership and a single one-byte red difference at this checkpoint."
+              },
+              {
+                "path": "build/gl-effects-001/final-idle/idle-188-yaw-80/E19_KF_2-001/frame-000000-actors-gpu.png",
+                "detail": "The GL actor-pass image comes from a natural Kriss Kross drowning. The corresponding summary records 46 GL drowning-body pixels and 10 bubble pixels, with exact actor coverage, owner, colour, and depth across both backends."
+              },
+              {
+                "path": "build/gl-effects-001/effect-delta-trace.tsv",
+                "detail": "Across the retained Just Dig checkpoints, three one-byte delta differences come from scenery colours that the debris replaces identically. The only two remaining particle colour differences are one red byte each. The debris witness log traces both to half-byte rounding after tile filtering and face shading."
+              },
+              {
+                "path": "build/gl-effects-001/scenery-difference-trace.tsv",
+                "detail": "Every full-image RGB difference above one byte at the effect passes is traced by pixel to an earlier secondary or legacy scenery pass. The source-pass mismatch and material tables retain competing depths and winners, including Just Bomb\u2019s nearly coplanar water materials and Just Dig\u2019s exit basket."
+              },
+              {
+                "path": "build/gl-effects-001/rea-static.json",
+                "detail": "Retained Ghidra instructions for the registered reference corroborate the mark dispatch at 0x4082B6, the blend dispatch at 0x4402FB, and the drowning blend selector and equal-channel tint at 0x404403 and 0x404434. The effective original depth state remains unresolved."
+              }
+            ]
+          },
+          {
+            "criterion": "A blast mark stays behind later actors, debris crosses the same surfaces, and a drowning body shows through the intended fluid and is hidden by intervening scenery in both backends, shown by the comparison logs.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-effects-001/final-frames/MM_BOMB-001/frame-000008-summary.tsv",
+                "detail": "Scene Z was preserved by the mark in both backends. Later opaque actors replaced the same 74 marked pixels, with zero actor coverage or ownership differences."
+              },
+              {
+                "path": "build/gl-effects-001/MM_DIG_000-witnesses.log",
+                "detail": "At 6,890 ms both backends show debris in front of scenery at (323, 121) and let nearer scenery hide debris at (303, 128). Witnesses at later times and rotated viewpoints also agree."
+              },
+              {
+                "path": "build/gl-effects-001/drowning-witnesses.tsv",
+                "detail": "At Kriss Kross tick 188 and yaw 80, both backends show the body through water at (521, 224) and hide it behind scenery at the adjacent pixel (520, 224). The logged depths identify the winning surface in each case."
+              },
+              {
+                "path": "build/gl-effects-001/effects-contract.log",
+                "detail": "Supplemental prepared-frame checks confirm pipe clipping, bubble gating, debris on either side of water, axe and forced-flight depth rules, and lowest-owner precedence at equal actor depth."
+              }
+            ]
+          },
+          {
+            "criterion": "Effects age only on level time and not per backend, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The application advances death effects from the world\u2019s level clock and advances drowning animation with the admitted simulation time. It prepares marks, actors, and particles once before handing the same scene to both consumers."
+              },
+              {
+                "path": "build/gl-effects-001/MM_BOMB-final-comparison.log",
+                "detail": "Multiple viewpoints at each checkpoint retain the same recorded clock and effect age. Later simulation checkpoints advance the age and show debris and sprite pieces expiring."
+              },
+              {
+                "path": "build/agent-runs/20261124T220128-9332-97a88ddf/after-source-hashes.json",
+                "detail": "Compared with the same run\u2019s before snapshot, the production changes are confined to application and renderer files. Simulation and replay source files and the promoted recordings retain their hashes."
+              },
+              {
+                "path": "build/gl-effects-001/replays.tsv",
+                "detail": "All 32 promoted recordings reproduced their expected outcomes, including the archived return to the map. Just Bomb, Just Dig, and Kriss Kross passed at steps 954, 1014, and 6034 respectively."
+              },
+              {
+                "path": "build/agent-runs/20261124T220128-9332-97a88ddf/verification.log",
+                "detail": "The supervisor built smoke_tests and recorded 95 of 95 main smoke tests and 84 of 84 recovery tests passing, including the installed-level sweep."
+              },
+              {
+                "path": "docs/scratch/gl-effects-001.md",
+                "detail": "The two-line handoff is followed by the final what-to-check note. It names all three levels, the player action for each, the F10 comparison capture, and the expected depth and coverage."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T22:34:16.462364+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T220128-9332-97a88ddf\\verification.log",
+        "verified_content": "16b04e503f24f804e102637e5d4e6ab3efa0d52e0553acee8b79fb4c951e6d3a"
+      }
     },
     {
       "id": "gl-2d-play-001",
       "title": "OpenGL phase 7: 2D compositor and ordinary play on the GL renderer",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "gl-effects-001"
       ],
@@ -38481,12 +39055,118 @@
         "With --renderer gl the menu, map, Just Climb, results and the return to the map run through one GL presenter with no software scene frame, and the 2D layers meet the parity rules against software at window scales 1, 2 and 3, shown by frames and comparison logs under build/ from native runs.",
         "Selecting a skill, pausing, opening sound options, Examine Level and Retry give the same text, hotspots and ordering as software, and a requested PNG under GL contains the displayed logical frame, shown by logs and frames under build/.",
         "Software remains the default and unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261124T223416-9332-0e6f18d1",
+      "started": "2026-11-24T22:34:16.974775+00:00",
+      "finished": "2026-11-24T23:10:30.494176+00:00",
+      "last_run": "build/agent-runs/20261124T223416-9332-0e6f18d1",
+      "review": {
+        "decision": "accept",
+        "reason": "The native GL route meets all three criteria. The isolated 2D draws matched software byte for byte at all three scales. The two pixels with larger errors in the composed overlay frames were traced to existing 3D basket triangle boundaries. The 3\u00d7 probe used a desktop-fit override and verified a real 1920\u00d71440 drawable. The supervisor smoke profile and all 32 promoted replays passed.",
+        "checks": [
+          {
+            "criterion": "With --renderer gl the menu, map, Just Climb, results and the return to the map run through one GL presenter with no software scene frame, and the 2D layers meet the parity rules against software at window scales 1, 2 and 3, shown by frames and comparison logs under build/ from native runs.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The shared SDL window owns the presenter across frontend, level, results, and map legs. Ordinary native GL skips software raster allocation and submits the GPU scene textures directly to the compositor. The native software reference draw is gated by an explicit comparison request."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/level-return-probe/1/comparison.tsv",
+                "detail": "The 640\u00d7480 drawable run retained 20 paired checkpoints. Menu, confirmation, map, and results matched exactly. Level checkpoints differed by at most one byte per channel."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/level-return-probe/2/comparison.tsv",
+                "detail": "The 1280\u00d7960 drawable run reproduced the same results, with at most eight differing pixels in any level checkpoint and zero alpha differences."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/level-return-probe/3/comparison.tsv",
+                "detail": "The probe verified the 1920\u00d71440 drawable and reproduced the same logical-frame comparisons."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/level-return-probe/3/run.log",
+                "detail": "One OpenGL 3.3 initialization spans the installed Just Climb win with 10 saved and 1 required, the loss and Retry exercise, and the return to the map."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/level-return-probe/3/9-stage4-screen2-frame3-gl.png",
+                "detail": "The retained GL frame after Continue shows Just Climb cleared and the neighboring routes unlocked."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/compositor-probe/3/run.log",
+                "detail": "The isolated compositor reports exact matches for keyed cursor pixels, glyph placement, skill panel, caption, fuse depth, ordered composition, and page revision handling."
+              }
+            ]
+          },
+          {
+            "criterion": "Selecting a skill, pausing, opening sound options, Examine Level and Retry give the same text, hotspots and ordering as software, and a requested PNG under GL contains the displayed logical frame, shown by logs and frames under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-2d-play-001/native-verified/overlays-probe/3/run.log",
+                "detail": "Scaled SDL input reaches the shared controls. Just Climb refuses the unstocked slot and Lems at Loggerheads selects the stocked Floater. Pause freezes the tick, Sound Options opens and closes, Examine Level leaves the game paused, and Retry restarts at frame zero. The observer also verifies deferred logical readback."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/overlays-probe/3/comparison.tsv",
+                "detail": "The paired checkpoints cover entry, skill, pause, sound, Examine Level, and Retry. Alpha matches at every checkpoint. The composed frames with a two-byte RGB difference each contain only one pixel above one byte."
+              },
+              {
+                "path": "build/gl-2d-play-001/boundary-witness.tsv",
+                "detail": "At (165,143) and (148,159), each backend's composed RGB equals its own scene RGB. The per-pass mismatch logs locate both pixels at overlapping exit basket triangle boundaries."
+              },
+              {
+                "path": "build/gl-2d-play-001/native-verified/overlays-probe/3/11-examine-gl.png",
+                "detail": "The retained Examine Level frame shows the cursor, HUD, and the Paused and Drag to look around caption in their expected positions."
+              },
+              {
+                "path": "build/gl-2d-play-001/cli-png-comparison.tsv",
+                "detail": "Native CLI captures are 640\u00d7480. Frontend and map PNGs match exactly. The Just Climb diagnostic and window PNGs each differ by one byte at eight pixels."
+              },
+              {
+                "path": "build/gl-2d-play-001/level-window-gl.png",
+                "detail": "The native --window-shot output shows the upright logical scene with its HUD, skill panel, and hatch label. The presenter reads the same logical framebuffer it blits to the window."
+              }
+            ]
+          },
+          {
+            "criterion": "Software remains the default and unchanged, simulation and replays are unchanged, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-2d-play-001/default-software.log",
+                "detail": "A launch without --renderer reports requested=software and actual=software."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Renderer selection defaults to software. The default presentation path retains software scene rasterization and SDL presentation. Replay dispatch still calls replayLevel before window setup."
+              },
+              {
+                "path": "build/gl-2d-play-001/replays.tsv",
+                "detail": "All 32 promoted recordings exited successfully and reproduced their outcomes, including the MM_TELE_003 return-to-map recording. The task source snapshots show no simulation or replay implementation changes."
+              },
+              {
+                "path": "build/agent-runs/20261124T223416-9332-0e6f18d1/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including all 17 chunks of the 102-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-2d-play-001.md",
+                "detail": "The report ends with the two-line handoff and a what-to-check note naming Just Climb, the skill and menu actions, and the expected Retry and map results."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-24T23:13:50.148535+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261124T223416-9332-0e6f18d1\\verification.log",
+        "verified_content": "d380c30ea08c8dc211167dd416a9525b1875ddf2ab3d8fb0e435ca39e4edaf80"
+      }
     },
     {
       "id": "gl-web-001",
       "title": "OpenGL web: the finished GL renderer on WebGL2, with the parked presenter of gl-presenter-web-001",
-      "status": "ready",
+      "status": "blocked",
       "depends_on": [
         "gl-2d-play-001"
       ],
@@ -38500,7 +39180,81 @@
         "With GL chosen at Start, a headless browser run of the Emscripten build creates a WebGL2 context, logs the confirmed ES 3.0 version, and runs the menu, map, Just Climb with a skill assignment, results and the return to the map with no software scene frame, shown by logs and canvas frames under build/.",
         "In that run the GL frames meet the plan parity rules against software for the menu, map, Just Climb at rest and while rotating, and Just Dig after a dig, and when WebGL2 creation fails or the context is lost the page presents through software without losing the session, save lock, selected level or pause state, shown by comparison logs under build/.",
         "Software stays the default, Node stays a software target, Start, audio, IDBFS and animation-frame behaviour are unchanged, the native build and smoke profile pass, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261124T231350-9332-126d08a6",
+      "started": "2026-11-24T23:13:50.709769+00:00",
+      "finished": "2026-11-25T00:01:28.876160+00:00",
+      "last_run": "build/agent-runs/20261124T231350-9332-126d08a6",
+      "blocker": "The native build and smoke gate passed. The current Emscripten build\u2019s headless browser attempt timed out at Runtime.enable before Start. Acceptance requires an interactive lead run of the retained harness with browser logs, canvas frames, parity diagnostics, and fallback results for gl-web-001.",
+      "review": {
+        "decision": "blocked",
+        "reason": "The native build and smoke gate passed. The current Emscripten build\u2019s headless browser attempt timed out at Runtime.enable before Start. Acceptance requires an interactive lead run of the retained harness with browser logs, canvas frames, parity diagnostics, and fallback results for gl-web-001.",
+        "checks": [
+          {
+            "criterion": "With GL chosen at Start, a headless browser run of the Emscripten build creates a WebGL2 context, logs the confirmed ES 3.0 version, and runs the menu, map, Just Climb with a skill assignment, results and the return to the map with no software scene frame, shown by logs and canvas frames under build/.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/gl-web-001/browser-worker-attempt.log",
+                "detail": "Chrome exposed its DevTools target, then Runtime.enable timed out on the initial data page. The attempt never reached Start or produced a WebGL2 version log or game canvas frame."
+              },
+              {
+                "path": "build/gl-web-001/plane-es-level-return.log",
+                "detail": "The SDL adapter used a native OpenGL ES 3.2 context and recorded a Just Climb win with 10 saved and 1 required, followed by return to the map. This exercises the shared renderer through SDL."
+              },
+              {
+                "path": "build/gl-presenter-web-001/lead-browser-evidence.md",
+                "detail": "The earlier headless run confirmed WebGL2 and ES 3.0 for the parked presenter, which displayed CPU-composed frames. That run predates the browser scene renderer under review."
+              }
+            ]
+          },
+          {
+            "criterion": "In that run the GL frames meet the plan parity rules against software for the menu, map, Just Climb at rest and while rotating, and Just Dig after a dig, and when WebGL2 creation fails or the context is lost the page presents through software without losing the session, save lock, selected level or pause state, shown by comparison logs under build/.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/gl-web-001/plane-es-level-return/comparison.tsv",
+                "detail": "The native ES adapter\u2019s same-frame comparisons show exact menu, map, results, and returned map pixels."
+              },
+              {
+                "path": "build/gl-web-001/es-final-parity-summary.tsv",
+                "detail": "The native ES probes report zero finite/clear coverage differences and zero interior colour errors above one byte at sampled Just Climb and Just Dig checkpoints. The first edited Just Dig frame still records a four-byte colour outlier and seven primary-pass depths over the comparison bound. The browser checkpoints need their own boundary review."
+              },
+              {
+                "path": "build/gl-web-001/browser-check.mjs",
+                "detail": "The retained harness requests same-frame RGBA comparisons and exercises creation failure and paused context loss. Its level comparisons report colour outliers for review. Per-pass coverage, depth, and ownership still need evidence from the browser poses, along with observed preservation of focus, the save lock, the selected level, and pause state."
+              }
+            ]
+          },
+          {
+            "criterion": "Software stays the default, Node stays a software target, Start, audio, IDBFS and animation-frame behaviour are unchanged, the native build and smoke profile pass, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/web/webolution.html",
+                "detail": "Start offers software by default, focuses the input canvas, and enters async main from the click gesture. The IDBFS lock spans loading and play and is released when main exits."
+              },
+              {
+                "path": "src/web/Browser.cpp",
+                "detail": "The browser canvas check requires a document and canvas. Frame waits still yield through requestAnimationFrame, including the existing click wake-up in level play. Comparison callbacks require explicit installation."
+              },
+              {
+                "path": "build/gl-web-001/node-software.log",
+                "detail": "The Node Wasm run exited successfully and wrote the software-rendered Just Climb PNG."
+              },
+              {
+                "path": "build/agent-runs/20261124T231350-9332-126d08a6/verification.log",
+                "detail": "The supervisor built the native smoke_tests target with registered MinGW and passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-web-001.md",
+                "detail": "The report ends with a what-to-check note naming the Just Climb, Just Dig, and paused context-loss actions and expected results. The supervisor log resolves the report\u2019s pending smoke status."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

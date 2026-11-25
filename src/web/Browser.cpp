@@ -1,5 +1,10 @@
 #include "web/Browser.h"
 
+#include "app/AppEntry.h"
+#include "app/RuntimePick.h"
+#include "sim/World.h"
+
+#include <algorithm>
 #include <emscripten.h>
 
 namespace webo::web {
@@ -14,6 +19,71 @@ EM_JS(bool, webGlSelectedAtStart, (), {
 
 bool hasBrowserCanvas() { return browserCanvasAvailable(); }
 bool requestedWebGl() { return webGlSelectedAtStart(); }
+
+// Optional comparison observer supplied by the browser harness before Start.
+// The normal page does not request readbacks or software reference frames.
+EM_JS(bool, hasGlFrameObserver, (), {
+  return typeof Module['glFrameCheckpoint'] === 'function' &&
+         typeof Module['glFrameComparison'] === 'function';
+});
+
+EM_JS(bool, wantsGlFrame, (int screen, int frame), {
+  return !!Module['glFrameCheckpoint'](screen, frame);
+});
+
+EM_JS(void, observeGlFrame, (int screen, int frame, int width, int height,
+                             const std::uint8_t* cpu, const std::uint8_t* gpu), {
+  const bytes = width * height * 4;
+  Module['glFrameComparison'](screen, frame, width, height,
+    HEAPU8.slice(cpu, cpu + bytes), HEAPU8.slice(gpu, gpu + bytes));
+});
+
+app::GlFrameComparison glFrameComparison() {
+  if (!hasGlFrameObserver()) return {};
+  return {
+    [](shell::Screen screen, int frame) { return wantsGlFrame(static_cast<int>(screen), frame); },
+    [](shell::Screen screen, int frame, const Image& cpu, const Image& gpu) {
+      if (cpu.width == gpu.width && cpu.height == gpu.height && cpu.rgba.size() == gpu.rgba.size())
+        observeGlFrame(static_cast<int>(screen), frame, gpu.width, gpu.height, cpu.rgba.data(), gpu.rgba.data());
+    }
+  };
+}
+
+EM_JS(bool, hasGlLevelObserver, (), {
+  return typeof Module['glLevelFrame'] === 'function';
+});
+
+EM_JS(void, observeGlLevel, (const char* level, int frame, double yaw, bool intro, bool paused,
+                            int skill, int stock, std::size_t edits, int saved, int active,
+                            const int* targets, std::size_t count), {
+  Module['glLevelFrame']({level: UTF8ToString(level), frame, yaw, intro: !!intro, paused: !!paused,
+    skill, stock, edits, saved, active, targets: Array.from(HEAP32.subarray(targets >> 2, (targets >> 2) + count))});
+});
+
+app::LevelFrameObserver glLevelFrameObserver() {
+  if (!hasGlLevelObserver()) return {};
+  return [](const app::LevelFrameView& frame) {
+    const auto skill = static_cast<sim::Skill>(frame.selectedSkillIndex);
+    const auto& lemmings = frame.world.lemmings();
+    std::vector<int> targets;
+    for (const auto& actor : frame.actors) {
+      if (!frame.world.canAssign(actor.index, skill)) continue;
+      if (frame.levelName == "MM_CLIMB_002" &&
+          !app::firstLevelClimberSupport(lemmings[actor.index], skill, frame.world.terrain()).value_or(true)) continue;
+      const auto& p = actor.placement;
+      const int x = static_cast<int>((p.left + p.right) * 0.5);
+      const int y = static_cast<int>((p.top + p.bottom) * 0.5);
+      if (x < 100 || x >= 640 || y < 0 || y >= 480) continue;
+      targets.push_back(static_cast<int>(actor.index));
+      targets.push_back(x);
+      targets.push_back(y);
+    }
+    const int active = static_cast<int>(std::ranges::count_if(lemmings, &sim::Lemming::active));
+    observeGlLevel(frame.levelName.data(), frame.frame, frame.displayedPose.yawUnits, frame.cameraIntroActive,
+                   frame.paused, frame.selectedSkillIndex, frame.world.setup().skills[frame.selectedSkillIndex],
+                   frame.drawnTerrainCellsChanged, frame.world.saved(), active, targets.data(), targets.size());
+  };
+}
 
 // Clone addition. Scale the display with CSS. SDL maps it to the 640x480 backing canvas.
 EM_JS(void, applyCanvasScale, (int scale), {

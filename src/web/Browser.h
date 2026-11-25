@@ -1,8 +1,17 @@
 #pragma once
 
+#include <functional>
+
+namespace webo::app {
+struct GlFrameComparison;
+struct LevelFrameView;
+}
+
 namespace webo::web {
 bool hasBrowserCanvas();
 bool requestedWebGl();
+app::GlFrameComparison glFrameComparison();
+std::function<void(const app::LevelFrameView&)> glLevelFrameObserver();
 void setCanvasScale(int scale);
 void canvasFillSize(int& width, int& height);
 void nextFrame();

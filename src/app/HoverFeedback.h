@@ -24,6 +24,10 @@ struct HoverFragment {
   std::size_t pixel;
   std::array<std::uint8_t, 3> rgb;
 };
+struct SensorFragment {
+  HoverFragment fragment;
+  double depth;
+};
 inline void drawHoverFragments(Image& target, std::span<const HoverFragment> fragments) {
   for (const auto& fragment : fragments)
     addHoverRgb(target.rgba.data() + fragment.pixel * 4, fragment.rgb.data());

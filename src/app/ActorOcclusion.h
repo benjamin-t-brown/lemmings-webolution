@@ -44,6 +44,8 @@ class ActorOcclusionPlane {
     return world;
   }
 
+  std::array<double, 4> coefficients() const { return {numerator_, constant_, dx_, dy_}; }
+
  private:
   double numerator_, dx_, dy_, constant_;
 };

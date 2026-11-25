@@ -31,6 +31,12 @@ class AssetLibrary;
 namespace sim { struct Crab; struct NamedHazard; struct LevelSetup; struct OccupancySensor; }
 namespace app {
 class Raster;
+
+using ProjectedMeshTriangle = std::array<std::array<double, 3>, 3>;
+struct PreparedHatchQuery {
+  std::size_t index;
+  std::vector<ProjectedMeshTriangle> triangles;
+};
 // Application-owned animation state for placed scenery.
 struct EntranceExitPresentation {
   struct Entrance { std::size_t root; HatchAnimation animation; };
@@ -171,6 +177,14 @@ class BackdropScene {
       std::optional<std::size_t> submission;
       bool nullMaterial = false;
     };
+    enum class DrawKind { Mesh, Billboard, Sprite, Fluid };
+    // Optional descriptions for comparison. Ranges index the same draws the
+    // software path consumes, including the interleaved Secondary dispatch.
+    struct DrawRange {
+      std::size_t first, end, node;
+      std::string material;
+      DrawKind kind;
+    };
     struct Candidate {
       std::size_t beforeDraw;
       std::uint64_t source, node, block, triangleCount;
@@ -181,6 +195,12 @@ class BackdropScene {
     BackdropStats stats;
     std::vector<Draw> draws;
     std::vector<Candidate> candidates;
+    std::vector<DrawRange> ranges;
+
+    void describeRange(std::size_t first, std::size_t node, const std::string& material,
+                       DrawKind kind) {
+      if (first != draws.size()) ranges.push_back({first, draws.size(), node, material, kind});
+    }
   };
   // Provisional clone fluid depth defaults to LessWriteOn. Original ZENABLE,
   // ZWRITEENABLE, ZFUNC and device ZBIAS are unresolved.
@@ -217,7 +237,8 @@ class BackdropScene {
                   SceneRasterObserver* observer = nullptr,
                   std::vector<double>* depthOutput = nullptr) const;
   PreparedStage prepareStage(const CameraBasis&, const AssetLibrary&, Stage,
-                             bool trackHighlights, bool observeCandidates = false) const;
+                             bool trackHighlights, bool observeCandidates = false,
+                             bool describeDraws = false) const;
   static void drawStage(Raster&, const PreparedStage&, BackdropStats&,
                         const SceneRasterObserver* = nullptr, std::span<double> depthOutput = {});
   // Dispatches the parsed trees with the supplied inputs.
@@ -251,7 +272,20 @@ class BackdropScene {
                             bool arrival, int facing, double levelSeconds);
   void animateGadgets(const GadgetPresentation&, double levelSeconds);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
+  std::vector<PreparedHatchQuery> prepareHatchQueries(const CameraBasis&) const;
+  static std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&,
+      std::span<const PreparedHatchQuery>);
   std::optional<PickBox> exitHoverTarget(const CameraBasis&, const Raster&, int x, int y) const;
+  std::vector<PreparedHatchQuery> prepareExitQueries(const CameraBasis&, int x, int y) const;
+  struct SwitchHover {
+    std::vector<SceneHighlightId> targets;
+    std::vector<std::uint32_t> sensors;
+  };
+  std::optional<SwitchHover> selectSwitchHover(const sim::LevelSetup&,
+      const LeverPresentation*, const PressurePadPresentation*,
+      std::span<const GadgetPresentation::TeleportHoverBinding>, SceneHighlightId pointerOwner,
+      const std::function<bool(std::size_t)>& hitRoot) const;
+  std::optional<PreparedHatchQuery> prepareHoverQuery(const CameraBasis&, std::size_t root, int x, int y) const;
   bool drawSwitchHover(Image&, const CameraBasis&, const Raster&, const sim::LevelSetup&,
                        const LeverPresentation*, const PressurePadPresentation*,
                        std::span<const GadgetPresentation::TeleportHoverBinding>,
@@ -324,7 +358,7 @@ class BackdropScene {
   std::vector<FluidGateState> fluidState_;
   bool hasFluidState_ = false;
   FluidDepthPolicy fluidPolicy_ = kProvisionalFluidDepthPolicy;
-  void prepareFluid(PreparedStage&, const CameraBasis&, bool observeCandidates) const;
+  void prepareFluid(PreparedStage&, const CameraBasis&, bool observeCandidates, bool describeDraws) const;
   std::expected<const SceneRgbaImage*, std::string> stageTexture(
       const AssetLibrary&, const std::string& asset, bool alphaFromRgb) const;
   mutable std::map<std::tuple<const AssetLibrary*, std::string, bool>, SceneRgbaImage> stageTextures_;

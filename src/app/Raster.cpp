@@ -3,6 +3,7 @@
 #include "app/RasterRows.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -68,12 +69,13 @@ void Raster::compositeOpaque(const Raster& layer) {
 void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
                       const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
                       const std::array<double, 3>& modulate, std::size_t actorOwner,
-                      SceneAddress address, SceneHighlightId highlight) {
+                      SceneAddress address, SceneHighlightId highlight, DrawOwners drawOwners) {
   profile::Scope profileRaster(profile::active &&
       (actorOwner != ActorDepth::noOwner || profile::active->cost == profile::BuilderBrick) ?
       profile::active->cost : profile::TubeRaster);
   if (texture.width <= 0 || texture.height <= 0 || texture.rgb.empty())
     return;
+  assert(drawOwners.pixels.empty() || drawOwners.pixels.size() == depth_.size());
 
   const auto& a = p[0];
   const auto& b = p[1];
@@ -93,7 +95,8 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
   const double mr = modulate[0], mg = modulate[1], mb = modulate[2];
   const bool wrap = address == SceneAddress::Wrap;
 
-  const auto drawRows = [this, p, uv, &texture, actorOwner, area, xmin, xmax, tw, th, dst, mr, mg, mb, wrap, highlight](int first, int last) {
+  const auto drawRows = [this, p, uv, &texture, actorOwner, area, xmin, xmax, tw, th, dst,
+                         mr, mg, mb, wrap, highlight, drawOwners](int first, int last) {
     const auto& a = p[0]; const auto& b = p[1]; const auto& c = p[2];
     // The normalized coordinate bounds the bilinear taps to [-1, size].
     const auto addressTap = [wrap](int i, int size) {
@@ -159,6 +162,7 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
         }
         if (actorOwner == ActorDepth::noOwner) depth_[pos] = z;
         else actorDepth_.submit(pos, z, actorOwner);
+        if (!drawOwners.pixels.empty()) drawOwners.pixels[pos] = drawOwners.id;
         ++count;
       }
     }

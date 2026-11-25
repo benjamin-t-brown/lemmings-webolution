@@ -29,6 +29,7 @@ struct PreparedLevelScene {
   std::shared_ptr<const TubeScene::PreparedTube> tube;
   std::vector<PreparedSceneTriangle> counterGates, explosionMarks;
   TubeScene::PreparedActors actors;
+  std::vector<PreparedHatchQuery> hatchQueries;
   TubeScene::PreparedParticles particles;
   bool trackHighlights = false;
   bool cachePose = false;
@@ -63,6 +64,27 @@ struct PreparedLevelFrame {
   PreparedLevelScene scene;
   PreparedLevelLayers layers;
 };
+
+inline constexpr std::array<std::uint8_t, 3> kBlueSkyRgb{4, 8, 24};
+
+inline void fillBlueSky(Raster& target) {
+  // One Way Ticket fills untouched black after water blends over its clear.
+  auto& rgb = target.mutableFramebuffer().rgb;
+  const auto& depth = target.depthBuffer();
+  for (std::size_t p = 0; p < depth.size(); ++p) {
+    const auto i = 3 * p;
+    if (depth[p] != std::numeric_limits<double>::infinity() ||
+        rgb[i] != 0 || rgb[i+1] != 0 || rgb[i+2] != 0) continue;
+    std::copy(kBlueSkyRgb.begin(), kBlueSkyRgb.end(), rgb.begin() + i);
+  }
+}
+
+inline void patchDrowningDepth(std::span<double> beforeFluid, std::span<const double> afterFluid,
+                               std::span<const double> completedScene) {
+  // Later opaque scenery can occlude the additive swimmer through water.
+  for (std::size_t i = 0; i < completedScene.size(); ++i)
+    if (completedScene[i] != afterFluid[i]) beforeFluid[i] = completedScene[i];
+}
 
 // The software consumer owns its cache and intermediate depth planes. All
 // simulation, clocks, RNG and audio stay outside this object.
@@ -134,7 +156,7 @@ class SoftwareLevelRaster {
           fillBlueSky(target);
           break;
         case Pass::CompleteDrowningDepth:
-          completeDrowningDepth(target);
+          patchDrowningDepth(drowningDepth_, afterFluidDepth_, target.depthBuffer());
           break;
         case Pass::ExplosionMarks:
           TubeScene::drawSceneTriangles(target, frame.explosionMarks);
@@ -156,13 +178,6 @@ class SoftwareLevelRaster {
   std::span<const double> pipeDepth() const { return pipeDepth_; }
 
  private:
-  void completeDrowningDepth(const Raster& target) {
-    // Later opaque scenery can occlude the additive swimmer through water.
-    const auto& completed = target.depthBuffer();
-    for (std::size_t i = 0; i < completed.size(); ++i)
-      if (completed[i] != afterFluidDepth_[i]) drowningDepth_[i] = completed[i];
-  }
-
   void drawTubePass(Raster& target, const PreparedLevelScene& frame) {
     const auto& camera = frame.camera;
     if (!frame.cacheTube) {
@@ -189,20 +204,6 @@ class SoftwareLevelRaster {
     TubeScene::drawTube(target, *frame.tube);
     profile::Scope rasterTime(profile::TubeRaster);
     batch.flush();
-  }
-
-  static void fillBlueSky(Raster& target) {
-    // One Way Ticket fills untouched black after water blends over its clear.
-    auto& rgb = target.mutableFramebuffer().rgb;
-    const auto& depth = target.depthBuffer();
-    for (std::size_t p = 0; p < depth.size(); ++p) {
-      const auto i = 3 * p;
-      if (depth[p] != std::numeric_limits<double>::infinity() ||
-          rgb[i] != 0 || rgb[i+1] != 0 || rgb[i+2] != 0) continue;
-      rgb[i] = 4;
-      rgb[i+1] = 8;
-      rgb[i+2] = 24;
-    }
   }
 
   struct {
@@ -235,8 +236,11 @@ inline Image sceneImage(const Framebuffer& fb) {
 // event dispatch, including when preparation and materialization were deferred.
 class DisplayedFrameQueries {
  public:
+  using Point = std::function<std::pair<std::size_t, double>(int, int)>;
   DisplayedFrameQueries(CameraBasis camera, const Raster& raster)
       : camera_(std::move(camera)), raster_(&raster) {}
+  DisplayedFrameQueries(CameraBasis camera, Point point)
+      : camera_(std::move(camera)), point_(std::move(point)) {}
 
   void setSceneResults(std::vector<std::optional<ActorSpritePlacement>> actors,
                        std::vector<HatchHoverTarget> hatches) {
@@ -246,17 +250,30 @@ class DisplayedFrameQueries {
   }
   bool sceneResultsReady() const { return sceneResultsReady_; }
 
+  void useSoftwareRaster(const Raster& raster) {
+    raster_ = &raster;
+    point_ = {};
+    sceneResultsReady_ = false;
+    image_ = {};
+  }
+
   const CameraBasis& camera() const { return camera_; }
   std::span<const std::optional<ActorSpritePlacement>> actorBoxes() const { return actors_; }
   std::span<const HatchHoverTarget> hatches() const { return hatches_; }
+  std::size_t actorOwnerAt(int x, int y) const {
+    if (!pointerOverSceneBounds(x, y, 0, 0, camera_.width, camera_.height)) return ActorDepth::noOwner;
+    if (point_) return point_(x, y).first;
+    return raster_->actorDepth().ownerAt(std::size_t(y) * camera_.width + x);
+  }
   std::optional<double> pointDepth(int x, int y) const {
     if (x < 0 || y < 0 || x >= camera_.width || y >= camera_.height) return std::nullopt;
+    if (point_) return point_(x, y).second;
     const auto pixel = std::size_t(y) * camera_.width + x;
     const auto actor = raster_->actorDepth().depthAt(pixel);
     return std::isfinite(actor) ? actor : raster_->depthBuffer()[pixel];
   }
   const Image& composedImage() const {
-    if (image_.empty()) {
+    if (image_.empty() && raster_) {
       image_ = sceneImage(raster_->framebuffer());
       if (layers_) layers_->draw(image_, raster_->depthBuffer());
     }
@@ -268,10 +285,12 @@ class DisplayedFrameQueries {
   }
   // Automation holds a reference to this storage before it requests pixels.
   const Image& imageStorage() const { return image_; }
+  void setImage(Image image) { image_ = std::move(image); }
 
  private:
   CameraBasis camera_;
-  const Raster* raster_;
+  const Raster* raster_ = nullptr;
+  Point point_;
   std::vector<std::optional<ActorSpritePlacement>> actors_;
   std::vector<HatchHoverTarget> hatches_;
   bool sceneResultsReady_ = false;

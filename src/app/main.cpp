@@ -72,6 +72,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <chrono>
+#include <charconv>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -91,6 +92,9 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include "app/SdlWindow.hpp"
+#ifdef WEBOLUTION_GL_SCENE
+#include "app/OpaqueSceneComparison.h"
+#endif
 #ifdef WEBOLUTION_WINDOWS_ICON
 #include "app/WindowsWindowIcon.h"
 #endif
@@ -145,6 +149,9 @@ struct Args {
   bool invalidWindowScale = false;
   app::RendererChoice renderer = app::RendererChoice::Software;
   bool invalidRenderer = false;
+  fs::path opaqueComparison;
+  std::vector<int> opaqueCheckpoints;
+  bool invalidOpaqueComparison = false;
   bool help = false;
   bool version = false;
   bool map = false;
@@ -180,7 +187,8 @@ Args parseArgs(int argc, char** argv) {
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
     if (arg != "--game-dir" && arg != "--no-audio" && arg != "--window-scale" &&
-        arg != "--record" && arg != "--renderer") defaultFrontend = false;
+        arg != "--record" && arg != "--renderer" && arg != "--compare-opaque" &&
+        arg != "--compare-frame") defaultFrontend = false;
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
     else if (arg == "--version") a.version = true;
@@ -206,6 +214,18 @@ Args parseArgs(int argc, char** argv) {
       else if (value == "gl") a.renderer = app::RendererChoice::Gl;
       else if (value == "auto") a.renderer = app::RendererChoice::Auto;
       else a.invalidRenderer = true;
+    }
+    else if (arg == "--compare-opaque") {
+      a.opaqueComparison = next();
+      a.invalidOpaqueComparison |= a.opaqueComparison.empty();
+    }
+    else if (arg == "--compare-frame") {
+      const auto value = next();
+      int frame = -1;
+      const auto result = std::from_chars(value.data(), value.data() + value.size(), frame);
+      if (result.ec != std::errc{} || result.ptr != value.data() + value.size() || frame < 0)
+        a.invalidOpaqueComparison = true;
+      else a.opaqueCheckpoints.push_back(frame);
     }
     else if (arg == "--camera") a.camera = next();
     else if (arg == "--geom") a.geom = next();
@@ -255,13 +275,16 @@ void printHelp() {
   std::puts("Lemmings Webolution " WEBOLUTION_VERSION_STRING "\n"
             "webolution [--game-dir PATH] [--frontend | --direct-level | --level ID | --map] [options]\n"
             "--version prints the build version.\n"
-            "No options, or only --game-dir/--no-audio/--window-scale/--renderer/--record, starts the frontend.\n"
+            "No options, or only startup options, starts the frontend.\n"
             "Any other option keeps its diagnostic route unless --frontend is explicit.\n"
             "--direct-level opens the previous MM_CLIMB_002 injected-walker diagnostic.\n"
             "--level ID --sim starts direct play. Escape opens the level menu.\n"
             "--window-scale 1|2|3 overrides the saved Window size for this run.\n"
             "--renderer software|gl|auto selects window presentation (default software).\n"
             "gl requires native OpenGL 3.3 core. auto tries GL and falls back to software.\n"
+            "--compare-opaque DIR saves native GL and software scene, actor and effect comparisons at level frame 0,\n"
+            "the first terrain edit, F10, and any repeatable --compare-frame N checkpoints.\n"
+            "The window presents the complete software frame.\n"
             "Without a saved Window size, ordinary play uses Auto on desktop or Fill on web.\n"
             "--record DIR records each level attempt as DIR/*.replay (default via Play-Clone.ps1).\n"
             "--replay FILE checks a recording headless at full speed, without opening a save.\n"
@@ -312,11 +335,11 @@ app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
 // Hover and click share a 32x32 cursor box (0x0045578C) in render pixels;
 // pickBoxOverlaps adjusts it by 4 px per edge. Provisional clone ranking
 // uses nearest displayed body centre after eligibility checks. Ties keep World order.
-std::optional<std::size_t> hoveredActor(const sim::World& world, const app::DisplayedFrameQueries& queries,
+std::optional<std::size_t> hoveredActor(const sim::World& world,
+                        std::span<const std::optional<app::ActorSpritePlacement>> boxes,
                         int x, int y, sim::Skill skill, bool firstLevelSupport) {
   // SOURCE stock gate shared by both consumers; -1 remains unlimited.
   if (world.setup().skills[static_cast<std::size_t>(skill)] == 0) return std::nullopt;
-  const auto boxes = queries.actorBoxes();
   std::vector<app::ScreenPickCandidate> candidates;
   std::size_t walker = 0;
   const auto& lemmings = world.lemmings();
@@ -393,6 +416,20 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
 
   TextureCacheScope textureCache(*library);
 
+#ifdef WEBOLUTION_NATIVE_GL
+  const auto capturePage = [&](const app::PreparedPage& page, const app::PreparedLevelLayers& layers)
+      -> std::expected<Image, std::string> {
+    if (auto ready = sharedWindow->ensure("Lemmings Webolution screenshot", false); !ready)
+      return std::unexpected(ready.error());
+    auto& gl = *sharedWindow->glCompositor();
+    if (auto composed = gl.composeGl({}, page, layers); !composed)
+      return std::unexpected(composed.error());
+    Image image;
+    if (auto sampled = gl.readGl(image); !sampled) return std::unexpected(sampled.error());
+    return image;
+  };
+#endif
+
   // Frontend selection feeds the retail-level loader below.
   if (args.frontend) {
     std::optional<app::FrontendSession> localFrontend;
@@ -404,7 +441,18 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       frontend = &*localFrontend;
     }
     if (!args.shot.empty()) {
-      if (auto written = writePng(args.shot, frontend->composeFrame()); !written) {
+      Image image;
+#ifdef WEBOLUTION_NATIVE_GL
+      if (args.renderer == app::RendererChoice::Gl) {
+        app::PreparedLevelLayers layers;
+        const auto page = frontend->prepareFrame(layers);
+        auto captured = capturePage(page, layers);
+        if (!captured) { std::fprintf(stderr, "frontend screenshot: %s\n", captured.error().c_str()); return 1; }
+        image = std::move(*captured);
+      } else
+#endif
+      image = frontend->composeFrame();
+      if (auto written = writePng(args.shot, image); !written) {
         std::fprintf(stderr, "frontend screenshot: %s\n", written.error().c_str()); return 1;
       }
       return 0;
@@ -437,7 +485,16 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     auto map = app::MapScene::build(*library, flags);
     if (!map) { std::fprintf(stderr, "map: %s\n", map.error().c_str()); return 1; }
     if (!args.shot.empty()) {
-      if (auto written = writePng(args.shot, map->image()); !written) {
+      const Image* image = &map->image();
+#ifdef WEBOLUTION_NATIVE_GL
+      std::optional<Image> native;
+      if (args.renderer == app::RendererChoice::Gl) {
+        auto captured = capturePage({image, shell::Screen::Map, 0}, {});
+        if (!captured) { std::fprintf(stderr, "map screenshot: %s\n", captured.error().c_str()); return 1; }
+        image = &native.emplace(std::move(*captured));
+      }
+#endif
+      if (auto written = writePng(args.shot, *image); !written) {
         std::fprintf(stderr, "map screenshot: %s\n", written.error().c_str()); return 1;
       }
       std::printf("wrote %s (640x480 map SOURCE composition)\n", args.shot.c_str());
@@ -472,16 +529,36 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
 #endif
       SDL_Event event; while (SDL_PollEvent(&event)) if (event.type == SDL_QUIT ||
           (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) running = false;
-      if (presentation.usesGl()) {
-        if (auto shown = presentation.presentGl(map->image(), shell::Screen::Map, frame++); !shown) {
+      bool presented = false;
+      if (auto* gl = presentation.glCompositor()) {
+        auto shown = gl->composeGl({}, {&map->image(), shell::Screen::Map, 0}, {});
+        if (shown && presentation.compareGlFrame(shell::Screen::Map, frame)) {
+          Image image;
+          shown = gl->readGl(image);
+          if (shown) presentation.reportGlFrame(shell::Screen::Map, frame, map->image(), image);
+        }
+        if (shown) shown = gl->showGl();
+        if (!shown) {
+          const auto fallback = presentation.fallbackToSoftware(shown.error());
+          if (!fallback || !*fallback) {
+            std::fprintf(stderr, "map presenter: %s\n", fallback ? shown.error().c_str() : fallback.error().c_str());
+            return 1;
+          }
+        } else {
+          presented = true;
+        }
+      }
+      if (!presented && presentation.usesGl()) {
+        if (auto shown = presentation.presentGl(map->image(), shell::Screen::Map, frame); !shown) {
           std::fprintf(stderr, "map presenter: %s\n", shown.error().c_str());
           return 1;
         }
-      } else {
+      } else if (!presented) {
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr);
         SDL_RenderPresent(renderer);
       }
+      ++frame;
       if (args.frames > 0) running = false;
     } while (running);
     return 0;
@@ -793,6 +870,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
        (pressurePadPresentation && !pressurePadPresentation->bindings.empty()) || !teleportHover.empty());
   const bool c3Diagnostic = !args.c3WriteMask.empty() || !args.c3WriteEvents.empty();
   using BackdropStage = app::BackdropScene::Stage;
+  const bool describeComparison = !args.opaqueComparison.empty();
+  bool prepareGpuScene = describeComparison;
   const auto prepareLevelScene = [&](const app::CameraBasis& camera) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
     app::PreparedLevelScene frame;
@@ -813,20 +892,21 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         frame.primary = primaryDraws;
       } else {
         frame.primary = std::make_shared<app::BackdropScene::PreparedStage>(
-            backdrop->prepareStage(camera, *library, BackdropStage::Primary, false, c3Diagnostic));
+            backdrop->prepareStage(camera, *library, BackdropStage::Primary, false, c3Diagnostic, prepareGpuScene));
         if (!c3Diagnostic && frame.cachePose) {
           primaryDraws = frame.primary;
           primaryPose = camera;
         }
       }
-      frame.legacy = backdrop->prepareStage(camera, *library, BackdropStage::LegacyUnattributed, trackSceneHover);
+      frame.legacy = backdrop->prepareStage(camera, *library, BackdropStage::LegacyUnattributed,
+                                            trackSceneHover, false, prepareGpuScene);
     }
     const auto revision = scene->terrainBlocksRebuilt() + scene->counterGateRevision();
     if (frame.cacheTube && tubeDraws && tubeTerrainRevision == revision && sameCamera(*tubePose, camera)) {
       frame.tube = tubeDraws;
     } else {
       frame.tube = std::make_shared<app::TubeScene::PreparedTube>(
-          scene->prepareTube(camera, options, trackSceneHover));
+          scene->prepareTube(camera, options, trackSceneHover, prepareGpuScene));
       if (frame.cacheTube && frame.cachePose) {
         tubeDraws = frame.tube;
         tubePose = camera;
@@ -834,10 +914,15 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       }
     }
     if (backdrop) {
-      frame.gadgetEffects = backdrop->prepareStage(camera, *library, BackdropStage::GadgetEffect, trackSceneHover);
-      frame.pipes = backdrop->prepareStage(camera, *library, BackdropStage::FluidPipe, trackSceneHover);
-      frame.fluid = backdrop->prepareStage(camera, *library, BackdropStage::FluidGate, trackSceneHover);
-      frame.secondary = backdrop->prepareStage(camera, *library, BackdropStage::Secondary, trackSceneHover);
+      const auto prepare = [&](BackdropStage stage) {
+        return backdrop->prepareStage(camera, *library, stage, trackSceneHover, false, prepareGpuScene);
+      };
+      frame.gadgetEffects = prepare(BackdropStage::GadgetEffect);
+      frame.pipes = prepare(BackdropStage::FluidPipe);
+      frame.fluid = prepare(BackdropStage::FluidGate);
+      frame.secondary = prepare(BackdropStage::Secondary);
+      if (describeComparison || (prepareGpuScene && world && args.shot.empty()))
+        frame.hatchQueries = backdrop->prepareHatchQueries(camera);
     }
     if (world) frame.counterGates = scene->prepareCounterGates(camera, *library, world->setup().counterGates);
     frame.explosionMarks = scene->prepareExplosionDecals(camera);
@@ -845,7 +930,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       frame.actors = scene->prepareActors(camera, options, *library, bool(world));
     frame.particles = scene->prepareDeathParticles(camera, *library);
     if (backdrop)
-      frame.teleportEffects = backdrop->prepareStage(camera, *library, BackdropStage::TeleportEffect, trackSceneHover);
+      frame.teleportEffects = backdrop->prepareStage(camera, *library, BackdropStage::TeleportEffect,
+                                                     trackSceneHover, false, prepareGpuScene);
     return frame;
   };
   const auto renderLevelScene = [&](const app::PreparedLevelScene& frame, app::Raster& target) {
@@ -911,21 +997,72 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (persistentFrontend) presentation.updateWindowScale(persistentFrontend->windowScale());
     if (auto ready = presentation.ensure(
         "Lemmings Webolution " WEBOLUTION_VERSION_STRING
-        " — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip"); !ready) {
+        " — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip",
+        args.shot.empty()); !ready) {
       std::fprintf(stderr, "SDL: %s\n", ready.error().c_str());
       return false;
     }
     return true;
   };
   // Resolve auto before the first raster batch so only a real GL backend runs serially.
-  const bool selectRendererBeforeDraw = args.shot.empty() && args.renderer != app::RendererChoice::Software;
+  const bool selectRendererBeforeDraw = args.renderer != app::RendererChoice::Software &&
+                                        (args.shot.empty() || args.renderer == app::RendererChoice::Gl);
   if (selectRendererBeforeDraw && !ensureLevelPresentation()) return 1;
   const bool useGl = presentation.usesGl();
+  auto* glCompositor = describeComparison ? nullptr : presentation.glCompositor();
+  if (glCompositor && c3Diagnostic) {
+    std::fprintf(stderr, "C3 write-event diagnostics require --renderer software\n");
+    return 1;
+  }
+  struct ReleaseLayerAssets {
+    app::GlPresenter* presenter;
+    ~ReleaseLayerAssets() { if (presenter) presenter->releaseLayerAssets(); }
+  } releaseLayerAssets{glCompositor};
+  prepareGpuScene |= glCompositor != nullptr;
+#ifdef WEBOLUTION_GL_SCENE
+  std::optional<app::OpaqueSceneComparison> opaqueComparison;
+  std::optional<app::OpaqueSceneComparison> glScene;
+  bool opaqueCaptureRequested = false, firstTerrainEditCaptured = false;
+  if (prepareGpuScene) {
+    auto gpu = app::createOpaqueGpu();
+    if (!gpu) {
+      if (auto fallback = presentation.fallbackToSoftware(gpu.error()); !fallback || !*fallback) {
+        std::fprintf(stderr, "GL scene: %s\n", fallback ? gpu.error().c_str() : fallback.error().c_str());
+        return 1;
+      }
+      prepareGpuScene = false;
+      glCompositor = nullptr;
+    }
+    else if (describeComparison) opaqueComparison.emplace(std::move(*gpu), args.opaqueComparison);
+    else glScene.emplace(std::move(*gpu), fs::path{});
+  }
 #endif
-  app::Raster raster(params.width, params.height);
+#else
+  constexpr bool glCompositor = false;
+#endif
+  std::optional<app::Raster> raster;
   const auto camera = app::buildCamera(params);
   prepareScene();
-  renderLevelScene(prepareLevelScene(camera), raster);
+  {
+    // Preparation owns the scenery-sprite latch. Preserve the initial pose
+    // and dispatch order before the first gameplay frame on either backend.
+    auto initialScene = prepareLevelScene(camera);
+    if (!glCompositor) {
+      raster.emplace(params.width, params.height);
+      renderLevelScene(initialScene, *raster);
+    }
+#ifdef WEBOLUTION_GL_SCENE
+    else if (!args.shot.empty()) {
+      if (auto drawn = glScene->draw(initialScene, args.level, 0, 0, 0, 0, false); !drawn) {
+        std::fprintf(stderr, "screenshot: %s\n", drawn.error().c_str());
+        return 1;
+      }
+    }
+#endif
+  }
+#ifdef WEBOLUTION_GL_SCENE
+  const auto initialTerrainChanges = scene->terrainCellsChanged();
+#endif
 
   if (logLevelDetails) {
     std::printf(
@@ -935,21 +1072,26 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         args.level.c_str(), mesh->angularSteps, mesh->ringCount, mesh->surface.size(),
         index ? index->grid0.size() : 0, scene->outerTiles(), scene->innerTiles(),
         scene->surfaceQuads(), scene->polyListRecords(), scene->cellMesh0Quads(),
-        scene->cellMesh4Quads(), scene->cellInnerQuads(), raster.drawnTriangles(),
-        raster.drawnPixels(), camera.width, camera.height, app::resolvedYawUnits(params),
+        scene->cellMesh4Quads(), scene->cellInnerQuads(), raster ? raster->drawnTriangles() : 0,
+        raster ? raster->drawnPixels() : 0, camera.width, camera.height, app::resolvedYawUnits(params),
         camera.selectorTurns);
   }
   for (const auto& missing : scene->missingTiles())
     std::fprintf(stderr, "tile: %s\n", missing.c_str());
 
   if (!args.shot.empty()) {
-    Image image = app::sceneImage(raster.framebuffer());
+    app::PreparedLevelLayers layers;
+    std::optional<app::RetailSkillPanel> panel;
+    std::optional<Image> hudFont, captionFont;
+    std::optional<app::RuntimeCursor> cursor;
     if (args.skillPanel) {
-      // Draw the headless skill panel.
-      if (auto panel = app::drawRetailSkillPanel(image, *library, args.level); !panel) {
-        std::fprintf(stderr, "skill-panel: %s\n", panel.error().c_str());
+      auto loaded = app::RetailSkillPanel::create(*library, args.level);
+      if (!loaded) {
+        std::fprintf(stderr, "skill-panel: %s\n", loaded.error().c_str());
         return 1;
       }
+      panel.emplace(std::move(*loaded));
+      layers.draws.emplace_back(panel->prepare(panel->initialCounts(), 0, false, nullptr));
     }
     if (args.hudTicks >= 0) {
       // Use a separate World for the headless HUD overlay.
@@ -981,7 +1123,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                            static_cast<std::uint8_t>(b)};
       }
       const auto lines = shell::layoutHud(values, hudParams, shell::fontCells());
-      shell::drawHud(image, *sheet, lines, shell::fontCells());
+      layers.appendText(hudFont.emplace(std::move(*sheet)), lines);
       std::fprintf(stderr, "hud: tick=%d out=%d saved=%d target=%d seconds=%d\n", args.hudTicks,
                    values.out, values.saved, values.saveTarget, values.secondsRemaining);
       static const char* const names[] = {"out", "saved", "timer"};
@@ -1005,24 +1147,38 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         caption.fill = {static_cast<std::uint8_t>(r), static_cast<std::uint8_t>(g),
                         static_cast<std::uint8_t>(b)};
       }
-      if (args.captionNoText) {
-        shell::drawCaptionPanel(image, caption);
-      } else {
+      layers.draws.emplace_back(caption);
+      if (!args.captionNoText) {
         auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");
         if (!font) {
           std::fprintf(stderr, "caption: %s\n", font.error().c_str());
           return 1;
         }
-        shell::drawCaption(image, *font, shell::fontCells(), caption);
+        const auto line = shell::captionLine(caption);
+        layers.appendText(captionFont.emplace(std::move(*font)), std::span(&line, 1));
       }
       std::fprintf(stderr, "caption: rect %d %d %d %d alpha %d/%d fill %d,%d,%d\n", caption.rect.x0,
                    caption.rect.y0, caption.rect.x1, caption.rect.y1, caption.alpha,
                    caption.alphaScale, caption.fill[0], caption.fill[1], caption.fill[2]);
     }
     if (args.cursorFixture) {
-      auto cursor = app::RuntimeCursor::load(*library);
-      if (!cursor) { std::fprintf(stderr, "cursor: %s\n", cursor.error().c_str()); return 1; }
-      cursor->draw(image, app::CursorState::NoLemming, image.width / 2, image.height / 2);
+      auto loaded = app::RuntimeCursor::load(*library);
+      if (!loaded) { std::fprintf(stderr, "cursor: %s\n", loaded.error().c_str()); return 1; }
+      cursor.emplace(std::move(*loaded));
+      if (const auto sprite = cursor->prepare(app::CursorState::NoLemming, camera.width / 2, camera.height / 2))
+        layers.draws.emplace_back(*sprite);
+    }
+    Image image;
+#ifdef WEBOLUTION_GL_SCENE
+    if (glScene) {
+      auto captured = glCompositor->composeGl(glScene->sceneImage(), {}, layers);
+      if (captured) captured = glCompositor->readGl(image);
+      if (!captured) { std::fprintf(stderr, "screenshot: %s\n", captured.error().c_str()); return 1; }
+    } else
+#endif
+    {
+      image = app::sceneImage(raster->framebuffer());
+      layers.draw(image, raster->depthBuffer());
     }
     if (auto written = writePng(args.shot, image); !written) {
       std::fprintf(stderr, "screenshot: %s\n", written.error().c_str());
@@ -1064,9 +1220,21 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   params.width = 640; params.height = 480; params.aspect = 4.0 / 3.0;
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
                                  static_cast<int>(params.levelEyeHeight));
-  app::Raster windowRaster(640, 480);
+  std::optional<app::Raster> windowRaster;
+  if (!glCompositor) windowRaster.emplace(640, 480);
   bool running = true, leftDown = false, focused = true;
   bool presentationFailed = false;
+#ifdef __EMSCRIPTEN__
+  std::string presentationError;
+#endif
+  [[maybe_unused]] const auto failPresentation = [&](const std::string& error) {
+#ifdef __EMSCRIPTEN__
+    if (!presentationFailed) presentationError = error;
+#else
+    if (!presentationFailed) std::fprintf(stderr, "level presenter: %s\n", error.c_str());
+#endif
+    presentationFailed = true;
+  };
   Uint8 dragButton = 0;
   app::TouchInput touch;
   app::TouchInput menuTouch;
@@ -1217,7 +1385,42 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   auto displayedPickReference = controls.pickReference();
   std::optional<app::PreparedLevelFrame> displayedFrame;
   std::optional<app::DisplayedFrameQueries> displayedQueries;
+  const auto resetDisplayedQueries = [&] {
+#ifdef WEBOLUTION_GL_SCENE
+    if (glScene) {
+      displayedQueries.emplace(displayedCamera, [&](int x, int y) -> std::pair<std::size_t, double> {
+        if (glScene->hasDisplayedFrame()) {
+          if (auto query = glScene->pointDepth(x, y)) return {query->pixel.owner, query->pixel.depth};
+          else failPresentation(query.error());
+        }
+        return {app::ActorDepth::noOwner, std::numeric_limits<double>::infinity()};
+      });
+      return;
+    }
+#endif
+    displayedQueries.emplace(displayedCamera, *windowRaster);
+  };
   bool windowSceneCurrent = true;
+#ifdef __EMSCRIPTEN__
+  const auto recoverLevelRenderer = [&](std::string_view reason = {}) {
+    if (!glScene || (reason.empty() && !presentation.glContextLost())) return false;
+    glScene.reset();
+    glCompositor = nullptr;
+    windowRaster.emplace(640, 480);
+    const auto fallback = presentation.fallbackToSoftware(reason);
+    if (!fallback) {
+      failPresentation(fallback.error());
+      return false;
+    }
+    if (!*fallback) return false;
+    prepareGpuScene = false;
+    // Input during the next browser turn still refers to the displayed pose.
+    if (displayedFrame && windowSceneCurrent) renderLevelScene(displayedFrame->scene, *windowRaster);
+    if (displayedQueries) displayedQueries->useSoftwareRaster(*windowRaster);
+    presentationFailed = false;
+    return true;
+  };
+#endif
   bool pointerInWindow = true;
   // First-draw sprite latches consume RNG in dispatch order. Until every sprite
   // has latched, retain every full draw (including permanently hidden nodes).
@@ -1246,15 +1449,40 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const auto ensureDisplayedScene = [&]() -> app::DisplayedFrameQueries& {
     if (!windowSceneCurrent) {
       displayedFrame.emplace(app::PreparedLevelFrame{prepareLevelScene(displayedCamera), {}});
-      renderLevelScene(displayedFrame->scene, windowRaster);
+#ifdef WEBOLUTION_GL_SCENE
+      if (glScene) {
+        if (auto drawn = glScene->draw(displayedFrame->scene, args.level, rendered,
+                                          world ? world->levelClockMs() : 0, 0, 0, false); !drawn) {
+#ifdef __EMSCRIPTEN__
+          if (!recoverLevelRenderer(drawn.error()))
+#endif
+            failPresentation(drawn.error());
+        }
+#ifdef __EMSCRIPTEN__
+        else if (rendered == 0 && logLevelDetails) {
+          std::printf("scene renderer: webgl2 level=%s\n", args.level.c_str());
+        }
+#endif
+      }
+#endif
+      if (windowRaster) renderLevelScene(displayedFrame->scene, *windowRaster);
       windowSceneCurrent = true;
     }
-    if (!displayedQueries) displayedQueries.emplace(displayedCamera, windowRaster);
+    if (!displayedQueries) resetDisplayedQueries();
     if (!displayedQueries->sceneResultsReady()) {
       auto boxes = displayedFrame ? displayedFrame->scene.actors.boxes :
-          scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
-      auto hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
-          std::vector<app::HatchHoverTarget>{};
+          windowRaster ? scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, *windowRaster) :
+          std::vector<std::optional<app::ActorSpritePlacement>>{};
+      std::vector<app::HatchHoverTarget> hatches;
+#ifdef WEBOLUTION_GL_SCENE
+      if (glScene) hatches.assign(glScene->hatches().begin(), glScene->hatches().end());
+      else
+#endif
+      if (backdrop) {
+        hatches = displayedFrame && (describeComparison || !displayedFrame->scene.hatchQueries.empty())
+            ? app::BackdropScene::hatchHoverTargets(displayedCamera, *windowRaster, displayedFrame->scene.hatchQueries)
+            : backdrop->hatchHoverTargets(displayedCamera, *windowRaster);
+      }
       if (world)
         for (auto& h : hatches) h.remaining = world->remainingFromEntrance(h.index);
       displayedQueries->setSceneResults(std::move(boxes), std::move(hatches));
@@ -1262,12 +1490,25 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     return *displayedQueries;
   };
   const auto pickActorAt = [&](int x, int y, sim::Skill skill) {
-    return hoveredActor(*world, ensureDisplayedScene(), x, y, skill, args.level == "MM_CLIMB_002");
+    const bool firstLevelSupport = args.level == "MM_CLIMB_002";
+    const auto hit = hoveredActor(*world, ensureDisplayedScene().actorBoxes(), x, y, skill, firstLevelSupport);
+#ifdef WEBOLUTION_GL_SCENE
+    if (opaqueComparison && opaqueComparison->hasDisplayedFrame()) {
+      const auto gl = hoveredActor(*world, opaqueComparison->actorBoxes(), x, y, skill, firstLevelSupport);
+      std::printf("GL input skill frame=%d pixel=%d,%d skill=%d cpu=%zu gl=%zu\n", rendered - 1,
+                  x, y, int(skill), hit.value_or(app::ActorDepth::noOwner), gl.value_or(app::ActorDepth::noOwner));
+    }
+#endif
+    return hit;
   };
   const auto assignActor = [&](std::optional<std::size_t> hit, sim::Skill skill) {
     // Record the resolved simulation target, never the picking pixels.
     const auto before = recorder && hit ? std::optional{world->lemmings()[*hit]} : std::nullopt;
     const bool assigned = hit && world->assign(*hit, skill);
+#ifdef WEBOLUTION_GL_SCENE
+    if (opaqueComparison && hit)
+      std::printf("GL input assignment frame=%d actor=%zu accepted=%d\n", rendered - 1, *hit, assigned);
+#endif
     if (before) recorder->assignment(*hit, skill, assigned, *before);
     drainCues();
     // Preserve standard pause's resume on successful assignment.
@@ -1284,8 +1525,25 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     const auto& queries = ensureDisplayedScene();
     const auto depth = queries.pointDepth(x, y);
     if (!depth) return std::nullopt;
-    return app::cursorZoomPose(queries.camera(), cameraIntro.pose(controls.camera()),
-        x + 0.5, y + 0.5, *depth);
+    const auto target = cameraIntro.pose(controls.camera());
+    const auto pose = app::cursorZoomPose(queries.camera(), target, x + 0.5, y + 0.5, *depth);
+#ifdef WEBOLUTION_GL_SCENE
+    if (opaqueComparison && opaqueComparison->hasDisplayedFrame()) {
+      const auto gl = opaqueComparison->pointDepth(x, y);
+      if (gl) {
+        const auto glPose = app::cursorZoomPose(queries.camera(), target, x + 0.5, y + 0.5, gl->pixel.depth);
+        std::printf("GL input zoom frame=%d pixel=%d,%d cpu_z=%.17g gl_z=%.17g cpu_owner=%zu gl_owner=%zu kind=%d "
+                    "cpu_pose=%.17g,%.17g gl_pose=%.17g,%.17g readback_ms=%.6f\n",
+                    rendered - 1, x, y, *depth, gl->pixel.depth, queries.actorOwnerAt(x, y),
+                    gl->pixel.owner, int(gl->pixel.kind),
+                    pose ? pose->lateralOffset : NAN, pose ? pose->elevation : NAN,
+                    glPose ? glPose->lateralOffset : NAN, glPose ? glPose->elevation : NAN, gl->milliseconds);
+      } else {
+        std::fprintf(stderr, "GL input zoom query: %s\n", gl.error().c_str());
+      }
+    }
+#endif
+    return pose;
   };
   std::optional<Uint64> releasePressedAt;
   const auto hatchPressTarget = [&](int x, int y, int button, bool actorCanReceiveSkill)
@@ -1293,6 +1551,20 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y) >= 0) return std::nullopt;
     const auto targets = ensureDisplayedScene().hatches();
     const auto hit = app::RuntimeReleaseRateControl::pressTarget(targets, x, y, button, actorCanReceiveSkill);
+#ifdef WEBOLUTION_GL_SCENE
+    if (opaqueComparison && opaqueComparison->hasDisplayedFrame()) {
+      const auto glTargets = opaqueComparison->hatches();
+      const auto skill = skillSelection.selectedSkill();
+      const auto glActor = button == SDL_BUTTON_LEFT && world
+          ? hoveredActor(*world, opaqueComparison->actorBoxes(), x, y, skill, args.level == "MM_CLIMB_002")
+          : std::nullopt;
+      const bool glActorCanReceiveSkill = glActor && world->canAssign(*glActor, skill);
+      const auto gl = app::RuntimeReleaseRateControl::pressTarget(glTargets, x, y, button, glActorCanReceiveSkill);
+      std::printf("GL input hatch frame=%d pixel=%d,%d button=%d cpu=%zu gl=%zu\n", rendered - 1, x, y,
+                  button, hit ? targets[*hit].index : app::ActorDepth::noOwner,
+                  gl ? glTargets[*gl].index : app::ActorDepth::noOwner);
+    }
+#endif
     return hit ? std::optional{targets[*hit].index} : std::nullopt;
   };
   const auto startReleaseHold = [&](std::optional<std::size_t> hatch, int button) {
@@ -1412,6 +1684,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         rendererInfo.name, rendererInfo.flags, bool(rendererInfo.flags & SDL_RENDERER_SOFTWARE),
         bool(rendererInfo.flags & SDL_RENDERER_PRESENTVSYNC));
   const auto processLevelEvents = [&] {
+#ifdef __EMSCRIPTEN__
+    recoverLevelRenderer();
+    if (presentationFailed) return;
+#endif
     bool displayChanged = false;
     const auto routeEvent = [&](const SDL_Event& event, bool fromTouch = false) {
       // A hold can span Escape or a page change, including its consumed event batch.
@@ -1687,6 +1963,13 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     SDL_Event event;
     while (running && SDL_PollEvent(&event)) {
       if (app::isTouchMouseEvent(event)) continue;
+#ifdef WEBOLUTION_GL_SCENE
+      if (opaqueComparison && event.type == SDL_KEYDOWN && !event.key.repeat &&
+          event.key.keysym.scancode == SDL_SCANCODE_F10) {
+        opaqueCaptureRequested = true;
+        continue;
+      }
+#endif
       displayChanged |= event.type == SDL_WINDOWEVENT &&
                         event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED;
       const auto screen = persistentFrontend ? persistentFrontend->screen() : shell::Screen::Level;
@@ -1769,6 +2052,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     app::profile::Run::Frame measuredFrame(frameProfile, args.level.c_str(), rendered, options.injectedWalkers.size());
     processLevelEvents();
     if (!running) break; // Do not compose or observe another frame after close.
+#ifdef __EMSCRIPTEN__
+    if (presentationFailed) {
+      if (recoverLevelRenderer(presentationError)) continue;
+      break;
+    }
+#endif
     app::profile::Scope profileSim(app::profile::Simulation);
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     app::CameraInput input;
@@ -1904,13 +2193,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       displayedPickReference = controls.pickReference();
       prepareScene();
       windowSceneCurrent = false;
-      displayedQueries.emplace(displayedCamera, windowRaster);
+      resetDisplayedQueries();
       displayedFrame.reset();
       // Sample the pose before advancing intro time. Pause freezes the intro clock.
       cameraIntro.advanceAfterFrame(elapsed, runtimeSim.paused());
       std::vector<app::LevelActorView> actors;
       std::span<const app::HatchHoverTarget> hatches;
       bool touchMenuDrawn = false;
+      [[maybe_unused]] std::optional<std::size_t> markedWalker;
       // This state-only view is never offered to an ordinary observer. The
       // explicit automation scope opts into inspectLevelFrame() for pixels,
       // hover, visible actor boxes and hatch depth; all other fields are ready.
@@ -1930,8 +2220,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                          std::nullopt, std::nullopt,
                          hatches});
       const std::function<void()> materialize = [&] {
-        if (windowSceneCurrent) return;
+        if (windowSceneCurrent || presentationFailed) return;
         auto& queries = ensureDisplayedScene();
+        if (presentationFailed) return;
         if (pendingView) {
           auto& view = *pendingView;
           app::profile::Scope profileHud(app::profile::Hud);
@@ -1945,14 +2236,50 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           const bool pointerOnHud = !teleportHover.empty() && canHover && cursorInWindow &&
               overStatusHud(cursorX, cursorY, hudLines, hudCells);
           std::vector<app::HoverFragment> highlights;
-          const bool switchHover = canHover && cursorInWindow && backdrop &&
-            backdrop->prepareSwitchHover(highlights, camera, windowRaster, world->setup(),
-                leverPresentation ? &*leverPresentation : nullptr,
-                pressurePadPresentation ? &*pressurePadPresentation : nullptr,
-                pointerOnHud ? TeleportHoverBindings{} : teleportHover, cursorX, cursorY,
-                [&](const sim::OccupancySensor& sensor) {
-                  scene->prepareHoveredSensor(highlights, camera, windowRaster, sensor);
-                });
+          bool switchHover = false;
+#ifdef WEBOLUTION_GL_SCENE
+          const auto meshBounds = [&](std::span<const app::PreparedHatchQuery> candidates) -> std::optional<app::PickBox> {
+            auto bounds = glScene->readBounds(candidates);
+            if (!bounds) { failPresentation(bounds.error()); return std::nullopt; }
+            for (const auto& target : bounds->targets)
+              if (app::pointerOverSceneBounds(cursorX, cursorY, target.left, target.top, target.right, target.bottom))
+                return app::PickBox{target.left, target.top, target.right, target.bottom};
+            return std::nullopt;
+          };
+#endif
+          if (canHover && cursorInWindow && backdrop) {
+            const auto* levers = leverPresentation ? &*leverPresentation : nullptr;
+            const auto* pads = pressurePadPresentation ? &*pressurePadPresentation : nullptr;
+            const auto portals = pointerOnHud ? TeleportHoverBindings{} : teleportHover;
+#ifdef WEBOLUTION_GL_SCENE
+            if (glScene && trackSceneHover) {
+              app::SceneHighlightId pointerOwner{};
+              if (!portals.empty()) {
+                if (auto owner = glScene->readHighlight(cursorX, cursorY)) pointerOwner = *owner;
+                else failPresentation(owner.error());
+              }
+              auto selected = backdrop->selectSwitchHover(world->setup(), levers, pads, portals, pointerOwner,
+                  [&](std::size_t root) {
+                    const auto query = backdrop->prepareHoverQuery(camera, root, cursorX, cursorY);
+                    return query && meshBounds(std::span(&*query, 1)).has_value();
+                  });
+              if (selected) {
+                switchHover = true;
+                layers.draws.emplace_back(std::move(selected->targets));
+                for (const auto sensor : selected->sensors) {
+                  const auto marker = scene->prepareSensorMarker(camera, world->setup().occupancySensors[sensor]);
+                  if (auto clipped = glScene->clipSensor(marker, highlights); !clipped)
+                    failPresentation(clipped.error());
+                }
+              }
+            }
+#endif
+            if (windowRaster)
+              switchHover = backdrop->prepareSwitchHover(highlights, camera, *windowRaster, world->setup(),
+                  levers, pads, portals, cursorX, cursorY, [&](const sim::OccupancySensor& sensor) {
+                    scene->prepareHoveredSensor(highlights, camera, *windowRaster, sensor);
+                  });
+          }
           hatches = queries.hatches();
           std::optional<std::size_t> heldHatch;
           if (releaseControl && cursorInWindow && focused && !menuOpen() && !cameraDragging()) {
@@ -1962,7 +2289,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           }
           const auto selectedSkill = skillSelection.selectedSkill();
           auto hover = canHover && !heldHatch ?
-              hoveredActor(*world, queries,
+              hoveredActor(*world, queries.actorBoxes(),
                   cursorX, cursorY, selectedSkill, args.level == "MM_CLIMB_002") : std::nullopt;
           const bool actorCanReceiveSkill = hover && world->canAssign(*hover, selectedSkill);
           // Idle feedback follows left-click precedence. While adjusting a
@@ -1979,8 +2306,16 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const auto& lemmings = world->lemmings();
             const auto walker = std::count_if(lemmings.begin(), lemmings.begin() + *hover,
                                               [](const sim::Lemming& l) { return l.alive(); });
-            if (scene->prepareHoveredWalker(highlights, walker, camera, displayedFrame->scene.actors,
-                    windowRaster, software.drowningDepth(), software.pipeDepth())) view.markedActor = hover;
+#ifdef WEBOLUTION_GL_SCENE
+            if (glScene) {
+              markedWalker = walker;
+              if (auto marked = glScene->markActor(displayedFrame->scene, walker, bool(levelObserver))) {
+                if (*marked) view.markedActor = hover;
+              } else failPresentation(marked.error());
+            }
+#endif
+            if (windowRaster && scene->prepareHoveredWalker(highlights, walker, camera, displayedFrame->scene.actors,
+                    *windowRaster, software.drowningDepth(), software.pipeDepth())) view.markedActor = hover;
           }
           if (!highlights.empty()) layers.draws.emplace_back(std::move(highlights));
           if (hatchHover) {
@@ -1989,7 +2324,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                 ? std::optional{world->setup().entrances[target.index].releaseRate} : std::nullopt;
             layers.appendText(*runtimeFont, app::layoutHatchHover(camera.width, camera.height, target, adjustingRate));
           } else if (canHover && cursorInWindow && backdrop && !hover && !switchHover) {
-            if (const auto exit = backdrop->exitHoverTarget(camera, windowRaster, cursorX, cursorY)) {
+            std::optional<app::PickBox> exit;
+#ifdef WEBOLUTION_GL_SCENE
+            if (glScene) exit = meshBounds(backdrop->prepareExitQueries(camera, cursorX, cursorY));
+#endif
+            if (windowRaster) exit = backdrop->exitHoverTarget(camera, *windowRaster, cursorX, cursorY);
+            if (exit) {
               const auto label = app::layoutExitHover(camera.width, camera.height, *exit, world->setup().saveTarget);
               layers.appendText(*runtimeFont, std::span(&label, 1));
             }
@@ -2074,8 +2414,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
               layers.appendText(*runtimeFont, std::span(&line, 1));
             }
           }
-          queries.setLayers(layers);
-          (void)queries.composedImage();
+          if (windowRaster) {
+            queries.setLayers(layers);
+            (void)queries.composedImage();
+          }
           view.queries = &queries;
           view.actors = actors;
           view.hoveredActor = hover;
@@ -2083,6 +2425,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           view.hoveredHatch = hatchHover ? std::optional<std::size_t>{hatches[*hatchHover].index} : std::nullopt;
           view.hatches = hatches;
         }
+#ifdef WEBOLUTION_GL_SCENE
+        if (glScene) {
+          if (auto composed = glCompositor->composeGl(glScene->sceneImage(), {}, displayedFrame->layers);
+              !composed) failPresentation(composed.error());
+        }
+#endif
       };
       if (!scenerySpritesReady && backdrop) {
         scenerySpritesReady = true;
@@ -2094,19 +2442,85 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         backdrop->visitRoots([&](const auto&, const auto& root) { visit(visit, root); });
       }
       const bool finalShot = !args.windowShot.empty() && rendered + 1 == args.frames;
+      const bool compareGlFrame = glCompositor && presentation.compareGlFrame(shell::Screen::Level, rendered);
       const bool skipUnconsumed = app::ScopedFrameConsumption::skipUnconsumed() &&
           (args.frames > 0 || runOptions.frameSeconds > 0) && pendingView &&
-          (!backdrop || scenerySpritesReady) && !finalShot &&
-          args.c3WriteMask.empty() && args.c3WriteEvents.empty();
+          (!backdrop || scenerySpritesReady) && !finalShot && !compareGlFrame &&
+          args.c3WriteMask.empty() && args.c3WriteEvents.empty() && !describeComparison;
       if (!skipUnconsumed) materialize();
       if (levelObserver && pendingView) {
         app::profile::Scope profileObserver(app::profile::Other);
-        app::detail::PendingFrameInspection inspection(materialize);
+        const std::function<void()> inspect = [&] {
+          materialize();
+          if (glCompositor && !presentationFailed && displayedQueries->imageStorage().empty()) {
+            Image image;
+            if (auto sampled = glCompositor->readGl(image); !sampled) failPresentation(sampled.error());
+            else displayedQueries->setImage(std::move(image));
+          }
+        };
+        if (!app::ScopedFrameConsumption::observing()) inspect();
+        app::detail::PendingFrameInspection inspection(inspect);
         levelObserver(*pendingView);
       }
-      if (windowSceneCurrent && useGl) {
+      if (presentationFailed) {
+#ifdef __EMSCRIPTEN__
+        if (recoverLevelRenderer(presentationError)) continue;
+#endif
+        break;
+      }
+#ifdef WEBOLUTION_GL_SCENE
+      if (opaqueComparison && displayedFrame) {
+        const auto changed = scene->terrainCellsChanged();
+        const bool firstEdit = !firstTerrainEditCaptured && changed != initialTerrainChanges;
+        const bool checkpoint = rendered == 0 || opaqueCaptureRequested || firstEdit ||
+            std::ranges::find(args.opaqueCheckpoints, rendered) != args.opaqueCheckpoints.end();
+        const auto [compareX, compareY] = scenePointer();
+        if (auto compared = opaqueComparison->draw(displayedFrame->scene, resolvedLevel->id, rendered,
+                world ? world->levelClockMs() : 0, changed, scene->terrainBlocksRebuilt(), checkpoint,
+                &ensureDisplayedScene(), compareX, compareY); !compared) {
+          std::fprintf(stderr, "scene comparison: %s\n", compared.error().c_str());
+          presentationFailed = true;
+          break;
+        }
+        firstTerrainEditCaptured |= firstEdit;
+        opaqueCaptureRequested = false;
+      }
+#endif
+      if (windowSceneCurrent && glCompositor) {
+        if (finalShot || compareGlFrame) {
+          auto& shot = finalWindowFrame.emplace();
+          if (!displayedQueries->imageStorage().empty()) shot = displayedQueries->imageStorage();
+          else if (auto sampled = glCompositor->readGl(shot); !sampled) {
+            failPresentation(sampled.error());
+#ifdef __EMSCRIPTEN__
+            if (recoverLevelRenderer(presentationError)) continue;
+#endif
+            break;
+          }
+          if (compareGlFrame) {
+            app::Raster reference(displayedCamera.width, displayedCamera.height);
+            renderLevelScene(displayedFrame->scene, reference);
+            auto image = app::sceneImage(reference.framebuffer());
+            if (markedWalker) {
+              std::vector<app::HoverFragment> mark;
+              scene->prepareHoveredWalker(mark, *markedWalker, displayedCamera, displayedFrame->scene.actors,
+                                          reference, software.drowningDepth(), software.pipeDepth());
+              app::drawHoverFragments(image, mark);
+            }
+            displayedFrame->layers.draw(image, reference.depthBuffer(), reference.highlightPixels());
+            presentation.reportGlFrame(shell::Screen::Level, rendered, image, shot);
+          }
+        }
+        if (auto shown = glCompositor->showGl(); !shown) {
+          failPresentation(shown.error());
+#ifdef __EMSCRIPTEN__
+          if (recoverLevelRenderer(presentationError)) continue;
+#endif
+          break;
+        }
+      } else if (windowSceneCurrent && useGl) {
         Image scene;
-        if (!pendingView) scene = app::sceneImage(windowRaster.framebuffer());
+        if (!pendingView) scene = app::sceneImage(windowRaster->framebuffer());
         const auto& composed = pendingView ? displayedQueries->composedImage() : scene;
         Image* shot = finalShot ? &finalWindowFrame.emplace() : nullptr;
         if (auto shown = presentation.presentGl(composed, shell::Screen::Level, rendered, shot); !shown) {
@@ -2115,7 +2529,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           break;
         }
       } else if (windowSceneCurrent) {
-        const void* pixels = windowRaster.framebuffer().rgb.data();
+        const void* pixels = windowRaster->framebuffer().rgb.data();
         if (pendingView) {
           const auto& composed = displayedQueries->composedImage();
           if (finalShot) finalWindowFrame = composed;
@@ -2127,7 +2541,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             pixels = rgbFallback.data();
           }
         }
-        if (finalShot && !finalWindowFrame) finalWindowFrame = app::sceneImage(windowRaster.framebuffer());
+        if (finalShot && !finalWindowFrame) finalWindowFrame = app::sceneImage(windowRaster->framebuffer());
         { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(ownedTexture.get(), nullptr, pixels, 640 * (uploadRgbx ? 4 : 3)); }
         { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, ownedTexture.get(), nullptr, nullptr); }
         { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
@@ -2158,7 +2572,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       std::fprintf(stderr, "record: %s; replay remains incomplete\n", written.error().c_str());
     else if (logLevelDetails) std::fprintf(stderr, "record: saved %s\n", written->string().c_str());
   }
-  if (presentationFailed) return 1;
+  if (presentationFailed) {
+#ifdef __EMSCRIPTEN__
+    std::fprintf(stderr, "level presenter: %s\n", presentationError.c_str());
+#endif
+    return 1;
+  }
   if (!args.windowShot.empty() && disposition == LegDisposition::Exit) {
     if (!finalWindowFrame) {
       std::fprintf(stderr, "window screenshot: exited before the requested final frame\n");
@@ -2190,8 +2609,32 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   }
   if (args.help) { printHelp(); return 0; }
   if (args.version) { std::puts("Lemmings Webolution " WEBOLUTION_VERSION_STRING); return 0; }
-  if (args.renderer == RendererChoice::Gl && (!args.shot.empty() || !args.replayFile.empty())) {
+  if (args.invalidOpaqueComparison ||
+      (args.opaqueComparison.empty() && !args.opaqueCheckpoints.empty())) {
+    std::fprintf(stderr, "--compare-opaque requires a directory and --compare-frame a nonnegative frame\n");
+    return 1;
+  }
+  if (!args.opaqueComparison.empty()) {
+#ifdef WEBOLUTION_NATIVE_GL
+    if (args.map || !args.shot.empty() || !args.replayFile.empty() || args.skillPanel ||
+        args.pauseCaption || args.cursorFixture) {
+      std::fprintf(stderr, "--compare-opaque requires windowed level play\n");
+      return 1;
+    }
+    args.renderer = RendererChoice::Gl;
+#else
+    std::fprintf(stderr, "--compare-opaque requires the native OpenGL build\n");
+    return 1;
+#endif
+  }
+#ifndef WEBOLUTION_NATIVE_GL
+  if (args.renderer == RendererChoice::Gl && !args.shot.empty()) {
     std::fprintf(stderr, "--renderer gl requires window presentation; use --window-shot for GL capture\n");
+    return 1;
+  }
+#endif
+  if (args.renderer == RendererChoice::Gl && !args.replayFile.empty()) {
+    std::fprintf(stderr, "--renderer gl requires window presentation; replays run without a window\n");
     return 1;
   }
   const auto location = app::locateGameData(args.gameDir);
@@ -2352,6 +2795,14 @@ int main(int argc, char** argv) {
   webo::app::ApplicationRunOptions options;
   options.useDefaultSaveStore = true;  // ordinary startup persists to the clone's own save
   options.enableAudio = true;          // ordinary startup owns one mixer (--no-audio opts out)
+#ifdef __EMSCRIPTEN__
+  options.glComparison = webo::web::glFrameComparison();
+  auto levelObserver = webo::web::glLevelFrameObserver();
+  if (levelObserver) {
+    webo::app::ScopedFrameConsumption observeWithoutReadback(false);
+    return webo::app::runApplication(argc, argv, {}, std::move(levelObserver), options);
+  }
+#endif
   return webo::app::runApplication(argc, argv, {}, {}, options);
 }
 #endif

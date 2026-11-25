@@ -1,4 +1,5 @@
 #include "app/FrontendWindow.h"
+#include "app/PreparedLevelLayers.h"
 
 #include "assets/Png.h"
 #include <memory>
@@ -149,22 +150,41 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     presentation.updateWindowScale(session.windowScale(), displayChanged);
     if (session.screen() == shell::Screen::SoundOptions)
       session.setWindowScaleMenu(presentation.windowScaleMenu());
-    const Image image = session.composeFrame();
-    if (image.width != 640 || image.height != 480 || image.rgba.size() != 640u * 480u * 4u)
-      return std::unexpected("frontend image must be tightly packed 640x480 RGBA");
     const bool finalShot = !options.finalFramePath.empty() && frames + 1 == options.maxFrames;
-    if (presentation.usesGl()) {
-      Image* shot = finalShot ? &lastPresented.emplace() : nullptr;
-      if (auto presented = presentation.presentGl(image, session.screen(), frames, shot); !presented)
-        return std::unexpected(presented.error());
-    } else {
-      if (SDL_UpdateTexture(texture.get(), nullptr, image.rgba.data(), 640 * 4) != 0)
-        return std::unexpected(sdlError("SDL_UpdateTexture"));
-      if (SDL_RenderClear(renderer) != 0 ||
-          SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr) != 0)
-        return std::unexpected(sdlError("SDL_RenderCopy"));
-      SDL_RenderPresent(renderer);
-      if (finalShot) lastPresented = image;
+    bool presented = false;
+    if (auto* gl = presentation.glCompositor()) {
+      PreparedLevelLayers layers;
+      const auto page = session.prepareFrame(layers);
+      auto shown = gl->composeGl({}, page, layers);
+      const bool compare = presentation.compareGlFrame(session.screen(), frames);
+      if (shown && (finalShot || compare)) shown = gl->readGl(lastPresented.emplace());
+      if (shown) shown = gl->showGl();
+      if (shown) {
+        presented = true;
+        if (compare) presentation.reportGlFrame(session.screen(), frames, session.composeFrame(), *lastPresented);
+      } else {
+        const auto fallback = presentation.fallbackToSoftware(shown.error());
+        if (!fallback) return std::unexpected(fallback.error());
+        if (!*fallback) return std::unexpected(shown.error());
+      }
+    }
+    if (!presented) {
+      const Image image = session.composeFrame();
+      if (image.width != 640 || image.height != 480 || image.rgba.size() != 640u * 480u * 4u)
+        return std::unexpected("frontend image must be tightly packed 640x480 RGBA");
+      if (presentation.usesGl()) {
+        Image* shot = finalShot ? &lastPresented.emplace() : nullptr;
+        if (auto shown = presentation.presentGl(image, session.screen(), frames, shot); !shown)
+          return std::unexpected(shown.error());
+      } else {
+        if (SDL_UpdateTexture(texture.get(), nullptr, image.rgba.data(), 640 * 4) != 0)
+          return std::unexpected(sdlError("SDL_UpdateTexture"));
+        if (SDL_RenderClear(renderer) != 0 ||
+            SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr) != 0)
+          return std::unexpected(sdlError("SDL_RenderCopy"));
+        SDL_RenderPresent(renderer);
+        if (finalShot) lastPresented = image;
+      }
     }
     const int frame = frames++;
     if (observer) observer(session, frame);

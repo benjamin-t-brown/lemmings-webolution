@@ -1,6 +1,7 @@
 #pragma once
 #include "assets/Box.h"
 #include "assets/Bitmap.h"
+#include "shell/HudText.h"
 #include <array>
 #include <cstdint>
 #include <expected>
@@ -32,6 +33,8 @@ public:
   std::optional<std::string> titleForNode(std::size_t node) const;
   // Counts, display title, then m:ss, from the installed LEVELMAP.DAT row.
   std::optional<std::array<std::string,3>> hoverTextForNode(std::size_t node) const;
+  std::optional<std::array<shell::HudLine, 6>> layoutHover(std::size_t node) const;
+  const Image& hoverClock() const { return clock_; }
   void drawHover(Image& target, const Image& font, std::size_t node) const;
 
  private:

@@ -7,10 +7,17 @@ namespace webo::app {
 
 enum class ShaderDialect { DesktopCore, Embedded };
 
+#ifdef __EMSCRIPTEN__
+inline constexpr auto kSceneShaderDialect = ShaderDialect::Embedded;
+#else
+inline constexpr auto kSceneShaderDialect = ShaderDialect::DesktopCore;
+#endif
+
 inline std::string presentationShader(ShaderDialect dialect, std::string_view body) {
   std::string source = dialect == ShaderDialect::DesktopCore
       ? "#version 330 core\n"
-      : "#version 300 es\nprecision highp float;\nprecision highp int;\nprecision highp sampler2D;\n";
+      : "#version 300 es\n#define WEBGL2\nprecision highp float;\nprecision highp int;\n"
+        "precision highp sampler2D;\nprecision highp usampler2D;\nprecision highp isampler2D;\n";
   source.append(body);
   return source;
 }

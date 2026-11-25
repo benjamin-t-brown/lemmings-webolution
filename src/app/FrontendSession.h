@@ -5,6 +5,7 @@
 #include "app/ResultsScene.h"
 #include "app/RuntimeCursor.h"
 #include "app/SoundMenu.h"
+#include "app/PresentationBackend.h"
 #include "save/SaveStore.h"
 #include "save/SavedGame.h"
 #include "shell/Frontend.h"
@@ -39,6 +40,7 @@ class FrontendSession {
   const Image& image() const;
   // Present the cached base scene with map hover text, then draw the cursor last.
   Image composeFrame() const;
+  PreparedPage prepareFrame(PreparedLevelLayers&) const;
   // SDL supplies absolute coordinates. 453C3A..453D23 clamps relative
   // DirectInput deltas to these same inclusive extents.
   void setPointer(int x, int y) {
@@ -114,6 +116,8 @@ class FrontendSession {
   Image languageImage_;
   Image mapImage_;
   mutable int confirmImageFocus_ = 0;
+  mutable std::uint64_t menuRevision_ = 0, confirmRevision_ = 0;
+  std::uint64_t mapRevision_ = 0, resultsRevision_ = 0;
   std::vector<std::string> menuLabels_;
   std::array<std::string, 2> confirmLabels_;
   std::string confirmQuestion_;

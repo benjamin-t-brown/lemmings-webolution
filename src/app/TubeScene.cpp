@@ -304,8 +304,19 @@ std::array<double, 3> TubeScene::soundWorldPosition(
 void TubeScene::prepareHoveredSensor(std::vector<HoverFragment>& fragments,
     const CameraBasis& camera, const Raster& raster,
     const sim::OccupancySensor& sensor) const {
-  if (!havePoseLevel_ || raster.framebuffer().width != camera.width ||
+  if (raster.framebuffer().width != camera.width ||
       raster.framebuffer().height != camera.height) return;
+  for (const auto& candidate : prepareSensorMarker(camera, sensor)) {
+    const auto pixel = candidate.fragment.pixel;
+    if (candidate.depth < raster.depthBuffer()[pixel] && candidate.depth < raster.actorDepth().depthAt(pixel))
+      fragments.push_back(candidate.fragment);
+  }
+}
+
+std::vector<SensorFragment> TubeScene::prepareSensorMarker(
+    const CameraBasis& camera, const sim::OccupancySensor& sensor) const {
+  std::vector<SensorFragment> fragments;
+  if (!havePoseLevel_) return fragments;
   // Provisional clone contact marker for a tagged occupancy volume. It has no
   // normal draw path. Place the ring at the volume's centre in world space.
   const auto& low = sensor.min;
@@ -314,14 +325,14 @@ void TubeScene::prepareHoveredSensor(std::vector<HoverFragment>& fragments,
   const double x = std::midpoint(low[0], high[0] < low[0] ? high[0] + width : high[0]);
   const double y = std::midpoint(low[1], high[1]);
   const double slab = std::midpoint(low[2], high[2]);
-  if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(slab)) return;
+  if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(slab)) return fragments;
   rewirePoseLevel();
   const auto at = actorPoseFromCylinderSample(poseLevel_, {std::fmod(x, width), y, slab}, 1).modelPosition;
   std::array<double, 4> p;
-  if (!project(camera, {at[0], at[1], at[2]}, p)) return;
+  if (!project(camera, {at[0], at[1], at[2]}, p)) return fragments;
   constexpr int radius = 5;
   if (!(p[0] >= -radius && p[0] < camera.width + radius &&
-        p[1] >= -radius && p[1] < camera.height + radius)) return;
+        p[1] >= -radius && p[1] < camera.height + radius)) return fragments;
   const ActorOcclusionPlane plane(camera, at);
   constexpr std::array<std::uint8_t, 3> light{128, 96, 48};
   const int cx = int(std::floor(p[0])), cy = int(std::floor(p[1]));
@@ -332,9 +343,9 @@ void TubeScene::prepareHoveredSensor(std::vector<HoverFragment>& fragments,
       if (r2 > radius * radius || r2 < 9.0) continue;
       const auto pixel = std::size_t(py) * camera.width + px;
       const double z = plane.depthAt(px + 0.5, py + 0.5);
-      if (z < raster.depthBuffer()[pixel] && z < raster.actorDepth().depthAt(pixel))
-        fragments.push_back({pixel, light});
+      fragments.push_back({{pixel, light}, z});
     }
+  return fragments;
 }
 
 void TubeScene::drawHoveredSensor(Image& image, const CameraBasis& camera, const Raster& raster,
@@ -836,7 +847,7 @@ TubeScene::PreparedActors TubeScene::prepareActors(
     }
     actor.drowning = sampled.drownFluidKind >= 0 && (prepared.physical || actor.hasAttachment);
     if (actor.drowning) {
-      actor.drowningBrightness = sampled.drownBrightness;
+      actor.drowningGrey = std::uint8_t(std::clamp(sampled.drownBrightness, 0.0, 1.0) * 255.0);
       actor.drowningPosition = actorPoseFromCylinderSample(poseLevel_,
           {sampled.plus8X, sampled.plus8Y, sampled.plus8Z}, sampled.facing).modelPosition;
     }
@@ -932,7 +943,7 @@ void TubeScene::drawActors(Raster& raster, const CameraBasis& camera, const Prep
       // The fluid state supplies neutral brightness rather than the light map.
       const auto bodyRect = spriteRect(sprite, prepared->placement);
       clearSpriteRect(sprite, bodyRect);
-      const auto grey = std::uint8_t(std::clamp(actor.drowningBrightness, 0.0, 1.0) * 255.0);
+      const auto grey = actor.drowningGrey;
       if (!drawActorSprite(sprite, prepared->frame, prepared->sheet(), prepared->placement,
           prepared->mirrored, {grey, grey, grey}, true, prepared->inverted)) continue;
       const ActorOcclusionPlane plane(camera, actor.drowningPosition);
@@ -1341,7 +1352,7 @@ TubeScene::PreparedParticles TubeScene::prepareDeathParticles(
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
   for (std::size_t i = 0; i < deathParticles_.size(); ++i) {
     const auto& p = deathParticles_[i];
-    const auto owner = ActorDepth::noOwner / 2 + i;
+    const auto owner = ActorDepth::firstParticleOwner + i;
     auto sample = p.position(deathClockMs_);
     sample.x = std::fmod(sample.x, 256.0);
     if (sample.x < 0) sample.x += 256.0;
@@ -1486,7 +1497,7 @@ TubeScene::PreparedParticles TubeScene::prepareDeathParticles(
     auto body = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
         flightOptions, sprite, lib, bounds, true, &pose);
     if (!body) continue;
-    const auto owner = ActorDepth::noOwner / 2 + deathParticles_.size() + i;
+    const auto owner = ActorDepth::firstParticleOwner + deathParticles_.size() + i;
     prepared.draws.emplace_back(PreparedParticles::Sprite{std::move(*body), owner,
         PreparedParticles::Sprite::Depth::FlightPlane});
   }
@@ -1647,9 +1658,16 @@ std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreen
 }
 
 TubeScene::PreparedTube TubeScene::prepareTube(const CameraBasis& camera,
-    const SceneOptions& options, bool trackHighlights) const {
+    const SceneOptions& options, bool trackHighlights, bool recordBlocks) const {
   PreparedTube prepared;
   prepared.depthTest = options.depthTest;
+  using Bank = PreparedTube::Bank;
+  const auto recordBlock = [&](const CellMeshCell& cell, Bank bank, std::size_t first) {
+    const auto end = prepared.triangles.size();
+    if (recordBlocks && first < end)
+      prepared.blocks.push_back({first, end, cell.bucket, cell.band, bank,
+                                 cell.material + (bank == Bank::Inner ? 24u : 0u)});
+  };
   const int steps = static_cast<int>(mesh_.angularSteps);
   const int bands = static_cast<int>(mesh_.bandCount());
   const int cols = static_cast<int>(CylinderMesh::kTileColumns);
@@ -1812,7 +1830,8 @@ TubeScene::PreparedTube TubeScene::prepareTube(const CameraBasis& camera,
                                   static_cast<int>(cell.material / 8));
       if (tile == nullptr)
         continue;
-      const auto drawBank = [&](const std::vector<CellMeshQuad>& bank) {
+      const auto drawBank = [&](const std::vector<CellMeshQuad>& bank, Bank name) {
+        const auto first = prepared.triangles.size();
         for (const auto& quad : bank) {
           std::array<std::array<double, 4>, 4> projected{};
           bool ok = true;
@@ -1837,9 +1856,10 @@ TubeScene::PreparedTube TubeScene::prepareTube(const CameraBasis& camera,
             prepared.triangles.push_back({p, t, &tile->texture, modulate});
           }
         }
+        recordBlock(cell, name, first);
       };
-      drawBank(cell.mesh0);
-      drawBank(cell.mesh4);
+      drawBank(cell.mesh0, Bank::Mesh0);
+      drawBank(cell.mesh4, Bank::Mesh4);
     }
   }
 
@@ -1909,8 +1929,10 @@ TubeScene::PreparedTube TubeScene::prepareTube(const CameraBasis& camera,
     // (`0x4623A5` / `0x462404`); the centre route walks both banks forward.
     const auto drawBankReversed = [&](const CellMeshCell& cell, bool useMesh4) {
       const auto& bank = useMesh4 ? cell.mesh4 : cell.mesh0;
+      const auto first = prepared.triangles.size();
       for (auto it = bank.rbegin(); it != bank.rend(); ++it)
         drawRouteQuad(*it, cell.material, options.outerContext);
+      recordBlock(cell, useMesh4 ? Bank::Mesh4 : Bank::Mesh0, first);
     };
 
     // 1. INN (`0x4622FD`): buckets c..b descending, all bands, the entry+8
@@ -1919,8 +1941,11 @@ TubeScene::PreparedTube TubeScene::prepareTube(const CameraBasis& camera,
       for (int i = c; i >= b; --i)
         for (int j = 0; j < bands; ++j) {
           const CellMeshCell* cell = cellAt(i, j);
-          if (cell != nullptr && cell->hasInner)
+          if (cell != nullptr && cell->hasInner) {
+            const auto first = prepared.triangles.size();
             drawRouteQuad(cell->inner, cell->material + 24, options.innerContext);
+            recordBlock(*cell, Bank::Inner, first);
+          }
         }
     }
 
@@ -1949,14 +1974,18 @@ TubeScene::PreparedTube TubeScene::prepareTube(const CameraBasis& camera,
         continue;
       const auto& first = swap ? cell->mesh4 : cell->mesh0;
       const auto& second = swap ? cell->mesh0 : cell->mesh4;
+      const auto firstBank = prepared.triangles.size();
       for (const auto& quad : first)
         if (options.routeFlipCentre ? (quad.coord >= centreColumn)
                                     : (quad.coord < centreColumn))
           drawRouteQuad(quad, cell->material, options.outerContext);
+      recordBlock(*cell, swap ? Bank::Mesh4 : Bank::Mesh0, firstBank);
+      const auto secondBank = prepared.triangles.size();
       for (const auto& quad : second)
         if (options.routeFlipCentre ? (quad.coord < centreColumn)
                                     : (quad.coord >= centreColumn))
           drawRouteQuad(quad, cell->material, options.outerContext);
+      recordBlock(*cell, swap ? Bank::Mesh0 : Bank::Mesh4, secondBank);
     }
   }
 

@@ -45,6 +45,11 @@ class Raster {
   // Cached layers reuse storage but count only their current geometry build.
   void resetDrawCounts() { triangles_ = pixels_ = 0; }
 
+  struct DrawOwners {
+    std::span<std::uint32_t> pixels{};
+    std::uint32_t id = 0;
+  };
+
   // p[i] = {screenX, screenY, viewDepth - context, 1 / viewDepth}.
   // uv[i] = texture coordinates in tile units.
   // An actor owner uses the shared actor coverage after the strict scenery
@@ -55,14 +60,16 @@ class Raster {
                 const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
                 const std::array<double, 3>& modulate,
                 std::size_t actorOwner = ActorDepth::noOwner,
-                SceneAddress address = SceneAddress::Wrap, SceneHighlightId highlight = {});
+                SceneAddress address = SceneAddress::Wrap, SceneHighlightId highlight = {},
+                DrawOwners drawOwners = DrawOwners{{}, 0});
   // Reject temporaries even in synchronous calls so the same caller is safe
   // when enclosed in a deferred batch.
   void triangle(const std::array<std::array<double, 4>, 3>& p,
                 const std::array<std::array<double, 2>, 3>& uv, const Texture&& texture,
                 const std::array<double, 3>& modulate,
                 std::size_t actorOwner = ActorDepth::noOwner,
-                SceneAddress address = SceneAddress::Wrap, SceneHighlightId highlight = {}) = delete;
+                SceneAddress address = SceneAddress::Wrap, SceneHighlightId highlight = {},
+                DrawOwners drawOwners = DrawOwners{{}, 0}) = delete;
 
   const Framebuffer& framebuffer() const { return color_; }
   Framebuffer& mutableFramebuffer() { return color_; }

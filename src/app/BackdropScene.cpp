@@ -1041,65 +1041,107 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
  }
 }
 namespace {
+template<class Consumer>
+void projectMeshForBounds(const SceneNode& node, const CameraBasis& camera,
+                          const Matrix& context, Consumer consume) {
+  auto records = buildSceneMeshSource(node, identity(), camera.worldToView);
+  if (!records) return;
+  std::map<std::size_t, std::array<double, 3>> eyes;
+  collectEyes(node, identity(), context, eyes);
+  for (const auto& record : *records) {
+    if (!passesFacingPredicate(record, eyes)) continue;
+    for (std::size_t k = 1; k + 1 < record.corners.size(); ++k) {
+      const std::size_t ids[]{0, k, k + 1};
+      ProjectedMeshTriangle t;
+      bool valid = true;
+      for (int j = 0; j < 3; ++j) {
+        const auto& p = record.corners[ids[j]].viewPosition;
+        if (!(p[2] > 0)) { valid = false; break; }
+        const double x = camera.cx + camera.focalX * p[0] / p[2];
+        const double y = camera.cy - camera.focalY * p[1] / p[2];
+        if (!std::isfinite(x) || !std::isfinite(y)) { valid = false; break; }
+        t[j] = {x, y, p[2]};
+      }
+      if (valid) consume(t);
+    }
+  }
+}
+
+// Provisional clone bounds follow visible depth pixels, including the current
+// hatch pose. The original uses a box of +/-20 around the model origin.
+void accumulateVisibleBounds(PickBox& h, const ProjectedMeshTriangle& t,
+                             const CameraBasis& camera, const std::vector<double>& depth) {
+  const auto& [ax, ay, az] = t[0];
+  const auto& [bx, by, bz] = t[1];
+  const auto& [cx, cy, cz] = t[2];
+  const double area = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+  if (std::abs(area) < 1e-9) return;
+  const int x0 = int(std::clamp(std::floor(std::min({ax, bx, cx})), 0.0, double(camera.width)));
+  const int x1 = int(std::clamp(std::ceil(std::max({ax, bx, cx})), 0.0, double(camera.width)));
+  const int y0 = int(std::clamp(std::floor(std::min({ay, by, cy})), 0.0, double(camera.height)));
+  const int y1 = int(std::clamp(std::ceil(std::max({ay, by, cy})), 0.0, double(camera.height)));
+  for (int y = y0; y < y1; ++y) for (int x = x0; x < x1; ++x) {
+    const double px = x + 0.5, py = y + 0.5;
+    const double b = ((px - ax) * (cy - ay) - (py - ay) * (cx - ax)) / area;
+    const double c = ((bx - ax) * (py - ay) - (by - ay) * (px - ax)) / area;
+    const double a = 1 - b - c;
+    if (a < 0 || b < 0 || c < 0) continue;
+    const double plane = a * az + b * bz + c * cz;
+    if (std::abs(plane - depth[std::size_t(y) * camera.width + x]) > 0.5) continue;
+    h.left = std::min(h.left, x);
+    h.top = std::min(h.top, y);
+    h.right = std::max(h.right, x + 1);
+    h.bottom = std::max(h.bottom, y + 1);
+  }
+}
+
 std::optional<PickBox> visibleMeshBounds(const SceneNode& node, const CameraBasis& camera,
-                                       const std::vector<double>& depth, const Matrix& context) {
-   auto records = buildSceneMeshSource(node, identity(), camera.worldToView);
-   if (!records) return std::nullopt;
-   std::map<std::size_t,std::array<double,3>> eyes;
-   collectEyes(node, identity(), context, eyes);
-   PickBox h{camera.width, camera.height, 0, 0};
-   // Provisional hit area bounds visible depth-buffer pixels, following animation
-   // and occlusion. The depth tolerance is 0.5 world units. Native uses model-origin +/-20.
-   for (const auto& record : *records) {
-     if (!passesFacingPredicate(record, eyes)) continue;
-     for (std::size_t k = 1; k+1 < record.corners.size(); ++k) {
-       const std::size_t ids[]{0,k,k+1};
-       double sx[3], sy[3], z[3]; bool valid = true;
-       for (int j = 0; j < 3; ++j) {
-         const auto& p = record.corners[ids[j]].viewPosition;
-         z[j] = p[2];
-         if (!(z[j] > 0)) { valid = false; break; }
-         sx[j] = camera.cx + camera.focalX*p[0]/z[j];
-         sy[j] = camera.cy - camera.focalY*p[1]/z[j];
-         if (!std::isfinite(sx[j]) || !std::isfinite(sy[j])) valid = false;
-       }
-       if (!valid) continue;
-       const double area = (sx[1]-sx[0])*(sy[2]-sy[0])-(sy[1]-sy[0])*(sx[2]-sx[0]);
-       if (std::abs(area) < 1e-9) continue;
-       const int x0 = int(std::clamp(std::floor(std::min({sx[0],sx[1],sx[2]})), 0.0, double(camera.width)));
-       const int x1 = int(std::clamp(std::ceil(std::max({sx[0],sx[1],sx[2]})), 0.0, double(camera.width)));
-       const int y0 = int(std::clamp(std::floor(std::min({sy[0],sy[1],sy[2]})), 0.0, double(camera.height)));
-       const int y1 = int(std::clamp(std::ceil(std::max({sy[0],sy[1],sy[2]})), 0.0, double(camera.height)));
-       for (int y = y0; y < y1; ++y) for (int x = x0; x < x1; ++x) {
-         const double px=x+0.5, py=y+0.5;
-         const double b=((px-sx[0])*(sy[2]-sy[0])-(py-sy[0])*(sx[2]-sx[0]))/area;
-         const double c=((sx[1]-sx[0])*(py-sy[0])-(sy[1]-sy[0])*(px-sx[0]))/area;
-         const double a=1-b-c;
-         if (a < 0 || b < 0 || c < 0) continue;
-         const double plane=a*z[0]+b*z[1]+c*z[2];
-         if (std::abs(plane-depth[std::size_t(y)*camera.width+x]) > 0.5) continue;
-         h.left=std::min(h.left,x); h.top=std::min(h.top,y);
-         h.right=std::max(h.right,x+1); h.bottom=std::max(h.bottom,y+1);
-       }
-     }
-   }
-   if (h.left < h.right && h.top < h.bottom) return h;
-   return std::nullopt;
+                                        const std::vector<double>& depth, const Matrix& context) {
+  PickBox bounds{camera.width, camera.height, 0, 0};
+  projectMeshForBounds(node, camera, context, [&](const auto& t) {
+    accumulateVisibleBounds(bounds, t, camera, depth);
+  });
+  if (bounds.left < bounds.right && bounds.top < bounds.bottom) return bounds;
+  return std::nullopt;
 }
 
 }  // namespace
 
+std::vector<PreparedHatchQuery> BackdropScene::prepareHatchQueries(const CameraBasis& camera) const {
+  std::vector<PreparedHatchQuery> queries;
+  const auto context = predicateContext(camera);
+  for (const auto& owned : roots_) {
+    if (owned.source.owner != "entities_425e50") continue;
+    auto& query = queries.emplace_back(PreparedHatchQuery{owned.source.entityIndex, {}});
+    projectMeshForBounds(owned.node, camera, context, [&](const auto& t) { query.triangles.push_back(t); });
+  }
+  return queries;
+}
+
+std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
+    const CameraBasis& camera, const Raster& raster, std::span<const PreparedHatchQuery> queries) {
+  std::vector<HatchHoverTarget> targets;
+  if (raster.framebuffer().width != camera.width || raster.framebuffer().height != camera.height) return targets;
+  for (const auto& query : queries) {
+    PickBox bounds{camera.width, camera.height, 0, 0};
+    for (const auto& t : query.triangles) accumulateVisibleBounds(bounds, t, camera, raster.depthBuffer());
+    if (bounds.left < bounds.right && bounds.top < bounds.bottom)
+      targets.push_back({query.index, bounds.left, bounds.top, bounds.right, bounds.bottom});
+  }
+  return targets;
+}
+
 std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
     const CameraBasis& camera, const Raster& raster) const {
- std::vector<HatchHoverTarget> targets;
- if (raster.framebuffer().width != camera.width || raster.framebuffer().height != camera.height) return targets;
- const auto context = predicateContext(camera);
- for (const auto& owned : roots_) {
-   if (owned.source.owner != "entities_425e50") continue;
-   if (auto h = visibleMeshBounds(owned.node, camera, raster.depthBuffer(), context))
-     targets.push_back({owned.source.entityIndex, h->left, h->top, h->right, h->bottom});
- }
- return targets;
+  std::vector<HatchHoverTarget> targets;
+  if (raster.framebuffer().width != camera.width || raster.framebuffer().height != camera.height) return targets;
+  const auto context = predicateContext(camera);
+  for (const auto& owned : roots_) {
+    if (owned.source.owner != "entities_425e50") continue;
+    if (auto bounds = visibleMeshBounds(owned.node, camera, raster.depthBuffer(), context))
+      targets.push_back({owned.source.entityIndex, bounds->left, bounds->top, bounds->right, bounds->bottom});
+  }
+  return targets;
 }
 
 std::optional<PickBox> BackdropScene::exitHoverTarget(
@@ -1115,6 +1157,34 @@ std::optional<PickBox> BackdropScene::exitHoverTarget(
       return box;
   }
   return std::nullopt;
+}
+
+std::optional<PreparedHatchQuery> BackdropScene::prepareHoverQuery(
+    const CameraBasis& camera, std::size_t root, int x, int y) const {
+  if (!pointerOverSceneBounds(x, y, 0, 0, camera.width, camera.height)) return std::nullopt;
+  PreparedHatchQuery query{root, {}};
+  const auto context = predicateContext(camera);
+  double left = camera.width, top = camera.height, right = 0, bottom = 0;
+  projectMeshForBounds(roots_[root].node, camera, context, [&](const ProjectedMeshTriangle& t) {
+    query.triangles.push_back(t);
+    for (const auto& p : t) {
+      left = std::min(left, p[0]); top = std::min(top, p[1]);
+      right = std::max(right, p[0]); bottom = std::max(bottom, p[1]);
+    }
+  });
+  if (x < std::floor(left) || x >= std::ceil(right) || y < std::floor(top) || y >= std::ceil(bottom))
+    return std::nullopt;
+  return query;
+}
+
+std::vector<PreparedHatchQuery> BackdropScene::prepareExitQueries(const CameraBasis& camera, int x, int y) const {
+  std::vector<PreparedHatchQuery> queries;
+  for (std::size_t root = 0; root < roots_.size(); ++root) {
+    const auto& owned = roots_[root];
+    if (owned.source.owner == "entities_426c6b" && owned.visible)
+      if (auto query = prepareHoverQuery(camera, root, x, y)) queries.push_back(std::move(*query));
+  }
+  return queries;
 }
 
 bool BackdropScene::prepareSwitchHover(std::vector<HoverFragment>& fragments,
@@ -1136,14 +1206,30 @@ bool BackdropScene::prepareSwitchHover(std::vector<HoverFragment>& fragments,
                                             bounds->right, bounds->bottom);
   };
 
+  const auto selected = selectSwitchHover(level, levers, pads, teleports,
+      pixels[std::size_t(pointerY) * camera.width + pointerX].owner, pick);
+  if (!selected) return false;
+  for (std::size_t p = 0; p < pixels.size(); ++p) {
+    const auto& pixel = pixels[p];
+    if (pixel.owner.kind != SceneHighlightKind::None &&
+        std::ranges::find(selected->targets, pixel.owner) != selected->targets.end())
+      fragments.push_back({p, pixel.rgb});
+  }
+  for (const auto index : selected->sensors) appendSensor(level.occupancySensors[index]);
+  return true;
+}
+
+std::optional<BackdropScene::SwitchHover> BackdropScene::selectSwitchHover(
+    const sim::LevelSetup& level, const LeverPresentation* levers, const PressurePadPresentation* pads,
+    std::span<const GadgetPresentation::TeleportHoverBinding> teleports, SceneHighlightId pointerOwner,
+    const std::function<bool(std::size_t)>& pick) const {
   std::optional<std::size_t> hovered;
   auto portal = teleports.end();
   if (!teleports.empty()) {
     // A visible portal fragment takes priority over switch bounds, including
     // idle ring fragments that do not write scene depth.
-    const auto owner = pixels[std::size_t(pointerY) * camera.width + pointerX].owner;
-    if (owner.kind == SceneHighlightKind::BackdropRoot)
-      portal = std::ranges::find(teleports, owner.index, &GadgetPresentation::TeleportHoverBinding::root);
+    if (pointerOwner.kind == SceneHighlightKind::BackdropRoot)
+      portal = std::ranges::find(teleports, pointerOwner.index, &GadgetPresentation::TeleportHoverBinding::root);
     if (portal != teleports.end()) hovered = portal->root;
   }
 
@@ -1175,7 +1261,7 @@ bool BackdropScene::prepareSwitchHover(std::vector<HoverFragment>& fragments,
     });
     if (portal != teleports.end()) hovered = portal->root;
   }
-  if (!hovered) return false;
+  if (!hovered) return std::nullopt;
 
   // Clone addition. Like drawHoveredWalker, add the source RGB once on the
   // completed frame, using ownership from the original geometry submission.
@@ -1228,15 +1314,7 @@ bool BackdropScene::prepareSwitchHover(std::vector<HoverFragment>& fragments,
     resolved.push_back(message.targetId);
     addReceiver(receiver->second);
   }
-  for (std::size_t p = 0; p < pixels.size(); ++p) {
-    const auto& pixel = pixels[p];
-    if (pixel.owner.kind != SceneHighlightKind::None &&
-        std::ranges::find(targets, pixel.owner) != targets.end())
-      fragments.push_back({p, pixel.rgb});
-  }
-  for (const auto index : sensors)
-    appendSensor(level.occupancySensors[index]);
-  return true;
+  return SwitchHover{std::move(targets), std::move(sensors)};
 }
 
 bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
@@ -1316,7 +1394,7 @@ const SceneRgbaImage whiteSceneTexture{1,1,{255,255,255,255}};
 }
 
 void BackdropScene::prepareFluid(PreparedStage& prepared, const CameraBasis& camera,
-                                 bool observeCandidates) const {
+                                 bool observeCandidates, bool describeDraws) const {
  if(!hasFluidState_||fluidRoots_.empty())return;
  prepared.active = true;
  auto& stats = prepared.stats;
@@ -1349,6 +1427,7 @@ void BackdropScene::prepareFluid(PreparedStage& prepared, const CameraBasis& cam
      if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;++sub.predicateRejected;continue;}
      auto opts=optionsFor(rec.blendSelector==1);
      opts.highlight = {SceneHighlightKind::Fluid, static_cast<std::uint32_t>(root.record.entityIndex)};
+     const auto first = prepared.draws.size();
      for(std::size_t k=1;k+1<rec.corners.size();++k){
        std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
        for(int j=0;j<3;++j){
@@ -1364,18 +1443,20 @@ void BackdropScene::prepareFluid(PreparedStage& prepared, const CameraBasis& cam
        prepared.draws.push_back({{&whiteSceneTexture, v, opts}, &root.source,
                                  rec.recordSourceOffset, k - 1, stats.fluidSubmissions.size(), true});
      }
+     if (describeDraws)
+       prepared.describeRange(first, rec.nodeSourceOffset, {}, PreparedStage::DrawKind::Fluid);
    }
    stats.fluidSubmissions.push_back(sub);
  }
 }
 BackdropScene::PreparedStage BackdropScene::prepareStage(
     const CameraBasis& camera, const AssetLibrary& lib, Stage stage,
-    bool trackHighlights, bool observeCandidates) const {
+    bool trackHighlights, bool observeCandidates, bool describeDraws) const {
  PreparedStage prepared{};
  prepared.stage = stage;
  prepared.levelId = levelId_;
  if (stage == Stage::FluidGate) {
-   prepareFluid(prepared, camera, observeCandidates);
+   prepareFluid(prepared, camera, observeCandidates, describeDraws);
    return prepared;
  }
  auto& stats = prepared.stats;
@@ -1515,6 +1596,7 @@ BackdropScene::PreparedStage BackdropScene::prepareStage(
     }
     state.highlight = highlightOwner(rec.nodeSourceOffset);
     state.highlightTextureRgb = !isNull;
+    const auto first = prepared.draws.size();
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
        auto adapted=adaptPackedSceneMeshVertex(
@@ -1532,6 +1614,8 @@ BackdropScene::PreparedStage BackdropScene::prepareStage(
        ++stats.projectionRejected;
      }
    }
+   if (describeDraws)
+     prepared.describeRange(first, rec.nodeSourceOffset, rec.materialName, PreparedStage::DrawKind::Mesh);
   };
    const auto& meshes=stage==Stage::Primary?primaryMeshes:legacyMeshes;
    if(stage==Stage::Primary)stats.stageMeshRecords+=primaryMeshes.size();
@@ -1580,6 +1664,7 @@ BackdropScene::PreparedStage BackdropScene::prepareStage(
     }
     ++stats.sprites;
     const auto state=spriteOptions(quad->blendSelector);
+    const auto first = prepared.draws.size();
     std::uint64_t bi=0;
     for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){
       std::array<SceneRasterVertex,3> vv{};bool ok=true;
@@ -1592,6 +1677,8 @@ BackdropScene::PreparedStage BackdropScene::prepareStage(
                                 n.sourceOffset, bi, stats.spriteSubmissions.size()});
       ++bi;
     }
+    if (describeDraws)
+      prepared.describeRange(first, n.sourceOffset, asset, PreparedStage::DrawKind::Sprite);
     finish();
    };
    if (stage == Stage::Primary)
@@ -1611,6 +1698,7 @@ BackdropScene::PreparedStage BackdropScene::prepareStage(
     if (st.destinationBlend == SceneBlendFactor::One) st.depthWrite = false;
     st.highlight = highlightOwner(b.sourceOffset);
     st.highlightTextureRgb = !name.empty();
+    const auto first = prepared.draws.size();
     std::uint64_t bi = 0;
     for (const auto& tri : {std::array<int,3>{0,3,2}, std::array<int,3>{0,2,1}}) {
       std::array<SceneRasterVertex,3> vv{};
@@ -1630,6 +1718,8 @@ BackdropScene::PreparedStage BackdropScene::prepareStage(
       }
       ++bi;
     }
+    if (describeDraws)
+      prepared.describeRange(first, b.sourceOffset, name, PreparedStage::DrawKind::Billboard);
    };
    const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;
    if(stage==Stage::Primary)stats.stageBillboards+=primaryBillboards.size();

@@ -392,9 +392,9 @@ std::optional<std::array<std::string,3>> MapScene::hoverTextForNode(std::size_t 
   return hoverText_[node];
 }
 
-void MapScene::drawHover(Image& target, const Image& font, std::size_t node) const {
+std::optional<std::array<shell::HudLine, 6>> MapScene::layoutHover(std::size_t node) const {
   const auto block=hoverTextForNode(node);
-  if(!block) return;
+  if(!block) return std::nullopt;
   // 49AC47 uses left-aligned ^Font at rows 0,20,60. Draw red (220,50,50)
   // at x32/y+2 before the black foreground at x30.
   constexpr std::array<int,3> rows{0,20,60};
@@ -403,8 +403,14 @@ void MapScene::drawHover(Image& target, const Image& font, std::size_t node) con
     lines[i*2]={(*block)[i],32,rows[i]+2,{220,50,50}};
     lines[i*2+1]={(*block)[i],30,rows[i],{0,0,0}};
   }
-  shell::drawHud(target,font,lines,shell::fontCells());
-  compositeIconRegion(target,clock_,{0,60,0,0,28,31});
+  return lines;
+}
+
+void MapScene::drawHover(Image& target, const Image& font, std::size_t node) const {
+  if (auto lines = layoutHover(node)) {
+    shell::drawHud(target, font, *lines, shell::fontCells());
+    compositeIconRegion(target, clock_, {0,60,0,0,28,31});
+  }
   // Provisional clone text uses the integer alpha blit.
 }
 }  // namespace webo::app

@@ -2,6 +2,8 @@
 # Usage: .\scripts\Play-Clone.ps1                       (frontend, software renderer)
 #        .\scripts\Play-Clone.ps1 -Rebuild              (rebuild the release binary first)
 #        .\scripts\Play-Clone.ps1 -Rebuild -Renderer gl (OpenGL renderer)
+#        .\scripts\Play-Clone.ps1 -Renderer gl -Profile (per-frame timings, level play only,
+#                                                     appended to build/playtest/profile-gl.csv)
 #
 # The clone saves under %LOCALAPPDATA%\LemmingsWebolution. Registered play tests
 # assert that the normal save is untouched while they run, so playing on it during
@@ -10,7 +12,8 @@
 param(
     [switch]$Rebuild,
     [ValidateSet('software', 'gl', 'auto')]
-    [string]$Renderer = 'software'
+    [string]$Renderer = 'software',
+    [switch]$Profile
 )
 
 $Root = Split-Path -Parent $PSScriptRoot
@@ -44,9 +47,11 @@ try {
     $env:LOCALAPPDATA = $PlayData
     # Every unfinished level stays enterable (yellow); only won levels show complete.
     $env:WEBOLUTION_UNLOCK_ALL = '1'
+    if ($Profile) { $env:WEBOLUTION_FRAME_PROFILE = Join-Path $Root "build\playtest\profile-$Renderer.csv" }
     & (Join-Path $PSScriptRoot 'Invoke-Ucrt64.ps1') "build/cmake/gcc-release/webolution.exe --game-dir 'Lemmings Revolution' --renderer $Renderer --record build/playtest/replays"
 } finally {
     $env:LOCALAPPDATA = Split-Path -Parent (Split-Path -Parent $NormalSave)
     Remove-Item Env:WEBOLUTION_UNLOCK_ALL -ErrorAction SilentlyContinue
+    Remove-Item Env:WEBOLUTION_FRAME_PROFILE -ErrorAction SilentlyContinue
     Pop-Location
 }

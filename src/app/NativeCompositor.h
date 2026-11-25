@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/CompositorShaders.h"
+#include "app/FrameProfile.h"
 #include "app/NativeGlApi.h"
 #include "app/PreparedLevelLayers.h"
 #include "app/PresentationBackend.h"
@@ -42,6 +43,10 @@ class GlCompositor {
     depthWords_ = WEBO_GL_ENTRY(Uniform2ui, decltype(depthWords_));
     copy_ = WEBO_GL_ENTRY(CopyTexSubImage2D, decltype(copy_));
     blit_ = WEBO_GL_ENTRY(BlitFramebuffer, decltype(blit_));
+#ifndef __EMSCRIPTEN__
+    if (SDL_GL_ExtensionSupported("GL_ARB_texture_barrier"))
+      textureBarrier_ = WEBO_GL_ENTRY(TextureBarrier, PFNGLTEXTUREBARRIERPROC);
+#endif
     if (!location_ || !one_ || !four_ || !depthWords_ || !copy_ || !blit_)
       return std::unexpected("OpenGL compositor entry point is unavailable");
     const auto linked = linkGlProgram(gl_, presentationShader(kSceneShaderDialect, kPresentationVertex),
@@ -83,6 +88,9 @@ class GlCompositor {
       gl_.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     }
     gl_.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colour_, 0);
+#ifndef __EMSCRIPTEN__
+    targetColour_ = colour_;
+#endif
     if (gl_.CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
       return std::unexpected("GL compositor logical RGBA8 framebuffer incomplete");
     width_ = width;
@@ -93,6 +101,14 @@ class GlCompositor {
   void releaseAssets() {
     for (const auto& [image, texture] : assets_) gl_.DeleteTextures(1, &texture);
     assets_.clear();
+#ifndef __EMSCRIPTEN__
+    if (targetColour_ && targetColour_ != colour_) {
+      gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, target_);
+      gl_.FramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colour_, 0);
+      gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+      targetColour_ = colour_;
+    }
+#endif
   }
 
   std::expected<void, std::string> compose(const GlSceneImage& scene, const PreparedPage& page,
@@ -105,6 +121,19 @@ class GlCompositor {
     gl_.ActiveTexture(GL_TEXTURE0);
     if (auto allocated = allocateTarget(scene.width, scene.height); !allocated) return allocated;
     gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
+    bool drawBase = true;
+#ifndef __EMSCRIPTEN__
+    // The native level redraws this colour attachment before its next use.
+    // A borrowed diagnostic texture and a cached frontend page stay intact.
+    const GLuint output = !page.image && scene.consumableColour ? scene.colour : colour_;
+    if (targetColour_ != output) {
+      gl_.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, output, 0);
+      targetColour_ = output;
+    }
+    drawBase = output == colour_;
+    dirty_.clear();
+    snapshotReady_ = false;
+#endif
     gl_.Disable(GL_DEPTH_TEST);
     gl_.Disable(GL_BLEND);
     gl_.Disable(GL_DITHER);
@@ -115,11 +144,12 @@ class GlCompositor {
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
     gl_.UseProgram(program_);
     gl_.BindVertexArray(vao_);
-    bind(1, scratch_);
 #ifdef __EMSCRIPTEN__
+    bind(1, scratch_);
     bind(2, scene.depth ? scene.depth : emptyInteger_);
     bind(4, scene.highlights ? scene.highlights : emptyInteger_);
 #else
+    bind(1, textureBarrier_ ? targetColour_ : scratch_);
     bind(2, scene.depth);
     bind(4, scene.highlights);
 #endif
@@ -140,7 +170,7 @@ class GlCompositor {
         cache.revision = page.revision;
       }
       rect(full, Replace, Point, cache.texture, full);
-    } else if (scene.colour) {
+    } else if (scene.colour && drawBase) {
       rect(full, Replace, Scene, scene.colour);
     }
     for (const auto& layer : layers.draws) std::visit([this](const auto& item) { draw(item); }, layer);
@@ -202,6 +232,7 @@ class GlCompositor {
     gl_.BindTexture(GL_TEXTURE_2D, texture);
     gl_.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.width, image.height, 0,
                    GL_RGBA, GL_UNSIGNED_BYTE, image.rgba.data());
+    profile::glUpload(image.rgba.size());
   }
 
   GLuint texture(const Image& image) {
@@ -225,11 +256,32 @@ class GlCompositor {
     const int bottom = std::min(dest.top + dest.height, height_);
     if (left >= right || top >= bottom) return;
     if (blend != Replace) {
+#ifndef __EMSCRIPTEN__
+      // Disjoint operations can share a destination snapshot. Overlapping
+      // operations still see all preceding byte-rounded writes.
+      if (!snapshotReady_ || std::ranges::any_of(dirty_, [&](const Rect& written) {
+            return left < written.left + written.width && right > written.left &&
+                   top < written.top + written.height && bottom > written.top;
+          })) {
+        if (textureBarrier_) {
+          textureBarrier_();
+        } else {
+          bind(1, scratch_);
+          copy_(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width_, height_);
+        }
+        dirty_.clear();
+        snapshotReady_ = true;
+      }
+#else
       // Snapshot only the rectangle this draw can read. The source and destination
       // of a draw are distinct textures even when several glyphs overlap.
       bind(1, scratch_);
       copy_(GL_TEXTURE_2D, 0, left, height_ - bottom, left, height_ - bottom, right - left, bottom - top);
+#endif
     }
+#ifndef __EMSCRIPTEN__
+    dirty_.push_back({left, top, right - left, bottom - top});
+#endif
 #ifdef __EMSCRIPTEN__
     if (!source) source = emptyColour_;
 #endif
@@ -248,6 +300,7 @@ class GlCompositor {
       depthWords_(uniforms_.depth, GLuint(bits), GLuint(bits >> 32));
     }
     gl_.DrawArrays(GL_TRIANGLES, 0, 3);
+    profile::glDraw();
   }
 
   void draw(const shell::ScreenRect& draw) {
@@ -293,6 +346,7 @@ class GlCompositor {
     }
     bind(3, iconTaps_);
     gl_.TexImage2D(GL_TEXTURE_2D, 0, GL_RG32I, int(taps_.size()), 1, 0, GL_RG_INTEGER, GL_INT, taps_.data());
+    profile::glUpload(taps_.size() * sizeof(taps_[0]));
     rect({left, top, width, height}, sheet.alpha == AlphaMode::Additive ? AddRgb : RoundRgb,
          IconTaps, texture(sheet));
   }
@@ -358,6 +412,7 @@ class GlCompositor {
     }
     bind(0, hover_);
     gl_.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, hoverBytes_.data());
+    profile::glUpload(hoverBytes_.size());
     rect({left, top, width, height}, AddRgb, Point, hover_, {0, 0, width, height});
   }
 
@@ -394,6 +449,12 @@ class GlCompositor {
   PFNGLUNIFORM2UIPROC depthWords_ = nullptr;
   decltype(&::glCopyTexSubImage2D) copy_ = nullptr;
   PFNGLBLITFRAMEBUFFERPROC blit_ = nullptr;
+#ifndef __EMSCRIPTEN__
+  GLuint targetColour_ = 0;
+  bool snapshotReady_ = false;
+  std::vector<Rect> dirty_;
+  PFNGLTEXTUREBARRIERPROC textureBarrier_ = nullptr;
+#endif
 };
 
 }  // namespace webo::app

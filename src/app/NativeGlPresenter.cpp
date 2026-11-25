@@ -10,6 +10,7 @@
 #include "app/WindowScale.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
 #include <format>
 
@@ -25,7 +26,9 @@ class NativeGlPresenter final : public GlPresenter {
   ~NativeGlPresenter() override {
     if (context_) {
       if (SDL_GL_GetCurrentContext() == context_) {
+        releaseLevelGpuProfile();
         compositor_.reset();
+        programs_.reset();
         if (target_) gl_.DeleteFramebuffers(1, &target_);
         if (targetColour_) gl_.DeleteTextures(1, &targetColour_);
         if (source_) gl_.DeleteTextures(1, &source_);
@@ -38,6 +41,13 @@ class NativeGlPresenter final : public GlPresenter {
   }
 
   std::expected<void, std::string> start(const char* title, int width, int height, bool hidden) {
+    const bool profiling = std::getenv("WEBOLUTION_FRAME_PROFILE") != nullptr;
+    const auto start = profile::Clock::now();
+    const auto logStartup = [&](const char* stage) {
+      if (!profiling) return;
+      const auto ms = std::chrono::duration<double, std::milli>(profile::Clock::now() - start);
+      std::fprintf(stderr, "profile: native GL presenter %s %.3f ms\n", stage, ms.count());
+    };
     struct ResetAttributes {
       ~ResetAttributes() { SDL_GL_ResetAttributes(); }
     } resetAttributes;
@@ -59,6 +69,8 @@ class NativeGlPresenter final : public GlPresenter {
     context_ = SDL_GL_CreateContext(window_);
     if (!context_) return sdlError("SDL_GL_CreateContext");
     if (!current()) return std::unexpected("SDL did not make the OpenGL context current");
+    SDL_GL_SetSwapInterval(0);
+    logStartup("SDL window and context");
     if (auto loaded = gl_.load(); !loaded) return loaded;
 
     GLint major = 0, minor = 0, profile = 0;
@@ -85,15 +97,6 @@ class NativeGlPresenter final : public GlPresenter {
     if (!doubleBuffered || red < 8 || green < 8 || blue < 8)
       return std::unexpected("OpenGL window needs a double-buffered RGB8 drawable");
 
-    const auto linked = linkGlProgram(gl_,
-        presentationShader(ShaderDialect::DesktopCore, kPresentationVertex),
-        presentationShader(ShaderDialect::DesktopCore, kPresentationFragment));
-    if (!linked) return std::unexpected(linked.error());
-    program_ = *linked;
-    gl_.GenVertexArrays(1, &vao_);
-    gl_.BindVertexArray(vao_);
-    gl_.UseProgram(program_);
-    // The only program sampler defaults to texture unit zero.
     gl_.ActiveTexture(GL_TEXTURE0);
     gl_.Disable(GL_BLEND);
     gl_.Disable(GL_DEPTH_TEST);
@@ -103,39 +106,76 @@ class NativeGlPresenter final : public GlPresenter {
     gl_.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
     gl_.PixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    allocateTexture(source_);
-    allocateTexture(targetColour_);
-    gl_.GenFramebuffers(1, &target_);
-    gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
-    gl_.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, targetColour_, 0);
-    if (auto status = framebufferStatus("comparison"); !status) return status;
-    gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
-    gl_.BindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (!vao_ || !source_ || !targetColour_ || !target_)
-      return std::unexpected("OpenGL did not allocate the presentation objects");
     if (auto status = glStatus("OpenGL presenter initialization"); !status) return status;
+    programs_.emplace(gl_);
     compositor_.emplace(gl_);
     if (auto started = compositor_->start(); !started) return started;
+    logStartup("compositor ready");
     description_ = std::format(
         "OpenGL {}.{} core [{}; {}]; window framebuffer complete (RGB {}/{}/{}, double-buffered); "
-        "comparison framebuffer complete ({}x{} RGBA8); swap interval={}",
+        "swap interval={}",
         major, minor, glString(GL_VERSION), glString(GL_RENDERER),
-        red, green, blue, kGameWidth, kGameHeight, SDL_GL_GetSwapInterval());
+        red, green, blue, SDL_GL_GetSwapInterval());
     return {};
   }
 
   SDL_Window* window() const override { return window_; }
   const std::string& description() const override { return description_; }
   bool gpuComposition() const override { return true; }
+  GlProgramCache* programCache() override { return &*programs_; }
+
+  void beginLevelGpuProfile(int frame) override {
+    if (!profile::active || timerActive_) return;
+    profile::Scope scope(profile::GlQuery);
+    if (!timerInitialized_) {
+      timerInitialized_ = true;
+      const auto gen = WEBO_GL_ENTRY(GenQueries, PFNGLGENQUERIESPROC);
+      deleteQueries_ = WEBO_GL_ENTRY(DeleteQueries, PFNGLDELETEQUERIESPROC);
+      beginQuery_ = WEBO_GL_ENTRY(BeginQuery, PFNGLBEGINQUERYPROC);
+      endQuery_ = WEBO_GL_ENTRY(EndQuery, PFNGLENDQUERYPROC);
+      queryState_ = WEBO_GL_ENTRY(GetQueryObjectuiv, PFNGLGETQUERYOBJECTUIVPROC);
+      queryTime_ = WEBO_GL_ENTRY(GetQueryObjectui64v, PFNGLGETQUERYOBJECTUI64VPROC);
+      if (!gen || !deleteQueries_ || !beginQuery_ || !endQuery_ || !queryState_ || !queryTime_) return;
+      gen(timerQueries_.size(), timerQueries_.data());
+    }
+    if (!timerQueries_[0]) return;
+    if (pendingTimers_) {
+      GLuint ready = GL_FALSE;
+      queryState_(timerQueries_[timerHead_], GL_QUERY_RESULT_AVAILABLE, &ready);
+      if (ready) {
+        GLuint64 elapsed = 0;
+        queryTime_(timerQueries_[timerHead_], GL_QUERY_RESULT, &elapsed);
+        profile::active->gpuFrame = timerFrames_[timerHead_];
+        profile::active->gpuNanoseconds = elapsed;
+        timerHead_ = (timerHead_ + 1) % timerQueries_.size();
+        --pendingTimers_;
+      }
+    }
+    if (pendingTimers_ == timerQueries_.size()) return;
+    const auto tail = (timerHead_ + pendingTimers_) % timerQueries_.size();
+    beginQuery_(GL_TIME_ELAPSED, timerQueries_[tail]);
+    timerFrames_[tail] = frame;
+    ++pendingTimers_;
+    timerActive_ = true;
+  }
+
+  void endLevelGpuProfile() override {
+    if (!timerActive_) return;
+    profile::Scope scope(profile::GlQuery);
+    endQuery_(GL_TIME_ELAPSED);
+    timerActive_ = false;
+  }
 
   std::expected<void, std::string> composeGl(const GlSceneImage& scene, const PreparedPage& page,
                                                 const PreparedLevelLayers& layers) override {
     if (!current()) return std::unexpected("OpenGL composition requires its current SDL context");
+    profile::Scope scope(profile::GlCompose);
     return compositor_->compose(scene, page, layers);
   }
 
   std::expected<void, std::string> readGl(Image& image) override {
     if (!current()) return std::unexpected("OpenGL readback requires its current SDL context");
+    profile::Scope scope(profile::GlReadback);
     return compositor_->read(image);
   }
 
@@ -144,15 +184,20 @@ class NativeGlPresenter final : public GlPresenter {
     int width = 0, height = 0;
     SDL_GL_GetDrawableSize(window_, &width, &height);
     if (width > 0 && height > 0) {
-      { profile::Scope scope(profile::Copy);
+      { profile::Scope scope(profile::GlWindowCopy);
         if (auto copied = compositor_->copyToWindow(width, height); !copied) return copied;
       }
-      { profile::Scope scope(profile::Present); SDL_GL_SwapWindow(window_); }
+      endLevelGpuProfile();
+      { profile::Scope scope(profile::GlSwap); SDL_GL_SwapWindow(window_); }
     }
     return {};
   }
 
-  void releaseLayerAssets() override { if (current()) compositor_->releaseAssets(); }
+  void releaseLayerAssets() override {
+    if (!current()) return;
+    releaseLevelGpuProfile();
+    compositor_->releaseAssets();
+  }
 
   std::expected<void, std::string> present(const Image& image, Image* readback) override {
     if (!current()) return std::unexpected("OpenGL presentation requires its current SDL context");
@@ -160,6 +205,16 @@ class NativeGlPresenter final : public GlPresenter {
         image.rgba.size() != std::size_t(kGameWidth) * kGameHeight * 4)
       return std::unexpected("OpenGL presentation requires a tightly packed 640x480 RGBA image");
 
+    if (!program_) {
+      const auto linked = linkGlProgram(gl_,
+          presentationShader(ShaderDialect::DesktopCore, kPresentationVertex),
+          presentationShader(ShaderDialect::DesktopCore, kPresentationFragment));
+      if (!linked) return std::unexpected(linked.error());
+      program_ = *linked;
+      gl_.GenVertexArrays(1, &vao_);
+      if (!vao_) return std::unexpected("OpenGL did not allocate the upload presenter VAO");
+      // The only program sampler defaults to texture unit zero.
+    }
     gl_.BindFramebuffer(GL_FRAMEBUFFER, 0);
     gl_.UseProgram(program_);
     gl_.BindVertexArray(vao_);
@@ -167,13 +222,19 @@ class NativeGlPresenter final : public GlPresenter {
 
     {
       profile::Scope scope(profile::Upload);
+      if (!source_) allocateTexture(source_);
       gl_.BindTexture(GL_TEXTURE_2D, source_);
       // Keep straight alpha, and upload top-down. The vertex shader maps row 0 to the top.
       gl_.TexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, kGameWidth, kGameHeight,
                         GL_RGBA, GL_UNSIGNED_BYTE, image.rgba.data());
+      profile::glUpload(image.rgba.size());
     }
     if (readback) {
+      profile::Scope scope(profile::GlReadback);
       const auto start = profile::Clock::now();
+      if (!target_) {
+        if (auto ready = allocateComparison(); !ready) return ready;
+      }
       gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
       draw(kGameWidth, kGameHeight);
       readComparison(*readback, image.alpha);
@@ -184,13 +245,35 @@ class NativeGlPresenter final : public GlPresenter {
     int width = 0, height = 0;
     SDL_GL_GetDrawableSize(window_, &width, &height);
     if (width > 0 && height > 0) {
-      { profile::Scope scope(profile::Copy); draw(width, height); }
-      { profile::Scope scope(profile::Present); SDL_GL_SwapWindow(window_); }
+      { profile::Scope scope(profile::GlWindowCopy); draw(width, height); }
+      { profile::Scope scope(profile::GlSwap); SDL_GL_SwapWindow(window_); }
     }
     return glStatus("OpenGL presentation");
   }
 
  private:
+  std::array<GLuint, 16> timerQueries_{};
+  std::array<int, 16> timerFrames_{};
+  std::size_t timerHead_ = 0, pendingTimers_ = 0;
+  bool timerInitialized_ = false, timerActive_ = false;
+  PFNGLDELETEQUERIESPROC deleteQueries_ = nullptr;
+  PFNGLBEGINQUERYPROC beginQuery_ = nullptr;
+  PFNGLENDQUERYPROC endQuery_ = nullptr;
+  PFNGLGETQUERYOBJECTUIVPROC queryState_ = nullptr;
+  PFNGLGETQUERYOBJECTUI64VPROC queryTime_ = nullptr;
+
+  void releaseLevelGpuProfile() {
+    endLevelGpuProfile();
+    // Level frame numbers restart on Retry. Discard the previous leg's
+    // in-flight queries without asking the GPU for their results.
+    if (timerQueries_[0]) {
+      deleteQueries_(timerQueries_.size(), timerQueries_.data());
+      timerQueries_.fill(0);
+    }
+    timerHead_ = pendingTimers_ = 0;
+    timerInitialized_ = false;
+  }
+
   bool current() const {
     return SDL_GL_GetCurrentContext() == context_ && SDL_GL_GetCurrentWindow() == window_;
   }
@@ -225,9 +308,28 @@ class NativeGlPresenter final : public GlPresenter {
                    GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
   }
 
+  std::expected<void, std::string> allocateComparison() {
+    allocateTexture(targetColour_);
+    gl_.GenFramebuffers(1, &target_);
+    gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
+    gl_.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, targetColour_, 0);
+    auto complete = framebufferStatus("comparison");
+    if (complete) gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
+    gl_.BindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (!complete) {
+      gl_.DeleteFramebuffers(1, &target_);
+      gl_.DeleteTextures(1, &targetColour_);
+      target_ = targetColour_ = 0;
+    }
+    // allocateTexture binds the destination. Subsequent draws sample the source.
+    gl_.BindTexture(GL_TEXTURE_2D, source_);
+    return complete;
+  }
+
   void draw(int width, int height) const {
     gl_.Viewport(0, 0, width, height);
     gl_.DrawArrays(GL_TRIANGLES, 0, 3);
+    profile::glDraw();
   }
 
   void readComparison(Image& image, AlphaMode alpha) const {
@@ -248,6 +350,7 @@ class NativeGlPresenter final : public GlPresenter {
   SDL_Window* window_ = nullptr;
   SDL_GLContext context_ = nullptr;
   GlFunctions gl_;
+  std::optional<GlProgramCache> programs_;
   std::optional<GlCompositor> compositor_;
   GLuint program_ = 0, vao_ = 0, source_ = 0, targetColour_ = 0, target_ = 0;
   std::string description_;

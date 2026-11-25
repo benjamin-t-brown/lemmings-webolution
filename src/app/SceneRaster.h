@@ -2,12 +2,15 @@
 // device-state defaults and is separate from the legacy Raster path.
 #pragma once
 
+#include "app/Pick.h"
+
 #include <array>
 #include <cstdint>
 #include <expected>
 #include <string>
 #include <vector>
 #include <functional>
+#include <optional>
 #include <span>
 
 namespace webo::app {
@@ -114,6 +117,7 @@ struct SceneRgbaFramebuffer {
   // diagnostic observers retain the RGBA path so their alpha events stay exact.
   std::span<std::uint8_t> rgb{};
   std::span<SceneHighlightPixel> highlights{};
+  std::optional<PickBox> clip{};
 };
 
 // A prepared draw holds material state. Output planes in SceneRasterOptions

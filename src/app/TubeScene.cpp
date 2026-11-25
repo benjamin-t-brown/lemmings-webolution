@@ -1130,6 +1130,7 @@ void TubeScene::drawSceneTriangles(Raster& raster, std::span<const PreparedScene
   fb.height = raster.framebuffer().height;
   fb.rgb = raster.mutableFramebuffer().rgb;
   fb.highlights = raster.highlightPixels();
+  fb.clip = raster.clip();
   for (const auto& draw : draws)
     (void)rasterizeSceneTriangle(fb, raster.mutableDepthBuffer(), *draw.texture,
                                 draw.vertices, draw.material);

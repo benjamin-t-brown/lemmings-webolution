@@ -54,9 +54,11 @@ class SdlWindow {
                      void (*setIcon)(SDL_Window*) = nullptr,
                      RendererChoice requested = RendererChoice::Software,
                      CreateGlPresenter createGl = nullptr,
-                     const GlFrameComparison* comparison = nullptr)
+                     const GlFrameComparison* comparison = nullptr,
+                     bool useRequestedProfileScale = false)
       : choice_(choice), runOverride_(runOverride), setIcon_(setIcon),
-        requested_(requested), createGl_(createGl), comparison_(comparison) {
+        requested_(requested), createGl_(createGl), comparison_(comparison),
+        useRequestedProfileScale_(useRequestedProfileScale) {
 #ifndef __EMSCRIPTEN__
     scale_ = desktopWindowScale(windowScaleChoice(choice, runOverride), 0);
 #endif
@@ -260,7 +262,10 @@ class SdlWindow {
     web::setCanvasScale(choice);
 #else
     const auto area = desktopArea();
-    scale_ = desktopWindowScale(choice, area ? area->largestScale() : 0);
+    // The profiling protocol measures the real 3x drawable on desktops
+    // whose usable area is slightly shorter than a 1440-pixel client.
+    scale_ = useRequestedProfileScale_ && runOverride_ ? runOverride_ :
+        desktopWindowScale(choice, area ? area->largestScale() : 0);
     const int width = kGameWidth * scale_, height = kGameHeight * scale_;
     int currentWidth, currentHeight;
     SDL_GetWindowSize(window_, &currentWidth, &currentHeight);
@@ -296,6 +301,7 @@ class SdlWindow {
   RendererChoice requested_;
   CreateGlPresenter createGl_;
   const GlFrameComparison* comparison_;
+  [[maybe_unused]] bool useRequestedProfileScale_;
   int scale_ = 1;
   SDL_Window* window_ = nullptr;
   SDL_Renderer* renderer_ = nullptr;

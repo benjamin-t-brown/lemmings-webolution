@@ -218,6 +218,64 @@ class SoftwareLevelRaster {
   std::vector<double> pipeDepth_, drowningDepth_, afterFluidDepth_;
 };
 
+// Native GL queries keep the completed frame's prepared inputs. Sample only
+// the projected query rectangle for mesh bounds, in original screen coordinates.
+class NativeLevelQueries {
+ public:
+  void nextFrame() { fullReady_ = false; }
+
+  const Raster& full(const PreparedLevelScene& frame) {
+    if (!fullReady_) {
+      if (!full_) full_.emplace(frame.camera.width, frame.camera.height);
+      detail::ScopedSerialRaster serial(true);
+      BackdropStats stats;
+      software_.draw(*full_, frame, stats);
+      fullReady_ = true;
+    }
+    return *full_;
+  }
+
+  std::vector<HatchHoverTarget> bounds(const PreparedLevelScene& frame,
+      std::span<const PreparedHatchQuery> queries, std::optional<std::pair<int, int>> pointer) {
+    std::vector<HatchHoverTarget> targets;
+    for (const auto& query : queries) {
+      const auto box = query.bounds(frame.camera);
+      if (box.left >= box.right || box.top >= box.bottom ||
+          (pointer && !pointerOverSceneBounds(pointer->first, pointer->second,
+                                             box.left, box.top, box.right, box.bottom))) continue;
+      const auto& raster = fullReady_ ? *full_ : depthRegion(frame, box);
+      auto visible = BackdropScene::hatchHoverTargets(frame.camera, raster, std::span(&query, 1));
+      targets.insert(targets.end(), visible.begin(), visible.end());
+    }
+    return targets;
+  }
+
+ private:
+  const Raster& depthRegion(const PreparedLevelScene& frame, PickBox box) {
+    if (!region_) region_.emplace(frame.camera.width, frame.camera.height);
+    auto& target = *region_;
+    target.setClip(box);
+    target.clear(0, 0, 0);
+    BackdropStats stats;
+    const auto draw = [&](const BackdropScene::PreparedStage& stage) {
+      BackdropScene::drawStage(target, stage, stats);
+    };
+    if (frame.primary) draw(*frame.primary);
+    draw(frame.legacy);
+    TubeScene::drawTube(target, *frame.tube);
+    draw(frame.gadgetEffects);
+    draw(frame.pipes);
+    draw(frame.fluid);
+    draw(frame.secondary);
+    TubeScene::drawSceneTriangles(target, frame.counterGates);
+    return target;
+  }
+
+  std::optional<Raster> region_, full_;
+  SoftwareLevelRaster software_;
+  bool fullReady_ = false;
+};
+
 inline Image sceneImage(const Framebuffer& fb) {
   Image image;
   image.width = fb.width;

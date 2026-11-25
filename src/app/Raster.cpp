@@ -28,6 +28,20 @@ Raster::Raster(int width, int height)
 }
 
 void Raster::clear(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
+  if (clip_) {
+    for (int y = clip_->top; y < clip_->bottom; ++y) {
+      auto p = std::size_t(y) * width_ + clip_->left;
+      const auto end = std::size_t(y) * width_ + clip_->right;
+      std::fill(depth_.begin() + p, depth_.begin() + end, std::numeric_limits<double>::infinity());
+      for (; p < end; ++p) {
+        color_.rgb[3 * p] = r;
+        color_.rgb[3 * p + 1] = g;
+        color_.rgb[3 * p + 2] = b;
+      }
+    }
+    actorDepth_.clear();
+    return;
+  }
   if (r == g && r == b) {
     std::fill(color_.rgb.begin(), color_.rgb.end(), r);
   } else {
@@ -84,10 +98,12 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
   if (std::abs(area) < kDegenerateArea || !std::isfinite(area))
     return;
 
-  const int xmin = std::max(0, static_cast<int>(std::floor(std::min({a[0], b[0], c[0]}))));
-  const int xmax = std::min(width_ - 1, static_cast<int>(std::ceil(std::max({a[0], b[0], c[0]}))));
-  const int ymin = std::max(0, static_cast<int>(std::floor(std::min({a[1], b[1], c[1]}))));
-  const int ymax = std::min(height_ - 1, static_cast<int>(std::ceil(std::max({a[1], b[1], c[1]}))));
+  const auto clip = clip_.value_or(PickBox{0, 0, width_, height_});
+  const int xmin = std::max(clip.left, static_cast<int>(std::floor(std::min({a[0], b[0], c[0]}))));
+  const int xmax = std::min(clip.right - 1, static_cast<int>(std::ceil(std::max({a[0], b[0], c[0]}))));
+  const int ymin = std::max(clip.top, static_cast<int>(std::floor(std::min({a[1], b[1], c[1]}))));
+  const int ymax = std::min(clip.bottom - 1, static_cast<int>(std::ceil(std::max({a[1], b[1], c[1]}))));
+  if (clip_ && (xmin > xmax || ymin > ymax)) return;
 
   const int tw = texture.width;
   const int th = texture.height;

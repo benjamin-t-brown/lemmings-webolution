@@ -55,13 +55,12 @@ inline constexpr GLenum kActorDepthAttachment = GL_COLOR_ATTACHMENT1;
 inline constexpr GLenum kActorHighlightAttachment = GL_COLOR_ATTACHMENT2;
 #define DESKTOP_MESH_GL_FUNCTIONS(X) \
   X(ColorMaski, PFNGLCOLORMASKIPROC) \
+  X(BlendFuncSeparate, PFNGLBLENDFUNCSEPARATEPROC) \
   X(GenQueries, PFNGLGENQUERIESPROC) \
   X(DeleteQueries, PFNGLDELETEQUERIESPROC) \
   X(BeginQuery, PFNGLBEGINQUERYPROC) \
   X(EndQuery, PFNGLENDQUERYPROC) \
   X(GetQueryObjectuiv, PFNGLGETQUERYOBJECTUIVPROC) \
-  X(BeginConditionalRender, PFNGLBEGINCONDITIONALRENDERPROC) \
-  X(EndConditionalRender, PFNGLENDCONDITIONALRENDERPROC) \
   X(TexBuffer, PFNGLTEXBUFFERPROC)
 #endif
 
@@ -91,7 +90,7 @@ using MeshVertex = std::array<Words, 10>;
 #ifdef __EMSCRIPTEN__
 using MeshIndices = std::array<std::uint32_t, 8>;
 #else
-using MeshIndices = std::array<std::uint32_t, 4>;
+using MeshIndices = std::array<std::uint32_t, 12>;
 #endif
 constexpr std::size_t kTrianglesPerBuffer = 4096;  // 15 texels per triangle, below the 3.3 minimum.
 constexpr GLuint kParticleOwnerBit = 0x80000000u;
@@ -113,19 +112,20 @@ struct MeshBuffer {
   BufferTexture<MeshIndices> indices;
 };
 
-bool sameState(const OpaqueDraw& a, const OpaqueDraw& b) {
+bool sameState(const OpaqueDraw& a, const OpaqueDraw& b, bool trackHighlights) {
   const auto& x = a.material;
   const auto& y = b.material;
   return bool(a.tube) == bool(b.tube) && a.backdrop == b.backdrop &&
       bool(a.sprite) == bool(b.sprite) &&
       (!a.tube || a.tube->texture == b.tube->texture) &&
       x.filter == y.filter && x.address == y.address && x.alphaFunction == y.alphaFunction &&
-      x.alphaReference == y.alphaReference && x.blendEnabled == y.blendEnabled &&
-      x.sourceBlend == y.sourceBlend && x.destinationBlend == y.destinationBlend &&
+      (x.alphaFunction == SceneAlphaFunction::Disabled || x.alphaReference == y.alphaReference) &&
+      x.blendEnabled == y.blendEnabled &&
+      (!x.blendEnabled || (x.sourceBlend == y.sourceBlend && x.destinationBlend == y.destinationBlend)) &&
       x.depthFunction == y.depthFunction && x.depthWrite == y.depthWrite && x.shade == y.shade &&
       x.alphaOperation == y.alphaOperation && x.sampleOffsetX == y.sampleOffsetX &&
-      x.sampleOffsetY == y.sampleOffsetY && x.highlight == y.highlight &&
-      x.highlightTextureRgb == y.highlightTextureRgb;
+      x.sampleOffsetY == y.sampleOffsetY &&
+      (!trackHighlights || (x.highlight == y.highlight && x.highlightTextureRgb == y.highlightTextureRgb));
 }
 
 template<class T>
@@ -137,8 +137,10 @@ void flipRows(std::vector<T>& values, int stride, int height) {
   }
 }
 
+
 class SceneGpu final : public OpaqueGpu {
  public:
+  SceneGpu(bool diagnostics, GlProgramCache* programs) : diagnostics_(diagnostics), programs_(programs) {}
   ~SceneGpu() override {
     if (!context_.ownsCurrent()) return;
     end();
@@ -156,8 +158,8 @@ class SceneGpu final : public OpaqueGpu {
     release(brickMesh_.indices);
     release(particleMesh_.vertices);
     release(particleMesh_.indices);
-#ifdef __EMSCRIPTEN__
     if (probeTarget_) gl_.DeleteFramebuffers(1, &probeTarget_);
+#ifdef __EMSCRIPTEN__
     if (emptyOperands_) gl_.DeleteTextures(1, &emptyOperands_);
 #else
     if (drowningVisible_) gl_.DeleteQueries(1, &drowningVisible_);
@@ -168,14 +170,17 @@ class SceneGpu final : public OpaqueGpu {
     if (brickTarget_) gl_.DeleteFramebuffers(1, &brickTarget_);
     if (actorData_) gl_.DeleteTextures(1, &actorData_);
     if (brickTextures_[0]) gl_.DeleteTextures(3, brickTextures_.data());
-    for (const auto program : {actorProgram_, hatchProgram_, reduceProgram_})
-      if (program) gl_.DeleteProgram(program);
-    if (program_) gl_.DeleteProgram(program_);
-    if (skyProgram_) gl_.DeleteProgram(skyProgram_);
+    if (!programs_)
+      for (const auto program : {program_, skyProgram_, actorProgram_, hatchProgram_, reduceProgram_})
+        if (program) gl_.DeleteProgram(program);
     if (vao_) gl_.DeleteVertexArrays(1, &vao_);
     if (indices_) gl_.DeleteBuffers(1, &indices_);
     if (target_) gl_.DeleteFramebuffers(1, &target_);
     if (attachments_[0]) gl_.DeleteTextures(static_cast<GLsizei>(attachments_.size()), attachments_.data());
+#ifndef __EMSCRIPTEN__
+    if (primaryCache_.framebuffer) gl_.DeleteFramebuffers(1, &primaryCache_.framebuffer);
+    gl_.DeleteTextures(primaryCache_.textures.size(), primaryCache_.textures.data());
+#endif
     for (const auto& copy : {beforeFluid_, afterFluid_, colourScratch_, depthScratch_, highlightScratch_,
                             hatchMask_, hatchRows_, hatchResult_}) {
       if (copy.framebuffer) gl_.DeleteFramebuffers(1, &copy.framebuffer);
@@ -191,19 +196,32 @@ class SceneGpu final : public OpaqueGpu {
 #else
     fp64_ = SDL_GL_ExtensionSupported("GL_ARB_gpu_shader_fp64");
     const bool precise = SDL_GL_ExtensionSupported("GL_ARB_gpu_shader5");
+    projectedPlanes_ = fp64_ && precise;
+    clipProxy_ = SDL_GL_ExtensionSupported("GL_ARB_conservative_depth");
+    if (SDL_GL_ExtensionSupported("GL_ARB_texture_barrier"))
+      textureBarrier_ = WEBO_GL_ENTRY(TextureBarrier, PFNGLTEXTUREBARRIERPROC);
 #endif
-    precision_ = fp64_ ? (precise ? "binary64 precise" : "binary64") : "binary32";
-    const auto shaderSource = [&](std::string_view body, bool mesh = true) {
+    precision_ = projectedPlanes_ ? "binary64 depth with projected binary32 shading" :
+        fp64_ ? "binary64" : "binary32";
+    const auto shaderSource = [&](std::string_view body, bool mesh = true, bool clipProxy = false) {
       std::string source = presentationShader(kSceneShaderDialect, "");
+      if (clipProxy) source += "#extension GL_ARB_conservative_depth : require\n#define SCENE_CLIP_PROXY\n";
       if (fp64_) source += "#extension GL_ARB_gpu_shader_fp64 : require\n#define MESH_FP64\n";
       if (precise) source += "#extension GL_ARB_gpu_shader5 : require\n#define MESH_PRECISE precise\n";
       else source += "#define MESH_PRECISE\n";
       source += kGlReal;
-      if (mesh) source += kOpaqueMeshOperands;
+      if (mesh) {
+#ifndef __EMSCRIPTEN__
+        if (projectedPlanes_)
+          source += "#define SCENE_PROJECTED_PLANES\n";
+#endif
+        source += kOpaqueMeshOperands;
+      }
       source += body;
       return source;
     };
-    const auto program = linkGlProgram(gl_, shaderSource(kOpaqueMeshVertex), shaderSource(kOpaqueMeshFragment));
+    const auto program = link(shaderSource(kOpaqueMeshVertex, true, clipProxy_),
+                              shaderSource(kOpaqueMeshFragment, true, clipProxy_));
     if (!program) return std::unexpected(program.error());
     program_ = *program;
     const auto locate = [&](const char* name) { return gl_.GetUniformLocation(program_, name); };
@@ -212,16 +230,12 @@ class SceneGpu final : public OpaqueGpu {
                  locate("firstOwner"), locate("depthInterval"), locate("sampling"), locate("alphaState"),
                  locate("logicalSampleOffset"), locate("blendFactors"), locate("effectSceneDepth"),
                  locate("previousActor"), locate("effectMode"), locate("particleOwner"),
-                 locate("previousHighlight"), locate("highlightState")};
-    auto skyProgram = linkGlProgram(gl_, presentationShader(kSceneShaderDialect, kPresentationVertex),
-                                    presentationShader(kSceneShaderDialect, kBlueSkyFragment));
-    if (!skyProgram) return std::unexpected(skyProgram.error());
-    skyProgram_ = *skyProgram;
-    skyUniforms_ = {gl_.GetUniformLocation(skyProgram_, "sceneColour"),
-                    gl_.GetUniformLocation(skyProgram_, "sceneDepth"),
-                    gl_.GetUniformLocation(skyProgram_, "fillColour")};
+                 locate("previousHighlight"), locate("highlightState"), locate("useProjectedWeights")};
+#ifdef __EMSCRIPTEN__
+    if (auto sky = ensureSkyProgram(); !sky) return sky;
+#endif
     const auto screenVertex = presentationShader(kSceneShaderDialect, kPresentationVertex);
-    auto actorProgram = linkGlProgram(gl_, screenVertex, shaderSource(kActorFragment, false));
+    auto actorProgram = link(screenVertex, shaderSource(kActorFragment, false));
     if (!actorProgram) return std::unexpected(actorProgram.error());
     actorProgram_ = *actorProgram;
     const auto actorUniform = [&](const char* name) { return gl_.GetUniformLocation(actorProgram_, name); };
@@ -229,23 +243,31 @@ class SceneGpu final : public OpaqueGpu {
         actorUniform("plane[0]"), actorUniform("rectangle[0]"), actorUniform("atlasUv[0]"),
         actorUniform("frameBox"), actorUniform("drawState"), actorUniform("actorTint"),
         actorUniform("effectOperands"), actorUniform("patchFluidDepth"), actorUniform("trackHighlights")};
-#ifdef __EMSCRIPTEN__
+    for (std::size_t i = 0; i < actorSamplers_.size(); ++i)
+      actorSamplers_[i] = actorUniform(actorSamplerNames_[i]);
     actorUniforms_.visibility = actorUniform("visibility");
     actorUniforms_.requireVisibility = actorUniform("requireVisibility");
+#ifdef __EMSCRIPTEN__
     actorUniforms_.footprintCentre = actorUniform("footprintCentre");
     actorUniforms_.footprintOrigin = actorUniform("footprintOrigin");
     actorUniforms_.footprintDx = actorUniform("footprintDx");
     actorUniforms_.footprintDy = actorUniform("footprintDy");
+#else
+    actorUniforms_.hasPreviousActor = actorUniform("hasPreviousActor");
 #endif
-    auto hatchProgram = linkGlProgram(gl_, shaderSource(kOpaqueMeshVertex), shaderSource(kHatchMaskFragment));
-    if (!hatchProgram) return std::unexpected(hatchProgram.error());
-    hatchProgram_ = *hatchProgram;
-    auto reducer = linkGlProgram(gl_, screenVertex,
-        presentationShader(kSceneShaderDialect, kHatchReduceFragment));
-    if (!reducer) return std::unexpected(reducer.error());
-    reduceProgram_ = *reducer;
-    reduceUniforms_ = {gl_.GetUniformLocation(reduceProgram_, "viewport"),
-        gl_.GetUniformLocation(reduceProgram_, "range"), gl_.GetUniformLocation(reduceProgram_, "reduceRows")};
+    if (diagnostics_) {
+      auto hatchProgram = link(shaderSource(kOpaqueMeshVertex), shaderSource(kHatchMaskFragment));
+      if (!hatchProgram) return std::unexpected(hatchProgram.error());
+      hatchProgram_ = *hatchProgram;
+    }
+    {
+      auto reducer = link(screenVertex,
+          presentationShader(kSceneShaderDialect, kHatchReduceFragment));
+      if (!reducer) return std::unexpected(reducer.error());
+      reduceProgram_ = *reducer;
+      reduceUniforms_ = {gl_.GetUniformLocation(reduceProgram_, "viewport"),
+          gl_.GetUniformLocation(reduceProgram_, "range"), gl_.GetUniformLocation(reduceProgram_, "reduceRows")};
+    }
     const auto driverString = [&](GLenum key) {
       const auto* value = gl_.GetString(key);
       return value ? reinterpret_cast<const char*>(value) : "unknown";
@@ -271,8 +293,8 @@ class SceneGpu final : public OpaqueGpu {
     gl_.GenTextures(1, &streamAtlas_);
     gl_.GenTextures(1, &collision_);
     gl_.GenTextures(3, brickTextures_.data());
-#ifdef __EMSCRIPTEN__
     gl_.GenFramebuffers(1, &probeTarget_);
+#ifdef __EMSCRIPTEN__
     gl_.GenTextures(1, &emptyOperands_);
     textureImage(emptyOperands_, 1, 1, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT);
 #else
@@ -280,7 +302,10 @@ class SceneGpu final : public OpaqueGpu {
 #endif
     for (auto* copy : {&beforeFluid_, &afterFluid_, &colourScratch_, &depthScratch_, &highlightScratch_,
                        &hatchMask_, &hatchRows_, &hatchResult_}) {
-      gl_.GenFramebuffers(1, &copy->framebuffer);
+#ifndef __EMSCRIPTEN__
+      if (copy != &hatchMask_ || diagnostics_)
+#endif
+        gl_.GenFramebuffers(1, &copy->framebuffer);
       gl_.GenTextures(1, &copy->texture);
     }
     return status("allocate opaque comparison objects");
@@ -290,14 +315,16 @@ class SceneGpu final : public OpaqueGpu {
   std::string_view precision() const override { return precision_; }
 
   GlSceneImage sceneImage() const override {
-    return {attachments_[0], attachments_[2], width_, height_, fp64_, trackHighlights_ ? highlightTexture_ : 0};
+    return {attachments_[0], attachments_[2], width_, height_, fp64_,
+            trackHighlights_ ? highlightTexture_ : 0, !diagnostics_};
   }
 
   std::expected<void, std::string> begin(int width, int height,
-                                       double minimum, double maximum, bool trackHighlights) override {
+      double minimum, double maximum, bool trackHighlights, bool fluidSnapshots) override {
     if (!current()) return std::unexpected("opaque comparison lost its current GL context");
     saveBindings();
     trackHighlights_ = trackHighlights;
+    fluidSnapshots_ = diagnostics_ || fluidSnapshots;
     gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
     gl_.ActiveTexture(GL_TEXTURE0);
     if (width != width_ || height != height_) {
@@ -313,7 +340,7 @@ class SceneGpu final : public OpaqueGpu {
           Attachment{GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT}};
       for (std::size_t i = 0; i < specs.size(); ++i) {
         const auto [attachment, internal, layout, type] = specs[i];
-        if (attachment == GL_NONE) continue;
+        if (attachment == GL_NONE || (!diagnostics_ && attachment == GL_COLOR_ATTACHMENT1)) continue;
         gl_.BindTexture(GL_TEXTURE_2D, attachments_[i]);
         gl_.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         gl_.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -326,9 +353,8 @@ class SceneGpu final : public OpaqueGpu {
       enableSceneOutputs(true, true, true);
       if (gl_.CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         return std::unexpected("opaque comparison framebuffer is incomplete");
-      if (!allocateCopy(beforeFluid_, width, height, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT) ||
-          !allocateCopy(afterFluid_, width, height, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT) ||
-          !allocateCopy(colourScratch_, width, height, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE) ||
+      fluidTargetsReady_ = false;
+      if (!allocateCopy(colourScratch_, width, height, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE) ||
           !allocateCopy(highlightScratch_, width, height, GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT))
         return std::unexpected("scene comparison snapshot framebuffer is incomplete");
       if (!allocateActorTargets(width, height))
@@ -336,6 +362,18 @@ class SceneGpu final : public OpaqueGpu {
       gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
       width_ = width;
       height_ = height;
+    }
+#ifdef __EMSCRIPTEN__
+    const bool needFluidTargets = true;
+#else
+    const bool needFluidTargets = fluidSnapshots_;
+#endif
+    if (needFluidTargets && !fluidTargetsReady_) {
+      if (!allocateCopy(beforeFluid_, width, height, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT) ||
+          !allocateCopy(afterFluid_, width, height, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT))
+        return std::unexpected("fluid snapshot framebuffer is incomplete");
+      fluidTargetsReady_ = true;
+      gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
     }
     gl_.Viewport(0, 0, width, height);
     gl_.Disable(GL_BLEND);
@@ -355,7 +393,7 @@ class SceneGpu final : public OpaqueGpu {
     const auto depthBits = clearDepthWords();
     gl_.ClearBufferfv(GL_COLOR, 0, black);
 #ifndef __EMSCRIPTEN__
-    gl_.ClearBufferuiv(GL_COLOR, 1, clearOwner);
+    if (diagnostics_) gl_.ClearBufferuiv(GL_COLOR, 1, clearOwner);
 #endif
     gl_.ClearBufferuiv(GL_COLOR, 2, depthBits.data());
     gl_.ClearBufferuiv(GL_COLOR, 3, depthBits.data());
@@ -390,7 +428,8 @@ class SceneGpu final : public OpaqueGpu {
   }
 
   std::expected<std::vector<OpaqueUpload>, std::string> draw(
-      LevelScenePass pass, std::span<const OpaqueDrawRange> ranges) override {
+      LevelScenePass pass, std::span<const OpaqueDrawRange> ranges,
+      std::shared_ptr<const void> stableGeometry) override {
     std::vector<OpaqueUpload> uploads;
     if (ranges.empty() && pass == LevelScenePass::TeleportEffects) return uploads;
     if (pass == LevelScenePass::TeleportEffects) {
@@ -406,11 +445,12 @@ class SceneGpu final : public OpaqueGpu {
       setMeshDepthInterval(sceneMinimum_, sceneExtent_);
     }
     if (pass == LevelScenePass::BlueSky) {
+      if (auto sky = ensureSkyProgram(); !sky) return std::unexpected(sky.error());
       drawSky();
       if (auto drawn = status("draw late sky fill"); !drawn) return std::unexpected(drawn.error());
       return uploads;
     }
-    if (pass == LevelScenePass::Fluid) copySceneDepth(beforeFluid_);
+    if (pass == LevelScenePass::Fluid && fluidSnapshots_) copySceneDepth(beforeFluid_);
     const bool marks = pass == LevelScenePass::ExplosionMarks && !ranges.empty();
     if (marks) {
       copySceneDepth(depthScratch_);
@@ -419,28 +459,54 @@ class SceneGpu final : public OpaqueGpu {
       gl_.Disable(GL_DEPTH_TEST);
     }
     std::map<std::tuple<std::uint64_t, int, int>, std::size_t> occurrences;
+    auto& lastGeometry = lastGeometry_[std::size_t(pass)];
+    const bool geometryReady = stableGeometry && stableGeometry == lastGeometry;
+    lastGeometry = std::move(stableGeometry);
+#ifndef __EMSCRIPTEN__
+    // Primary starts from a clear target. Reuse its colour and both depth
+    // representations only at the same pose and quantization interval.
+    const bool cachePrimary = pass == LevelScenePass::Primary && geometryReady &&
+        !diagnostics_ && !trackHighlights_ && !ranges.empty();
+    if (cachePrimary && primaryCache_.geometry == lastGeometry &&
+        primaryCache_.width == width_ && primaryCache_.height == height_ &&
+        primaryCache_.minimum == sceneMinimum_ && primaryCache_.extent == sceneExtent_) {
+      copyPrimary(primaryCache_.framebuffer, target_);
+      return uploads;
+    }
+#endif
     for (const auto& range : ranges) {
       const auto occurrence = occurrences[{range.source, range.band, range.bank}]++;
       for (std::size_t offset = 0; offset < range.draws.size(); offset += kTrianglesPerBuffer) {
         const auto draws = range.draws.subspan(offset,
             std::min(kTrianglesPerBuffer, range.draws.size() - offset));
         auto& mesh = meshes_[{pass, range.source, range.band, range.bank, occurrence, offset}];
-        packMesh(draws);
-        gl_.ActiveTexture(GL_TEXTURE1);
-        const auto vertexBytes = sync(mesh.vertices, vertices_);
-        gl_.ActiveTexture(GL_TEXTURE2);
-        const auto indexBytes = sync(mesh.indices, triangleIndices_);
-        if (vertexBytes != 0 || indexBytes != 0)
+        std::size_t vertexBytes = 0, indexBytes = 0;
+        if (geometryReady) {
+          bindTextureUnit(1, mesh.vertices.texture, kOperandTarget);
+          bindTextureUnit(2, mesh.indices.texture, kOperandTarget);
+        } else {
+          packMesh(draws);
+          gl_.ActiveTexture(GL_TEXTURE1);
+          vertexBytes = sync(mesh.vertices, vertices_);
+          gl_.ActiveTexture(GL_TEXTURE2);
+          indexBytes = sync(mesh.indices, triangleIndices_);
+        }
+        if (diagnostics_ && (vertexBytes != 0 || indexBytes != 0))
           uploads.push_back({range.source, range.band, range.bank, draws.size(), vertexBytes, indexBytes});
         gl_.Uniform1ui(uniforms_.owner, nextOwner_);
         gl_.ActiveTexture(GL_TEXTURE0);
         for (std::size_t first = 0; first < draws.size();) {
           std::size_t end = first + 1;
-          while (end < draws.size() && sameState(draws[first], draws[end])) ++end;
+          while (end < draws.size() && sameState(draws[first], draws[end], trackHighlights_)) ++end;
           bindMaterial(draws[first], pass == LevelScenePass::Pipes ? MeshOutput::Pipes : MeshOutput::Scene);
-          if (draws[first].material.blendEnabled) {
-            for (std::size_t i = first; i < end; ++i)
-              if (copyBlendDestination(draws[i])) drawTriangles(i, 1);
+          if (draws[first].material.blendEnabled && !fixedBlend_) {
+#ifndef __EMSCRIPTEN__
+            if (textureBarrier_) {
+              drawOrderedBlend(draws, first, end);
+            } else
+#endif
+              for (std::size_t i = first; i < end; ++i)
+                if (copyBlendDestination(draws[i])) drawTriangles(i, 1);
           } else {
             drawTriangles(first, end - first);
           }
@@ -449,11 +515,19 @@ class SceneGpu final : public OpaqueGpu {
         nextOwner_ += static_cast<std::uint32_t>(draws.size());
       }
     }
+#ifndef __EMSCRIPTEN__
+    if (cachePrimary && allocatePrimaryCache()) {
+      copyPrimary(target_, primaryCache_.framebuffer);
+      primaryCache_.geometry = lastGeometry;
+      primaryCache_.minimum = sceneMinimum_;
+      primaryCache_.extent = sceneExtent_;
+    }
+#endif
     if (marks) {
       gl_.Uniform1i(uniforms_.effectMode, 0);
       gl_.Enable(GL_DEPTH_TEST);
     }
-    if (pass == LevelScenePass::Fluid) copySceneDepth(afterFluid_);
+    if (pass == LevelScenePass::Fluid && fluidSnapshots_) copySceneDepth(afterFluid_);
     if (auto drawn = status("draw scene comparison"); !drawn) return std::unexpected(drawn.error());
     return uploads;
   }
@@ -468,7 +542,7 @@ class SceneGpu final : public OpaqueGpu {
     frame.owners.resize(pixels);
     gl_.PixelStorei(GL_PACK_ALIGNMENT, 1);
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
-    gl_.ReadPixels(0, 0, width_, height_, GL_RGBA, GL_UNSIGNED_BYTE, frame.colour.rgba.data());
+    readPixels(0, 0, width_, height_, GL_RGBA, GL_UNSIGNED_BYTE, frame.colour.rgba.data());
 #ifdef __EMSCRIPTEN__
     const auto words = readWords(GL_COLOR_ATTACHMENT2);
     std::vector<std::uint32_t> encodedDepth(words.size());
@@ -478,7 +552,7 @@ class SceneGpu final : public OpaqueGpu {
     }
 #else
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT1);
-    gl_.ReadPixels(0, 0, width_, height_, GL_RED_INTEGER, GL_UNSIGNED_INT, frame.owners.data());
+    readPixels(0, 0, width_, height_, GL_RED_INTEGER, GL_UNSIGNED_INT, frame.owners.data());
     auto encodedDepth = readEncodedDepth(GL_COLOR_ATTACHMENT2);
 #endif
     if (auto sampled = status("read opaque comparison"); !sampled) return std::unexpected(sampled.error());
@@ -511,6 +585,9 @@ class SceneGpu final : public OpaqueGpu {
     if (!actors.physical && !actors.draws.empty())
       return std::unexpected("actor comparison requires the physical actor pass");
     gl_.BindFramebuffer(GL_FRAMEBUFFER, actorTarget_);
+    setClipProxy(false);
+    gl_.Disable(GL_BLEND);
+    actorBoxes_.clear();
     constexpr PixelWords empty{};
     enableActorOutputs(true, true, trackHighlights_);
     gl_.ClearBufferuiv(GL_COLOR, kActorDepthAttachment - GL_COLOR_ATTACHMENT0, empty.data());
@@ -567,7 +644,7 @@ class SceneGpu final : public OpaqueGpu {
     result.colour.rgba.resize(result.colour.pixelCount() * 4);
     gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, actorTarget_);
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
-    gl_.ReadPixels(0, 0, width_, height_, GL_RGBA, GL_UNSIGNED_BYTE, result.colour.rgba.data());
+    readPixels(0, 0, width_, height_, GL_RGBA, GL_UNSIGNED_BYTE, result.colour.rgba.data());
     auto actor = readWords(kActorDepthAttachment);
     gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, target_);
     auto scene = readWords(GL_COLOR_ATTACHMENT2);
@@ -611,9 +688,11 @@ class SceneGpu final : public OpaqueGpu {
       std::span<const PreparedHatchQuery> queries) override {
     GlHatchQueries result;
     if (queries.empty()) return result;
+    if (!diagnostics_) return std::unexpected("GL hatch readback requires scene diagnostics");
     if (queries.size() > static_cast<std::size_t>(width_))
       return std::unexpected("too many hatch queries for the reduction target");
     const ScopedQuery queryBindings(*this);
+    setClipProxy(false);
     gl_.Disable(GL_DEPTH_TEST);
 #ifndef __EMSCRIPTEN__
     gl_.ColorMaski(0, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -636,7 +715,7 @@ class SceneGpu final : public OpaqueGpu {
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
     std::vector<PixelWords> extents(queries.size());
     const auto start = std::chrono::steady_clock::now();
-    gl_.ReadPixels(0, 0, static_cast<GLsizei>(queries.size()), 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, extents.data());
+    readPixels(0, 0, static_cast<GLsizei>(queries.size()), 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, extents.data());
     result.readbackMilliseconds = elapsedMs(start);
     gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, target_);
     gl_.Viewport(0, 0, width_, height_);
@@ -659,12 +738,12 @@ class SceneGpu final : public OpaqueGpu {
     PixelWords words{};
     gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, actorTarget_);
     gl_.ReadBuffer(kActorDepthAttachment);
-    gl_.ReadPixels(x, height_ - 1 - y, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
+    readPixels(x, height_ - 1 - y, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
     auto pixel = decodeActor(words);
     if (pixel.owner == ActorDepth::noOwner) {
       gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, target_);
       gl_.ReadBuffer(GL_COLOR_ATTACHMENT2);
-      gl_.ReadPixels(x, height_ - 1 - y, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
+      readPixels(x, height_ - 1 - y, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
       pixel.depth = decode({words[1], words[2]});
     }
     const double duration = elapsedMs(start);
@@ -680,10 +759,10 @@ class SceneGpu final : public OpaqueGpu {
     gl_.ReadBuffer(kSceneHighlightAttachment);
 #ifdef __EMSCRIPTEN__
     PixelWords words{};
-    gl_.ReadPixels(x, height_ - 1 - y, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
+    readPixels(x, height_ - 1 - y, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
 #else
     Words words{};
-    gl_.ReadPixels(x, height_ - 1 - y, 1, 1, GL_RG_INTEGER, GL_UNSIGNED_INT, words.data());
+    readPixels(x, height_ - 1 - y, 1, 1, GL_RG_INTEGER, GL_UNSIGNED_INT, words.data());
 #endif
     if (auto read = status("read switch hover owner"); !read) return std::unexpected(read.error());
     return unpackSceneHighlight(words[0]);
@@ -704,7 +783,7 @@ class SceneGpu final : public OpaqueGpu {
     const auto readRegion = [&](GLuint framebuffer, GLenum attachment, auto& words) {
       gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
       gl_.ReadBuffer(attachment);
-      gl_.ReadPixels(box.left, height_ - box.bottom, w, h, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
+      readPixels(box.left, height_ - box.bottom, w, h, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
     };
     readRegion(actorTarget_, kActorDepthAttachment, actor);
     readRegion(target_, GL_COLOR_ATTACHMENT2, scene);
@@ -737,7 +816,7 @@ class SceneGpu final : public OpaqueGpu {
       gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, hatchResult_.framebuffer);
       gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
       PixelWords words{};
-      gl_.ReadPixels(0, 0, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
+      readPixels(0, 0, 1, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT, words.data());
       visible = words[0];
       gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, actorTarget_);
     }
@@ -750,6 +829,7 @@ class SceneGpu final : public OpaqueGpu {
 #ifndef __EMSCRIPTEN__
     if (needCoverage) {
       gl_.EndQuery(GL_ANY_SAMPLES_PASSED);
+      profile::Scope scope(profile::GlReadback);
       gl_.GetQueryObjectuiv(drowningVisible_, GL_QUERY_RESULT, &visible);
     }
 #endif
@@ -760,6 +840,7 @@ class SceneGpu final : public OpaqueGpu {
 
   void end() override {
     if (!active_ || !current()) return;
+    setClipProxy(false);
 #ifndef __EMSCRIPTEN__
     gl_.ColorMaski(0, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     gl_.ColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -789,6 +870,30 @@ class SceneGpu final : public OpaqueGpu {
   }
 
  private:
+  std::expected<GLuint, std::string> link(std::string vertex, std::string fragment) {
+#ifndef __EMSCRIPTEN__
+    if (programs_) return programs_->link(std::move(vertex), std::move(fragment));
+#endif
+    return linkGlProgram(gl_, vertex, fragment);
+  }
+
+  std::expected<void, std::string> ensureSkyProgram() {
+    if (skyProgram_) return {};
+    const auto program = link(presentationShader(kSceneShaderDialect, kPresentationVertex),
+                              presentationShader(kSceneShaderDialect, kBlueSkyFragment));
+    if (!program) return std::unexpected(program.error());
+    skyProgram_ = *program;
+    skyUniforms_ = {gl_.GetUniformLocation(skyProgram_, "sceneColour"),
+                    gl_.GetUniformLocation(skyProgram_, "sceneDepth"),
+                    gl_.GetUniformLocation(skyProgram_, "fillColour")};
+    return {};
+  }
+
+  void readPixels(GLint x, GLint y, GLsizei w, GLsizei h, GLenum format, GLenum type, void* dest) {
+    profile::Scope scope(profile::GlReadback);
+    gl_.ReadPixels(x, y, w, h, format, type, dest);
+  }
+
   struct CopyTarget { GLuint framebuffer = 0, texture = 0; };
 
   void saveBindings() {
@@ -825,6 +930,9 @@ class SceneGpu final : public OpaqueGpu {
     meshDepthMinimum_ = minimum;
     meshDepthScale_ = 0.5 / extent;
 #endif
+#ifndef __EMSCRIPTEN__
+    if (projectedPlanes_) extent = 0.5 / extent;
+#endif
     const auto lower = encode(minimum), span = encode(extent);
     gl_.Uniform4ui(uniforms_.interval, lower[0], lower[1], span[0], span[1]);
   }
@@ -858,16 +966,27 @@ class SceneGpu final : public OpaqueGpu {
     gl_.DrawBuffers(3, brickOutputs);
     if (gl_.CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;
     if (!allocateCopy(depthScratch_, width, height, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT) ||
-        !allocateCopy(hatchMask_, width, height, GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_BYTE) ||
         !allocateCopy(hatchRows_, 1, height, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT) ||
         !allocateCopy(hatchResult_, width, 1, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT)) return false;
-#ifdef __EMSCRIPTEN__
+    textureImage(hatchMask_.texture, width, height, GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_BYTE);
+#ifndef __EMSCRIPTEN__
+    if (diagnostics_)
+#endif
+    {
+      gl_.BindFramebuffer(GL_FRAMEBUFFER, hatchMask_.framebuffer);
+      gl_.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, hatchMask_.texture, 0);
+      if (gl_.CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;
+    }
     gl_.BindFramebuffer(GL_FRAMEBUFFER, probeTarget_);
     gl_.FramebufferTexture2D(GL_FRAMEBUFFER, kActorDepthAttachment, GL_TEXTURE_2D, hatchMask_.texture, 0);
+#ifdef __EMSCRIPTEN__
     enableActorOutputs(false, true, false);
+#else
+    const GLenum probeOutputs[]{GL_NONE, kActorDepthAttachment};
+    gl_.DrawBuffers(2, probeOutputs);
+#endif
     gl_.ReadBuffer(GL_NONE);
     if (gl_.CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;
-#endif
     return true;
   }
 
@@ -901,6 +1020,10 @@ class SceneGpu final : public OpaqueGpu {
     return box.left >= box.right || box.top >= box.bottom;
   }
 
+  static bool overlaps(const PickBox& a, const PickBox& b) {
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  }
+
   void copyActorRegion(GLenum attachment, const CopyTarget& copy, const PickBox& box) {
     gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, actorTarget_);
     gl_.ReadBuffer(attachment);
@@ -913,13 +1036,11 @@ class SceneGpu final : public OpaqueGpu {
 
   void configureActorInputs(const CameraBasis& camera,
       const std::shared_ptr<const ActorFootprint>& footprint, bool patchFluidDepth) {
+    setClipProxy(false);
     gl_.UseProgram(actorProgram_);
     // Use distinct units for the three sampler types on the actor program.
-    constexpr std::array names{"atlas", "sceneDepth", "pipeDepth", "previousActor",
-        "brickDepth", "brickColour", "rings", "collision", "beforeFluid", "afterFluid",
-        "destinationImage", "previousHighlight"};
-    for (std::size_t i = 0; i < names.size(); ++i)
-      gl_.Uniform1i(gl_.GetUniformLocation(actorProgram_, names[i]), static_cast<GLint>(i));
+    for (std::size_t i = 0; i < actorSamplers_.size(); ++i)
+      gl_.Uniform1i(actorSamplers_[i], static_cast<GLint>(i));
     gl_.Uniform2i(actorUniforms_.viewport, width_, height_);
     gl_.Uniform1i(actorUniforms_.patchFluidDepth, patchFluidDepth);
     gl_.Uniform1i(actorUniforms_.trackHighlights, trackHighlights_);
@@ -962,6 +1083,7 @@ class SceneGpu final : public OpaqueGpu {
       gl_.ActiveTexture(GL_TEXTURE7);
       textureImage(collision_, int(footprint->collision.width), int(footprint->collision.height),
                    GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT, cells.data());
+      profile::glUpload(cells.size() * sizeof(cells[0]));
       uploadedFootprint_ = footprint;
     }
     bindTextureUnit(6, actorRings_.texture
@@ -974,11 +1096,9 @@ class SceneGpu final : public OpaqueGpu {
     bindTextureUnit(9, afterFluid_.texture);
     bindTextureUnit(10, colourScratch_.texture);
     bindTextureUnit(11, highlightScratch_.texture);
-#ifdef __EMSCRIPTEN__
     gl_.Uniform1i(actorUniforms_.visibility, 12);
     gl_.Uniform1i(actorUniforms_.requireVisibility, 0);
     bindTextureUnit(12, hatchResult_.texture);
-#endif
   }
 
   void drawSprite(const CameraBasis& camera, const PreparedActorSprite& body, const PickBox& box,
@@ -987,7 +1107,16 @@ class SceneGpu final : public OpaqueGpu {
     const auto& p = body.placement;
     const auto& f = body.frame;
     if (boxEmpty(box) || f.width == 0 || f.height == 0) return;
-    if (mode != SpriteMode::DrowningProbe)
+    bool hasPrior = mode != SpriteMode::DrowningProbe;
+#ifndef __EMSCRIPTEN__
+    if (mode == SpriteMode::Body)
+      hasPrior = std::ranges::any_of(actorBoxes_, [&](const PickBox& previous) {
+        return overlaps(box, previous);
+      });
+    if (mode != SpriteMode::DrowningProbe && mode != SpriteMode::Mark && mode != SpriteMode::MarkDrowning)
+      actorBoxes_.push_back(box);
+#endif
+    if (hasPrior)
       copyActorRegion(kActorDepthAttachment, depthScratch_, box);
     const bool translucent = mode == SpriteMode::Drowning || mode == SpriteMode::Bubble;
     if (translucent || mode == SpriteMode::Mark || mode == SpriteMode::MarkDrowning)
@@ -997,6 +1126,9 @@ class SceneGpu final : public OpaqueGpu {
     gl_.BindFramebuffer(GL_FRAMEBUFFER, target ? target : actorTarget_);
     gl_.Disable(GL_DEPTH_TEST);
     gl_.UseProgram(actorProgram_);
+#ifndef __EMSCRIPTEN__
+    gl_.Uniform1i(actorUniforms_.hasPreviousActor, hasPrior);
+#endif
     gl_.Viewport(box.left, height_ - box.bottom, box.right - box.left, box.bottom - box.top);
     bindTextureUnit(1, attachments_[2]);
     bindTextureUnit(2, attachments_[3]);
@@ -1011,12 +1143,14 @@ class SceneGpu final : public OpaqueGpu {
         gl_.GenTextures(1, &atlas->second);
         textureImage(atlas->second, image.width, image.height, GL_RGBA8UI, GL_RGBA_INTEGER,
                      GL_UNSIGNED_BYTE, image.rgba.data());
+        profile::glUpload(image.rgba.size());
       } else {
         gl_.BindTexture(GL_TEXTURE_2D, atlas->second);
       }
     } else {
       textureImage(streamAtlas_, image.width, image.height, GL_RGBA8UI, GL_RGBA_INTEGER,
                    GL_UNSIGNED_BYTE, image.rgba.data());
+      profile::glUpload(image.rgba.size());
     }
     const ActorOcclusionPlane plane(camera, worldPosition);
     const auto coefficients = plane.coefficients();
@@ -1033,6 +1167,7 @@ class SceneGpu final : public OpaqueGpu {
     gl_.Uniform4i(actorUniforms_.state, body.mirrored, body.inverted, hasBrick, static_cast<int>(mode));
     gl_.Uniform4ui(actorUniforms_.tint, tint[0], tint[1], tint[2], encodeOwner(owner));
     gl_.DrawArrays(GL_TRIANGLES, 0, 3);
+    profile::glDraw();
   }
 
 #ifdef __EMSCRIPTEN__
@@ -1058,10 +1193,14 @@ class SceneGpu final : public OpaqueGpu {
     uploadVec3(actorUniforms_.footprintDy, dy);
   }
 
+#endif
   void probeSprite(const CameraBasis& camera, const PreparedActorSprite& sprite, const PickBox& box,
                    std::size_t owner, SpriteMode mode, const std::array<double, 3>& worldPosition,
                    std::array<std::uint8_t, 3> tint, bool hasBrick) {
     gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, probeTarget_);
+#ifndef __EMSCRIPTEN__
+    gl_.ColorMaski(1, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+#endif
     constexpr PixelWords zero{};
     gl_.ClearBufferuiv(GL_COLOR, kActorDepthAttachment - GL_COLOR_ATTACHMENT0, zero.data());
     drawSprite(camera, sprite, box, owner, mode, worldPosition, tint, hasBrick, 1.0, probeTarget_);
@@ -1070,29 +1209,15 @@ class SceneGpu final : public OpaqueGpu {
     reduceHatch(hatchRows_, hatchResult_, {0, 0, 1, 1}, bottom, top, true);
     gl_.UseProgram(actorProgram_);
   }
-#endif
-
   void drawDrowning(const CameraBasis& camera, const TubeScene::PreparedActors::Actor& actor,
                     const PickBox& bounds, bool hasBrick) {
     const auto& body = actor.body;
     const bool probe = !actor.bubbles.empty() || hasBrick || body.worldPosition != actor.drowningPosition;
     if (probe) {
-#ifdef __EMSCRIPTEN__
-      // WebGL queries complete on a later browser turn. Reduce the visibility
-      // mask on the GPU so the body and bubbles can use it in this frame.
+      // Keep the visibility condition on the GPU for this frame's body and bubbles.
       probeSprite(camera, body, bounds, actor.owner, SpriteMode::DrowningProbe, body.worldPosition,
                   body.tint, hasBrick);
       gl_.Uniform1i(actorUniforms_.requireVisibility, 1);
-#else
-      enableActorOutputs(false, false, false);
-      gl_.BeginQuery(GL_ANY_SAMPLES_PASSED, drowningVisible_);
-      drawSprite(camera, body, bounds, actor.owner, SpriteMode::DrowningProbe, body.worldPosition,
-                 body.tint, hasBrick);
-      gl_.EndQuery(GL_ANY_SAMPLES_PASSED);
-      enableActorOutputs(true, true, trackHighlights_);
-      // The query gates body/bubble draws on the context thread without a CPU readback.
-      gl_.BeginConditionalRender(drowningVisible_, GL_QUERY_WAIT);
-#endif
     }
     const auto grey = actor.drowningGrey;
     drawSprite(camera, body, spriteBox(body.placement), actor.owner, SpriteMode::Drowning,
@@ -1100,13 +1225,7 @@ class SceneGpu final : public OpaqueGpu {
     for (const auto& bubble : actor.bubbles)
       drawSprite(camera, bubble.sprite, spriteBox(bubble.sprite.placement), actor.owner,
                  SpriteMode::Bubble, {}, {255, 255, 255}, false, bubble.strength);
-    if (probe) {
-#ifdef __EMSCRIPTEN__
-      gl_.Uniform1i(actorUniforms_.requireVisibility, 0);
-#else
-      gl_.EndConditionalRender();
-#endif
-    }
+    if (probe) gl_.Uniform1i(actorUniforms_.requireVisibility, 0);
   }
 
   void bindPackedMesh(MeshBuffer& mesh, std::span<const OpaqueDraw> draws) {
@@ -1233,6 +1352,7 @@ class SceneGpu final : public OpaqueGpu {
       const auto batch = std::span(draws).subspan(offset, std::min(kTrianglesPerBuffer, draws.size() - offset));
       bindPackedMesh(hatchMesh_, batch);
       gl_.DrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr, static_cast<GLsizei>(batch.size()));
+      profile::glDraw();
     }
     return box;
   }
@@ -1247,12 +1367,13 @@ class SceneGpu final : public OpaqueGpu {
     gl_.Uniform2i(reduceUniforms_.range, begin, end);
     gl_.Uniform1i(reduceUniforms_.rows, reduceRows);
     gl_.DrawArrays(GL_TRIANGLES, 0, 3);
+    profile::glDraw();
   }
 
   std::vector<PixelWords> readWords(GLenum attachment) {
     std::vector<PixelWords> pixels(std::size_t(width_) * height_);
     gl_.ReadBuffer(attachment);
-    gl_.ReadPixels(0, 0, width_, height_, GL_RGBA_INTEGER, GL_UNSIGNED_INT, pixels.data());
+    readPixels(0, 0, width_, height_, GL_RGBA_INTEGER, GL_UNSIGNED_INT, pixels.data());
     return pixels;
   }
 
@@ -1267,9 +1388,9 @@ class SceneGpu final : public OpaqueGpu {
 
   void selectDesktopSceneBuffers() {
 #ifndef __EMSCRIPTEN__
-    constexpr std::array<GLenum, 5> outputs{
-        GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3,
-        GL_COLOR_ATTACHMENT4};
+    const std::array<GLenum, 5> outputs{
+        GL_COLOR_ATTACHMENT0, GLenum(diagnostics_ ? GL_COLOR_ATTACHMENT1 : GL_NONE),
+        GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4};
     gl_.DrawBuffers(static_cast<GLsizei>(outputs.size()), outputs.data());
 #endif
   }
@@ -1289,9 +1410,12 @@ class SceneGpu final : public OpaqueGpu {
                            pipe ? GLenum(GL_COLOR_ATTACHMENT3) : GL_NONE};
     gl_.DrawBuffers(4, outputs);
 #else
-    gl_.ColorMaski(2, depth, depth, depth, depth);
-    gl_.ColorMaski(3, pipe, pipe, pipe, pipe);
-    gl_.ColorMaski(4, highlight, highlight, highlight, highlight);
+    const GLenum outputs[]{GL_COLOR_ATTACHMENT0,
+                           diagnostics_ ? GLenum(GL_COLOR_ATTACHMENT1) : GL_NONE,
+                           depth ? GLenum(GL_COLOR_ATTACHMENT2) : GL_NONE,
+                           pipe ? GLenum(GL_COLOR_ATTACHMENT3) : GL_NONE,
+                           highlight ? GLenum(GL_COLOR_ATTACHMENT4) : GL_NONE};
+    gl_.DrawBuffers(std::size(outputs), outputs);
 #endif
   }
 
@@ -1320,6 +1444,50 @@ class SceneGpu final : public OpaqueGpu {
     gl_.BlitFramebuffer(0, 0, width_, height_, 0, 0, width_, height_, GL_COLOR_BUFFER_BIT, GL_NEAREST);
   }
 
+#ifndef __EMSCRIPTEN__
+  bool allocatePrimaryCache() {
+    auto& cache = primaryCache_;
+    if (cache.width == width_ && cache.height == height_) return true;
+    if (!cache.framebuffer) {
+      gl_.GenFramebuffers(1, &cache.framebuffer);
+      gl_.GenTextures(cache.textures.size(), cache.textures.data());
+    }
+    gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, cache.framebuffer);
+    constexpr std::array formats{
+        Attachment{GL_COLOR_ATTACHMENT0, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE},
+        Attachment{GL_COLOR_ATTACHMENT2, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT},
+        Attachment{GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT}};
+    for (std::size_t i = 0; i < formats.size(); ++i) {
+      const auto [attachment, internal, layout, type] = formats[i];
+      textureImage(cache.textures[i], width_, height_, internal, layout, type);
+      gl_.FramebufferTexture2D(GL_DRAW_FRAMEBUFFER, attachment, GL_TEXTURE_2D, cache.textures[i], 0);
+    }
+    const bool complete = gl_.CheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+    gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, target_);
+    if (!complete) return false;
+    cache.geometry.reset();
+    cache.width = width_;
+    cache.height = height_;
+    return true;
+  }
+
+  void copyPrimary(GLuint source, GLuint destination) {
+    gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, source);
+    gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, destination);
+    constexpr GLenum colour = GL_COLOR_ATTACHMENT0, depth = GL_COLOR_ATTACHMENT2;
+    gl_.ReadBuffer(colour);
+    gl_.DrawBuffers(1, &colour);
+    gl_.BlitFramebuffer(0, 0, width_, height_, 0, 0, width_, height_,
+                        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    gl_.ReadBuffer(depth);
+    gl_.DrawBuffers(1, &depth);
+    blitColour();
+    gl_.ReadBuffer(colour);
+    gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
+    selectDesktopSceneBuffers();
+  }
+#endif
+
   void copySceneDepth(const CopyTarget& copy) {
     gl_.BindFramebuffer(GL_READ_FRAMEBUFFER, target_);
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT2);
@@ -1328,7 +1496,7 @@ class SceneGpu final : public OpaqueGpu {
     gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, target_);
   }
 
-  bool copyBlendDestination(const OpaqueDraw& draw) {
+  PickBox blendBounds(const OpaqueDraw& draw) const {
     const auto& [a, b, c] = draw.vertices;
     const auto left = std::min({a.screenX, b.screenX, c.screenX}) - draw.material.sampleOffsetX;
     const auto right = std::max({a.screenX, b.screenX, c.screenX}) - draw.material.sampleOffsetX;
@@ -1337,11 +1505,40 @@ class SceneGpu final : public OpaqueGpu {
     const auto bound = [](double value, int limit) {
       return static_cast<GLint>(std::clamp(value, 0.0, double(limit)));
     };
-    const GLint x0 = bound(std::floor(left) - 1, width_);
-    const GLint x1 = bound(std::ceil(right) + 2, width_);
-    const GLint y0 = height_ - bound(std::ceil(bottom) + 2, height_);
-    const GLint y1 = height_ - bound(std::floor(top) - 1, height_);
-    if (x0 == x1 || y0 == y1) return false;
+    return {bound(std::floor(left) - 1, width_), bound(std::floor(top) - 1, height_),
+            bound(std::ceil(right) + 2, width_), bound(std::ceil(bottom) + 2, height_)};
+  }
+
+#ifndef __EMSCRIPTEN__
+  void drawOrderedBlend(std::span<const OpaqueDraw> draws, std::size_t first, std::size_t end) {
+    bindTextureUnit(3, attachments_[0]);
+    if (trackHighlights_) bindTextureUnit(11, highlightTexture_);
+    for (std::size_t i = first; i < end;) {
+      blendBounds_.clear();
+      std::size_t after = i;
+      for (; after < end; ++after) {
+        const auto box = blendBounds(draws[after]);
+        if (boxEmpty(box)) break;
+        if (std::ranges::any_of(blendBounds_, [&](const PickBox& prior) { return overlaps(box, prior); })) break;
+        blendBounds_.push_back(box);
+      }
+      if (after == i) { ++i; continue; }
+      // A fragment reads and writes its own texel once. Disjoint triangles
+      // can share the barrier, including when the preceding draw was opaque.
+      textureBarrier_();
+      drawTriangles(i, after - i);
+      i = after;
+    }
+    bindTextureUnit(3, colourScratch_.texture);
+    if (trackHighlights_) bindTextureUnit(11, highlightScratch_.texture);
+    gl_.ActiveTexture(GL_TEXTURE0);
+  }
+#endif
+
+  bool copyBlendDestination(const OpaqueDraw& draw) {
+    const auto box = blendBounds(draw);
+    if (boxEmpty(box)) return false;
+    const auto [x0, y0, x1, y1] = PickBox{box.left, height_ - box.bottom, box.right, height_ - box.top};
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
     gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, colourScratch_.framebuffer);
     gl_.BlitFramebuffer(x0, y0, x1, y1, x0, y0, x1, y1, GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -1356,11 +1553,14 @@ class SceneGpu final : public OpaqueGpu {
   }
 
   void drawTriangles(std::size_t first, std::size_t count) {
+    setClipProxy(clipProxy_);
     gl_.Uniform1i(uniforms_.first, static_cast<GLint>(first));
     gl_.DrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr, static_cast<GLsizei>(count));
+    profile::glDraw();
   }
 
   void drawSky() {
+    setClipProxy(false);
     // The shader reads completed colour and clear-depth codes from the scene
     // target. Its draw framebuffer attaches only the separate sky result.
     gl_.ActiveTexture(GL_TEXTURE3);
@@ -1380,6 +1580,7 @@ class SceneGpu final : public OpaqueGpu {
     gl_.Uniform1i(skyUniforms_.depth, 1);
     gl_.Uniform4i(skyUniforms_.fill, kBlueSkyRgb[0], kBlueSkyRgb[1], kBlueSkyRgb[2], 255);
     gl_.DrawArrays(GL_TRIANGLES, 0, 3);
+    profile::glDraw();
 
     gl_.BindFramebuffer(GL_DRAW_FRAMEBUFFER, target_);
     constexpr GLenum colourOnly = GL_COLOR_ATTACHMENT0;
@@ -1406,7 +1607,7 @@ class SceneGpu final : public OpaqueGpu {
     std::ranges::transform(words, encoded.begin(), [](const PixelWords& pixel) { return pixel[0]; });
 #else
     gl_.ReadBuffer(attachment);
-    gl_.ReadPixels(0, 0, width_, height_, GL_RED_INTEGER, GL_UNSIGNED_INT, encoded.data());
+    readPixels(0, 0, width_, height_, GL_RED_INTEGER, GL_UNSIGNED_INT, encoded.data());
 #endif
     return encoded;
   }
@@ -1421,6 +1622,19 @@ class SceneGpu final : public OpaqueGpu {
 
   bool current() const {
     return context_.current();
+  }
+
+  void setClipProxy(bool enabled) {
+#ifndef __EMSCRIPTEN__
+    if (enabled == clipProxyActive_) return;
+    clipProxyActive_ = enabled;
+    for (const auto plane : {GL_CLIP_DISTANCE0, GL_CLIP_DISTANCE1, GL_CLIP_DISTANCE2}) {
+      if (enabled) gl_.Enable(plane);
+      else gl_.Disable(plane);
+    }
+#else
+    (void)enabled;
+#endif
   }
 
   std::expected<void, std::string> status(const char* operation) const {
@@ -1455,9 +1669,14 @@ class SceneGpu final : public OpaqueGpu {
         for (double value : {v.screenX, v.screenY, v.screenZ, v.rhw, v.u, v.v,
                              v.diffuse[0], v.diffuse[1], v.diffuse[2], v.diffuse[3]})
           *out++ = encode(value);
-        const auto [index, added] = corners.try_emplace(words, static_cast<std::uint32_t>(vertices_.size()));
-        if (added) vertices_.push_back(words);
-        indices[corner++] = index->second;
+        if (diagnostics_) {
+          const auto [index, added] = corners.try_emplace(words, static_cast<std::uint32_t>(vertices_.size()));
+          if (added) vertices_.push_back(words);
+          indices[corner++] = index->second;
+        } else {
+          indices[corner++] = static_cast<std::uint32_t>(vertices_.size());
+          vertices_.push_back(words);
+        }
       }
 #ifdef __EMSCRIPTEN__
       const auto& [a, b, c] = draw.vertices;
@@ -1471,6 +1690,36 @@ class SceneGpu final : public OpaqueGpu {
         indices[6] = encode((bx * cz - cx * bz) * scale)[0];
         indices[7] = 1;
       }
+#else
+      const auto& [a, b, c] = draw.vertices;
+      const double bx = b.screenX - a.screenX, by = b.screenY - a.screenY;
+      const double cx = c.screenX - a.screenX, cy = c.screenY - a.screenY;
+      const double area = bx * cy - by * cx;
+      if (projectedPlanes_ && std::abs(area) >= 1e-12) {
+        const double w0x = (by - cy) / area, w0y = (cx - bx) / area;
+        const double w1x = cy / area, w1y = -cx / area;
+        const double w2x = -by / area, w2y = bx / area;
+        const double bz = b.screenZ - a.screenZ, cz = c.screenZ - a.screenZ;
+        const auto dx = encode(bz * w1x + cz * w2x), dy = encode(bz * w1y + cz * w2y);
+        const auto floatWord = [](double value) { return std::bit_cast<std::uint32_t>(float(value)); };
+        // Include the raster proxy's padding when bounding the magnitude of
+        // the projected weights. The shader resolves this band in binary64.
+        const double xSpan = std::max(std::abs(bx), std::abs(cx)) + 2.0;
+        const double ySpan = std::max(std::abs(by), std::abs(cy)) + 2.0;
+        const double condition = 1 + (std::abs(w0x) + std::abs(w1x)) * xSpan +
+                                    (std::abs(w0y) + std::abs(w1y)) * ySpan;
+        if (condition < 128) {
+          indices[3] = floatWord(8 * std::numeric_limits<float>::epsilon() * condition);
+          indices[4] = floatWord(w0x);
+          indices[5] = floatWord(w0y);
+          indices[6] = floatWord(w1x);
+          indices[7] = floatWord(w1y);
+          indices[8] = dx[0];
+          indices[9] = dx[1];
+          indices[10] = dy[0];
+          indices[11] = dy[1];
+        }
+      }
 #endif
     }
   }
@@ -1479,7 +1728,8 @@ class SceneGpu final : public OpaqueGpu {
   std::size_t sync(BufferTexture<T>& resident, std::vector<T>& contents) {
     // At a fixed pose, upload changed terrain blocks and moving nodes. ES
     // index records also carry the depth-plane coefficients for the pose.
-    if (!resident.texture) {
+    const bool created = !resident.texture;
+    if (created) {
 #ifndef __EMSCRIPTEN__
       gl_.GenBuffers(1, &resident.buffer);
 #endif
@@ -1508,14 +1758,11 @@ class SceneGpu final : public OpaqueGpu {
     }
 #else
     gl_.BindBuffer(GL_TEXTURE_BUFFER, resident.buffer);
-    if (resident.capacity < bytes) {
-      resident.capacity = bytes;
-      gl_.BufferData(GL_TEXTURE_BUFFER, bytes, contents.data(), GL_DYNAMIC_DRAW);
-      gl_.TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32UI, resident.buffer);
-    } else {
-      gl_.BufferSubData(GL_TEXTURE_BUFFER, 0, bytes, contents.data());
-    }
+    // Replace the store so a frame can keep using its previous operands.
+    gl_.BufferData(GL_TEXTURE_BUFFER, bytes, contents.data(), GL_STREAM_DRAW);
+    if (created) gl_.TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32UI, resident.buffer);
 #endif
+    profile::glUpload(bytes);
     resident.contents.swap(contents);
     return bytes;
   }
@@ -1541,10 +1788,12 @@ class SceneGpu final : public OpaqueGpu {
         const auto& t = *draw.tube->texture;
         gl_.TexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, t.width, t.height, 0, GL_RGB,
                        GL_UNSIGNED_BYTE, t.rgb.data());
+        profile::glUpload(t.rgb.size());
       } else {
         const auto& t = *draw.backdrop;
         gl_.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, t.width, t.height, 0, GL_RGBA,
                        GL_UNSIGNED_BYTE, t.rgba.data());
+        profile::glUpload(t.rgba.size());
       }
     } else {
       gl_.BindTexture(GL_TEXTURE_2D, texture->second);
@@ -1557,10 +1806,27 @@ class SceneGpu final : public OpaqueGpu {
     const bool pipeWrite = target == MeshOutput::Pipes && state.depthWrite && !draw.sprite;
     if (target == MeshOutput::Scene || target == MeshOutput::Pipes)
       enableSceneOutputs(state.depthWrite, pipeWrite, trackHighlights_);
-    gl_.Uniform2i(uniforms_.blend, state.blendEnabled ? static_cast<int>(state.sourceBlend) : -1,
-                  static_cast<int>(state.destinationBlend));
+    fixedBlend_ = false;
+#ifndef __EMSCRIPTEN__
+    fixedBlend_ = !diagnostics_ && !trackHighlights_ && state.blendEnabled &&
+        state.destinationBlend == SceneBlendFactor::One &&
+        state.sourceBlend != SceneBlendFactor::InvSrcAlpha &&
+        (target == MeshOutput::Scene || target == MeshOutput::Pipes);
+    if (fixedBlend_) {
+      gl_.Enable(GL_BLEND);
+      gl_.BlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
+    } else {
+      gl_.Disable(GL_BLEND);
+    }
+#endif
+    const int blend = fixedBlend_ ? -2 : state.blendEnabled ? static_cast<int>(state.sourceBlend) : -1;
+    gl_.Uniform2i(uniforms_.blend, blend,
+                  static_cast<int>(fixedBlend_ ? state.sourceBlend : state.destinationBlend));
     gl_.Uniform4i(uniforms_.sampling, state.filter == SceneFilter::Point,
                   state.address == SceneAddress::Wrap, bool(draw.tube), state.shade == SceneShade::Gouraud);
+    if (uniforms_.projected >= 0)
+      gl_.Uniform1i(uniforms_.projected, (target == MeshOutput::Scene || target == MeshOutput::Pipes) &&
+          state.filter == SceneFilter::Linear && state.alphaFunction != SceneAlphaFunction::StrictGreater);
     gl_.Uniform2i(uniforms_.alpha, state.alphaOperation == SceneAlphaOperation::SelectTexture,
                   state.alphaFunction == SceneAlphaFunction::StrictGreater ? state.alphaReference : -1);
     gl_.Uniform2f(uniforms_.offset, static_cast<float>(state.sampleOffsetX),
@@ -1571,17 +1837,23 @@ class SceneGpu final : public OpaqueGpu {
 
   struct Uniforms {
     GLint vertices, indices, surface, destination, viewport, first, owner, interval, sampling, alpha, offset, blend;
-    GLint effectDepth, effectActor, effectMode, particleOwner, priorHighlight, highlight;
+    GLint effectDepth, effectActor, effectMode, particleOwner, priorHighlight, highlight, projected;
   } uniforms_{};
   struct SkyUniforms { GLint colour, depth, fill; } skyUniforms_{};
   struct ActorUniforms {
     GLint viewport, ringCount, camera, plane, placement, uv, frame, state, tint, effect, patchFluidDepth,
           trackHighlights;
-#ifdef __EMSCRIPTEN__
     GLint visibility = -1, requireVisibility = -1;
+#ifdef __EMSCRIPTEN__
     GLint footprintCentre = -1, footprintOrigin = -1, footprintDx = -1, footprintDy = -1;
+#else
+    GLint hasPreviousActor = -1;
 #endif
   } actorUniforms_{};
+  static constexpr std::array actorSamplerNames_{"atlas", "sceneDepth", "pipeDepth", "previousActor",
+        "brickDepth", "brickColour", "rings", "collision", "beforeFluid", "afterFluid",
+        "destinationImage", "previousHighlight"};
+  std::array<GLint, actorSamplerNames_.size()> actorSamplers_{};
   struct ReduceUniforms { GLint viewport, range, rows; } reduceUniforms_{};
   struct Attachment { GLenum point; GLint internal; GLenum layout, type; };
   CurrentGlContext context_;
@@ -1592,8 +1864,9 @@ class SceneGpu final : public OpaqueGpu {
   GLuint actorProgram_ = 0, hatchProgram_ = 0, reduceProgram_ = 0;
   GLuint actorTarget_ = 0, actorData_ = 0, brickTarget_ = 0, streamAtlas_ = 0, collision_ = 0;
   GLuint highlightTexture_ = 0;
+  GLuint probeTarget_ = 0;
 #ifdef __EMSCRIPTEN__
-  GLuint probeTarget_ = 0, emptyOperands_ = 0;
+  GLuint emptyOperands_ = 0;
 #else
   GLuint drowningVisible_ = 0;
 #endif
@@ -1603,6 +1876,7 @@ class SceneGpu final : public OpaqueGpu {
   MeshBuffer brickMesh_, hatchMesh_, particleMesh_;
   BufferTexture<PixelWords> actorRings_;
   std::map<const Image*, GLuint> atlases_;
+  std::vector<PickBox> actorBoxes_;
   std::shared_ptr<const ActorFootprint> uploadedFootprint_;
   double sceneMinimum_ = 0, sceneExtent_ = 0;
 #ifdef __EMSCRIPTEN__
@@ -1612,8 +1886,24 @@ class SceneGpu final : public OpaqueGpu {
   int width_ = 0, height_ = 0;
   std::uint32_t nextOwner_ = 1;
   bool active_ = false, fp64_ = false, trackHighlights_ = false;
+  bool diagnostics_, fluidSnapshots_ = false, fluidTargetsReady_ = false, fixedBlend_ = false;
+  GlProgramCache* programs_ = nullptr;
+  bool clipProxy_ = false, projectedPlanes_ = false;
+#ifndef __EMSCRIPTEN__
+  bool clipProxyActive_ = false;
+  struct PrimaryCache {
+    GLuint framebuffer = 0;
+    std::array<GLuint, 3> textures{};
+    int width = 0, height = 0;
+    double minimum = 0, extent = 0;
+    std::shared_ptr<const void> geometry;
+  } primaryCache_;
+  PFNGLTEXTUREBARRIERPROC textureBarrier_ = nullptr;
+  std::vector<PickBox> blendBounds_;
+#endif
   std::string driver_, precision_;
   std::map<std::tuple<LevelScenePass, std::uint64_t, int, int, std::size_t, std::size_t>, MeshBuffer> meshes_;
+  std::array<std::shared_ptr<const void>, std::size_t(LevelScenePass::TeleportEffects) + 1> lastGeometry_;
   std::map<const void*, GLuint> surfaces_;
   std::vector<MeshVertex> vertices_;
   std::vector<MeshIndices> triangleIndices_;
@@ -1621,8 +1911,8 @@ class SceneGpu final : public OpaqueGpu {
 
 }  // namespace
 
-std::expected<std::unique_ptr<OpaqueGpu>, std::string> createOpaqueGpu() {
-  auto gpu = std::make_unique<SceneGpu>();
+std::expected<std::unique_ptr<OpaqueGpu>, std::string> createOpaqueGpu(bool diagnostics, GlProgramCache* programs) {
+  auto gpu = std::make_unique<SceneGpu>(diagnostics, programs);
   if (auto started = gpu->start(); !started) return std::unexpected(started.error());
   return gpu;
 }

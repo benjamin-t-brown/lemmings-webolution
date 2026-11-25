@@ -10,6 +10,9 @@
 
 #include <expected>
 #include <string>
+#ifndef __EMSCRIPTEN__
+#include <vector>
+#endif
 
 namespace webo::app {
 
@@ -148,5 +151,34 @@ inline std::expected<GLuint, std::string> linkGlProgram(
   gl.DeleteProgram(program);
   return std::unexpected(std::string("OpenGL program: ") + log);
 }
+
+#ifndef __EMSCRIPTEN__
+// Link each immutable shader once in the window's context. Scene legs retain
+// their own framebuffer, textures and geometry, and set uniforms before use.
+class GlProgramCache {
+ public:
+  explicit GlProgramCache(const GlFunctions& gl) : gl_(gl) {}
+  ~GlProgramCache() {
+    if (context_.ownsCurrent())
+      for (const auto& entry : entries_) gl_.DeleteProgram(entry.program);
+  }
+  GlProgramCache(const GlProgramCache&) = delete;
+  GlProgramCache& operator=(const GlProgramCache&) = delete;
+
+  std::expected<GLuint, std::string> link(std::string vertex, std::string fragment) {
+    for (const auto& entry : entries_)
+      if (entry.vertex == vertex && entry.fragment == fragment) return entry.program;
+    auto program = linkGlProgram(gl_, vertex, fragment);
+    if (program) entries_.push_back({std::move(vertex), std::move(fragment), *program});
+    return program;
+  }
+
+ private:
+  struct Entry { std::string vertex, fragment; GLuint program; };
+  const GlFunctions& gl_;
+  CurrentGlContext context_;
+  std::vector<Entry> entries_;
+};
+#endif
 
 }  // namespace webo::app

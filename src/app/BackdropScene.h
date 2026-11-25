@@ -36,6 +36,7 @@ using ProjectedMeshTriangle = std::array<std::array<double, 3>, 3>;
 struct PreparedHatchQuery {
   std::size_t index;
   std::vector<ProjectedMeshTriangle> triangles;
+  PickBox bounds(const CameraBasis&) const;
 };
 // Application-owned animation state for placed scenery.
 struct EntranceExitPresentation {

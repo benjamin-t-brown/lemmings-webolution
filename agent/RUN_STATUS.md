@@ -11,7 +11,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
 - gl-presenter-web-001: **blocked** — OpenGL phase 2b: WebGL2 presenter, Start-page renderer choice and software fallback
-- gl-perf-001: **ready** — OpenGL performance: native GL frame cost far below software, no per-frame GPU stalls
+- gl-perf-001: **blocked** — OpenGL performance: native GL frame cost far below software, no per-frame GPU stalls
 - gl-web-001: **blocked** — OpenGL web: the finished GL renderer on WebGL2, with the parked presenter of gl-presenter-web-001
 
 ## Recently completed queue entries
@@ -39,11 +39,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-2d1ab42e918440b586ca92e9a3f497ba/result.json`
+- Result: `build/agent-runs/loop-f6c1a5a68cce47be860031c21051a911/result.json`
 - Status: **blocked**
-- Duration: 3h 50m 34s
-- Completed in this invocation: gl-opaque-meshes-001, gl-scene-passes-001, gl-actors-001, gl-effects-001, gl-2d-play-001
-- Reason: The native build and smoke gate passed. The current Emscripten build’s headless browser attempt timed out at Runtime.enable before Start. Acceptance requires an interactive lead run of the retained harness with browser logs, canvas frames, parity diagnostics, and fallback results for gl-web-001.
+- Duration: 2h 31m 08s
+- Completed in this invocation: none
+- Reason: Attempt limit reached for gl-perf-001
 
 ## Documentation handoff
 

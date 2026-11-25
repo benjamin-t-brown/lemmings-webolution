@@ -32,6 +32,8 @@ class Raster {
   Raster(int width, int height);
 
   void clear(std::uint8_t r, std::uint8_t g, std::uint8_t b);
+  void setClip(PickBox clip) { clip_ = clip; }
+  const std::optional<PickBox>& clip() const { return clip_; }
   void trackSceneHighlights(bool on) { highlights_.assign(on ? depth_.size() : 0, {}); }
   std::span<const SceneHighlightPixel> highlightPixels() const { return highlights_; }
   std::span<SceneHighlightPixel> highlightPixels() { return highlights_; }
@@ -88,6 +90,7 @@ class Raster {
   std::vector<double> depth_;
   ActorDepth actorDepth_;
   std::vector<SceneHighlightPixel> highlights_;
+  std::optional<PickBox> clip_;
   std::size_t triangles_ = 0;
   std::size_t pixels_ = 0;
 };

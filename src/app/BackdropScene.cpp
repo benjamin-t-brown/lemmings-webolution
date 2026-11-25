@@ -1107,6 +1107,20 @@ std::optional<PickBox> visibleMeshBounds(const SceneNode& node, const CameraBasi
 
 }  // namespace
 
+PickBox PreparedHatchQuery::bounds(const CameraBasis& camera) const {
+  double left = camera.width, top = camera.height, right = 0, bottom = 0;
+  for (const auto& triangle : triangles) for (const auto& p : triangle) {
+    left = std::min(left, p[0]);
+    top = std::min(top, p[1]);
+    right = std::max(right, p[0]);
+    bottom = std::max(bottom, p[1]);
+  }
+  return {int(std::clamp(std::floor(left), 0.0, double(camera.width))),
+          int(std::clamp(std::floor(top), 0.0, double(camera.height))),
+          int(std::clamp(std::ceil(right), 0.0, double(camera.width))),
+          int(std::clamp(std::ceil(bottom), 0.0, double(camera.height)))};
+}
+
 std::vector<PreparedHatchQuery> BackdropScene::prepareHatchQueries(const CameraBasis& camera) const {
   std::vector<PreparedHatchQuery> queries;
   const auto context = predicateContext(camera);
@@ -1164,15 +1178,11 @@ std::optional<PreparedHatchQuery> BackdropScene::prepareHoverQuery(
   if (!pointerOverSceneBounds(x, y, 0, 0, camera.width, camera.height)) return std::nullopt;
   PreparedHatchQuery query{root, {}};
   const auto context = predicateContext(camera);
-  double left = camera.width, top = camera.height, right = 0, bottom = 0;
   projectMeshForBounds(roots_[root].node, camera, context, [&](const ProjectedMeshTriangle& t) {
     query.triangles.push_back(t);
-    for (const auto& p : t) {
-      left = std::min(left, p[0]); top = std::min(top, p[1]);
-      right = std::max(right, p[0]); bottom = std::max(bottom, p[1]);
-    }
   });
-  if (x < std::floor(left) || x >= std::ceil(right) || y < std::floor(top) || y >= std::ceil(bottom))
+  const auto box = query.bounds(camera);
+  if (!pointerOverSceneBounds(x, y, box.left, box.top, box.right, box.bottom))
     return std::nullopt;
   return query;
 }
@@ -1774,6 +1784,7 @@ void BackdropScene::drawStage(Raster& target, const PreparedStage& prepared, Bac
   fb.width = target.framebuffer().width;
   fb.height = target.framebuffer().height;
   fb.highlights = target.highlightPixels();
+  fb.clip = target.clip();
   const auto initialDepth = observer && !fluid ? depth : std::vector<double>{};
   const auto initialRgb = observer && fluid ? rgb : std::vector<std::uint8_t>{};
   if (observer) {
@@ -1786,7 +1797,7 @@ void BackdropScene::drawStage(Raster& target, const PreparedStage& prepared, Bac
     fb.rgb = rgb;
   }
 
-  detail::RasterCommandBatch batch(fb.height, !observer);
+  detail::RasterCommandBatch batch(fb.height, !observer && !fb.clip);
   auto candidate = prepared.candidates.begin();
   const auto reportCandidates = [&](std::size_t beforeDraw) {
     if (!observer || !observer->candidate) return;

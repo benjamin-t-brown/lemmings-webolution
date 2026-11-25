@@ -39166,7 +39166,7 @@
     {
       "id": "gl-perf-001",
       "title": "OpenGL performance: native GL frame cost far below software, no per-frame GPU stalls",
-      "status": "ready",
+      "status": "blocked",
       "depends_on": [
         "gl-2d-play-001"
       ],
@@ -39181,7 +39181,132 @@
         "In ordinary GL play no frame calls glReadPixels, glFinish, glGetQueryObject on an unfinished query or any other call that waits for the GPU, comparison-only passes and attachments run only under the comparison and shot options, and pick, hover and highlight results match software for the displayed frame, shown by the changed call paths and comparison logs under build/.",
         "On the native protocol levels plus M01_KF_1 at window scales 1, 2 and 3, with and without the synthetic pointer, GL mean and p95 active frame cost are each below the software figures on the same Release build and GL p95 is at most 2 ms, shown by three warm runs per workload with CSVs and a summary table under build/, and level start on GL takes no longer than software.",
         "The accepted parity rules for phases 1 to 7 still hold for the menu, map, Just Climb at rest and rotating, Just Dig after a dig and Kriss Kross, software stays the default and unchanged, the Emscripten software build compiles, the smoke profile passes, and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261125T055903-56732-3191e949",
+      "started": "2026-11-25T05:59:04.122655+00:00",
+      "finished": "2026-11-25T06:43:22.878181+00:00",
+      "last_run": "build/agent-runs/20261125T055903-56732-3191e949",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Native GL beats software on mean and p95 active frame cost in all 108 workloads. Only 40 workloads meet the 2 ms p95 limit, down from 47 in the preceding matrix, and GL first present is slower in every workload. Ordinary runs recorded zero readback time, but window swaps still stall the frame thread. The latest supervisor smoke and recovery gates passed.",
+        "checks": [
+          {
+            "criterion": "FrameProfile separates the GL scene draw, compose, window copy, swap and GPU query or readback waits from other_ms, GPU elapsed time per frame is collected with asynchronous timer queries, and a test-only synthetic pointer drives the ordinary hover, pick and highlight path during --frames runs, shown by profile CSVs under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrameProfile.h",
+                "detail": "The exclusive CPU timer writes separate columns for scene draw, composition, window copy, swap, readback and query work. GPU elapsed time is tagged with its source frame."
+              },
+              {
+                "path": "src/app/NativeGlPresenter.cpp",
+                "detail": "The presenter queues GL_TIME_ELAPSED queries, checks GL_QUERY_RESULT_AVAILABLE before fetching the oldest result, and discards pending queries on level exit. Retry starts a new set of queries."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The CLI restricts --pointer to bounded direct-level window runs. scenePointer() feeds those coordinates into the ordinary hatch and actor hover, pick precedence and highlight rendering logic. Camera drag still suppresses hover."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-final-M01_KF_1-rest.csv",
+                "detail": "In the final executable, CPU frame 33 carries the 2.478240 ms GPU sample for frame 30. It separately records 0.2201 ms for scene draw, 0.0135 ms for compose, 0.0006 ms for window copy, 1.6317 ms for swap, 0 ms for readback, 0.0025 ms for query work and 0.0327 ms for other work."
+              }
+            ]
+          },
+          {
+            "criterion": "In ordinary GL play no frame calls glReadPixels, glFinish, glGetQueryObject on an unfinished query or any other call that waits for the GPU, comparison-only passes and attachments run only under the comparison and shot options, and pick, hover and highlight results match software for the displayed frame, shown by the changed call paths and comparison logs under build/.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Native level input queries use the displayed frame's prepared geometry. Ordinary frames skip GPU hatch collection. Composed readback requires an explicit image consumer, and the blocking actor coverage query is requested only by a level observer."
+              },
+              {
+                "path": "src/app/NativeOpaqueComparison.cpp",
+                "detail": "The diagnostic scene owner attachment and hatch mesh program are gated. The ordinary drowning pass still uses the visibility reduction on the GPU for the body and bubbles."
+              },
+              {
+                "path": "src/app/NativeGlPresenter.cpp",
+                "detail": "The upload presenter's comparison framebuffer is allocated on demand. Ordinary level presentation still calls SDL_GL_SwapWindow on the frame thread after copying the composition, with swap interval set to 0."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-native-144hz/MM_E1_4SKILLS-fast-2x-pointer-gl-2.csv",
+                "detail": "Sergeant Bash frame 69 spent 75.9741 ms of its 76.3887 ms inside swap, with zero readback time. This locates the stall in the presentation call. The driver's internal cause remains unverified."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-final-checks/input-gl-mark/run.log",
+                "detail": "Just Build selected hatch 0, changed the rate from 25 to 26, hovered and marked actor 0, assigned Builder and resolved cursor zoom. The paired software log records identical targets, point depth and outcomes."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-final-checks/pixel-summary.log",
+                "detail": "Hover-on versus hover-off changed the same 90 pixels inside the actor box on both backends, with identical RGB deltas."
+              }
+            ]
+          },
+          {
+            "criterion": "On the native protocol levels plus M01_KF_1 at window scales 1, 2 and 3, with and without the synthetic pointer, GL mean and p95 active frame cost are each below the software figures on the same Release build and GL p95 is at most 2 ms, shown by three warm runs per workload with CSVs and a summary table under build/, and level start on GL takes no longer than software.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/gl-perf-001/revision-matrix.py",
+                "detail": "The harness uses one Release executable for both backends. It measures three repeats of each level, motion, scale and pointer combination, verifies the 144 Hz refresh and drawable dimensions, and computes active time from frames 30\u2013229 with idle time removed."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-native-144hz/summary.tsv",
+                "detail": "All 108 workloads favor GL on mean and p95. GL p95 ranges from 1.2701 to 4.0691 ms, with 68 workloads above 2 ms. Every GL median first present is slower. Love Train Boogie at rest at 2\u00d7 with the pointer has a 3.5522 ms GL p95 and a 975.309 ms median first present, versus 4.9061 ms and 257.670 ms in software."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-native-144hz/runs.tsv",
+                "detail": "The inventory links all 648 runs to their CSVs and logs. The 324 GL runs contain all 64,800 expected GPU samples and zero measured readback time. Cold first presents range from 706.068 to 1,004.893 ms on GL and 228.046 to 269.246 ms on software."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-final-probe.log",
+                "detail": "The full matrix predates the final level-exit timer cleanup. Spot runs after that change still put Love Train Boogie rest and Kriss Kross rotation above the target, at 2.479 and 3.203 ms GL p95."
+              }
+            ]
+          },
+          {
+            "criterion": "The accepted parity rules for phases 1 to 7 still hold for the menu, map, Just Climb at rest and rotating, Just Dig after a dig and Kriss Kross, software stays the default and unchanged, the Emscripten software build compiles, the smoke profile passes, and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gl-perf-001/presentation-final-checks/menu-map/comparison.tsv",
+                "detail": "All four frontend menu and map checkpoints are byte-exact at logical resolution."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-final-checks/MM_CLIMB_002-rotate/comparison.tsv",
+                "detail": "Rotating Just Climb frames 30, 90 and 180 stay within one byte per channel and have zero alpha differences."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-final-checks/boundary-winners.tsv",
+                "detail": "The 33 composed samples above one byte in stationary Just Climb, Kriss Kross and edited Just Dig are in exit-basket edge bands with matching coverage. Both competing triangles cover each sample and map to the same binary32 depth code. At Just Climb frame 30, pixel (85, 248), both depths map to 0x3e0d77e4."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-final-checks/dig-trace/scene/MM_DIG_000-001/frame-000024-summary.tsv",
+                "detail": "The edited Just Dig frame records three changed terrain cells, zero scene coverage or depth-bound discrepancies, and matching actor and particle ownership."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Renderer selection still defaults to Software. Ordinary software play retains its software raster and SDL presentation path. The prepared-frame input substitutions are selected only for native GL scenes."
+              },
+              {
+                "path": "build/gl-perf-001/presentation-emscripten-build.log",
+                "detail": "The Emscripten build compiled the changed application sources and linked webolution.js."
+              },
+              {
+                "path": "build/agent-runs/20261125T055903-56732-3191e949/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including all 17 chunks of the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/gl-perf-001.md",
+                "detail": "The two-line handoff is followed by a Love Train Boogie playtest note that names the route, the hover, drag and fast-forward actions, and the expected input feedback and scene depth behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Native GL beats software on mean and p95 active frame cost in all 108 workloads. Only 40 workloads meet the 2 ms p95 limit, down from 47 in the preceding matrix, and GL first present is slower in every workload. Ordinary runs recorded zero readback time, but window swaps still stall the frame thread. The latest supervisor smoke and recovery gates passed.",
+      "blocker": "Attempt limit: Native GL beats software on mean and p95 active frame cost in all 108 workloads. Only 40 workloads meet the 2 ms p95 limit, down from 47 in the preceding matrix, and GL first present is slower in every workload. Ordinary runs recorded zero readback time, but window swaps still stall the frame thread. The latest supervisor smoke and recovery gates passed."
     },
     {
       "id": "gl-web-001",

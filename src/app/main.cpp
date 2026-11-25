@@ -145,6 +145,10 @@ struct Args {
   fs::path gameDir;
   int frames = 0;
   bool framesSpecified = false;
+  std::optional<std::pair<int, int>> testPointer;
+  enum class ProfileMotion { Rest, Rotate, Fast };
+  std::optional<ProfileMotion> profileMotion;
+  bool invalidProfileInput = false;
   int windowScale = 0;  // omitted: use the saved choice in ordinary play
   bool invalidWindowScale = false;
   app::RendererChoice renderer = app::RendererChoice::Software;
@@ -203,6 +207,26 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--shot") a.shot = next();
     else if (arg == "--window-shot") a.windowShot = next();
     else if (arg == "--frames") { a.framesSpecified = true; a.frames = std::atoi(next().c_str()); }
+    else if (arg == "--pointer") {
+      const auto value = next();
+      const auto split = value.find(',');
+      int x = -1, y = -1;
+      const auto parse = [](std::string_view s, int& n) {
+        const auto result = std::from_chars(s.data(), s.data() + s.size(), n);
+        return result.ec == std::errc{} && result.ptr == s.data() + s.size();
+      };
+      if (split == std::string::npos || !parse(std::string_view(value).substr(0, split), x) ||
+          !parse(std::string_view(value).substr(split + 1), y) || x < 0 || x >= 640 || y < 0 || y >= 480)
+        a.invalidProfileInput = true;
+      else a.testPointer = std::pair{x, y};
+    }
+    else if (arg == "--profile-motion") {
+      const auto value = next();
+      if (value == "rest") a.profileMotion = Args::ProfileMotion::Rest;
+      else if (value == "rotate") a.profileMotion = Args::ProfileMotion::Rotate;
+      else if (value == "fast") a.profileMotion = Args::ProfileMotion::Fast;
+      else a.invalidProfileInput = true;
+    }
     else if (arg == "--window-scale") {
       const auto value = next();
       if (value == "1" || value == "2" || value == "3") a.windowScale = value[0] - '0';
@@ -294,6 +318,8 @@ void printHelp() {
             "--shot renders one headless frame; --frames N runs N window frames\n"
             "(use SDL_VIDEODRIVER=dummy for a headless smoke run).\n"
             "--window-shot PNG with --frames N saves the final presented window frame.\n"
+            "--pointer X,Y holds a logical pointer during a bounded level run.\n"
+            "--profile-motion rest|rotate|fast uses a 1/60 second budget with --frames.\n"
             "--sim draws live skill counts; click the first eight plates or use keys 1-8\n"
             "to select a skill. Left/right-click a hatch to slow/speed releases; hold to repeat.\n"
             "Double-click Nuke to end releases and explode the remaining lemmings.\n"
@@ -379,6 +405,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                             [[maybe_unused]] app::SdlWindow* sharedWindow,
                             [[maybe_unused]] audio::CuePlayback* cues,
                             std::optional<app::LevelOutcome>& completed, LegDisposition& disposition) {
+  const auto legStart = app::profile::Clock::now();
+  const char* profilePath = std::getenv("WEBOLUTION_FRAME_PROFILE");
+  [[maybe_unused]] const auto profileStartup = [&](const char* phase) {
+    if (profilePath && *profilePath) {
+      const auto elapsed = std::chrono::duration<double, std::milli>(app::profile::Clock::now() - legStart);
+      std::fprintf(stderr, "profile: %s %.3f ms\n", phase, elapsed.count());
+    }
+  };
   // Direct play shares the menu session. Map play owns the intro and results.
   const bool mapPlay = persistentFrontend && args.frontend;
 #ifdef __EMSCRIPTEN__
@@ -1007,7 +1041,11 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   // Resolve auto before the first raster batch so only a real GL backend runs serially.
   const bool selectRendererBeforeDraw = args.renderer != app::RendererChoice::Software &&
                                         (args.shot.empty() || args.renderer == app::RendererChoice::Gl);
-  if (selectRendererBeforeDraw && !ensureLevelPresentation()) return 1;
+  if (selectRendererBeforeDraw) {
+    profileStartup("before GL window");
+    if (!ensureLevelPresentation()) return 1;
+    profileStartup("GL window ready");
+  }
   const bool useGl = presentation.usesGl();
   auto* glCompositor = describeComparison ? nullptr : presentation.glCompositor();
   if (glCompositor && c3Diagnostic) {
@@ -1024,7 +1062,15 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   std::optional<app::OpaqueSceneComparison> glScene;
   bool opaqueCaptureRequested = false, firstTerrainEditCaptured = false;
   if (prepareGpuScene) {
-    auto gpu = app::createOpaqueGpu();
+    auto gpu = app::createOpaqueGpu(
+#ifdef WEBOLUTION_NATIVE_GL
+        describeComparison || !args.shot.empty(),
+        glCompositor ? glCompositor->programCache() : nullptr
+#else
+        true
+#endif
+    );
+    profileStartup("GL scene programs ready");
     if (!gpu) {
       if (auto fallback = presentation.fallbackToSoftware(gpu.error()); !fallback || !*fallback) {
         std::fprintf(stderr, "GL scene: %s\n", fallback ? gpu.error().c_str() : fallback.error().c_str());
@@ -1246,6 +1292,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   // The logical SDL pointer drives hover, clicks and zoom. Camera drag freezes it.
   int pointerX = 320, pointerY = 240;
   const auto scenePointer = [&] {
+    if (args.testPointer) return *args.testPointer;
     return touchCursor ? std::pair{app::touchPixel(touchCursor->x), app::touchPixel(touchCursor->y)}
                        : std::pair{pointerX, pointerY};
   };
@@ -1385,10 +1432,24 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   auto displayedPickReference = controls.pickReference();
   std::optional<app::PreparedLevelFrame> displayedFrame;
   std::optional<app::DisplayedFrameQueries> displayedQueries;
+#ifdef WEBOLUTION_NATIVE_GL
+  constexpr bool nativeQueries = true;
+#else
+  constexpr bool nativeQueries = false;
+#endif
+  [[maybe_unused]] app::NativeLevelQueries nativeLevelQueries;
   const auto resetDisplayedQueries = [&] {
 #ifdef WEBOLUTION_GL_SCENE
     if (glScene) {
       displayedQueries.emplace(displayedCamera, [&](int x, int y) -> std::pair<std::size_t, double> {
+        if constexpr (nativeQueries) {
+          if (!displayedFrame) return {app::ActorDepth::noOwner, std::numeric_limits<double>::infinity()};
+          const auto& raster = nativeLevelQueries.full(displayedFrame->scene);
+          const auto p = std::size_t(y) * displayedCamera.width + x;
+          const auto owner = raster.actorDepth().ownerAt(p);
+          return {owner, owner == app::ActorDepth::noOwner ? raster.depthBuffer()[p] :
+                                                           raster.actorDepth().depthAt(p)};
+        }
         if (glScene->hasDisplayedFrame()) {
           if (auto query = glScene->pointDepth(x, y)) return {query->pixel.owner, query->pixel.depth};
           else failPresentation(query.error());
@@ -1429,6 +1490,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const int previousCursorVisibility = SDL_ShowCursor(SDL_QUERY);
   if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
+  const auto cameraDragging = [&] { return dragButton || touchDragging; };
   // Only the last presented frame can offer the plate as a touch target.
   bool touchMenuPresented = false;
   const auto cancelFastForwardHold = [&] {
@@ -1451,8 +1513,43 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       displayedFrame.emplace(app::PreparedLevelFrame{prepareLevelScene(displayedCamera), {}});
 #ifdef WEBOLUTION_GL_SCENE
       if (glScene) {
+        if constexpr (nativeQueries) {
+          auto& prepared = displayedFrame->scene;
+          const auto [x, y] = scenePointer();
+          prepared.trackHighlights = prepared.trackHighlights && backdrop &&
+              (focused || args.testPointer) && (pointerInWindow || touchCursor || args.testPointer) &&
+              !menuOpen() && !cameraDragging() && app::runtimeSkillPanelIndex(x, y) < 0;
+          if (prepared.trackHighlights) {
+            const auto possible = [&](const auto& presentation) {
+              return presentation && std::ranges::any_of(presentation->bindings,
+                  [&](const auto& b) { return backdrop->prepareHoverQuery(displayedCamera, b.root, x, y).has_value(); });
+            };
+            const auto coversPortal = [&](const app::BackdropScene::PreparedStage& stage) {
+              return std::ranges::any_of(stage.draws, [&](const auto& draw) {
+                const auto& material = draw.triangle.material;
+                const auto owner = material.highlight;
+                if (owner.kind != app::SceneHighlightKind::BackdropRoot ||
+                    std::ranges::find(teleportHover, owner.index,
+                        &app::GadgetPresentation::TeleportHoverBinding::root) == teleportHover.end())
+                  return false;
+                const auto& [a, b, c] = draw.triangle.vertices;
+                const double px = x + material.sampleOffsetX, py = y + material.sampleOffsetY;
+                return px >= std::min({a.screenX, b.screenX, c.screenX}) &&
+                       px <= std::max({a.screenX, b.screenX, c.screenX}) &&
+                       py >= std::min({a.screenY, b.screenY, c.screenY}) &&
+                       py <= std::max({a.screenY, b.screenY, c.screenY});
+              });
+            };
+            prepared.trackHighlights = possible(leverPresentation) || possible(pressurePadPresentation) ||
+                (!teleportHover.empty() && (coversPortal(prepared.legacy) || coversPortal(prepared.gadgetEffects) ||
+                    coversPortal(prepared.pipes) || coversPortal(prepared.secondary) ||
+                    coversPortal(prepared.teleportEffects)));
+          }
+        }
+        glCompositor->beginLevelGpuProfile(rendered);
+        app::profile::Scope profileScene(app::profile::GlScene);
         if (auto drawn = glScene->draw(displayedFrame->scene, args.level, rendered,
-                                          world ? world->levelClockMs() : 0, 0, 0, false); !drawn) {
+            world ? world->levelClockMs() : 0, 0, 0, false, nullptr, -1, -1, !nativeQueries); !drawn) {
 #ifdef __EMSCRIPTEN__
           if (!recoverLevelRenderer(drawn.error()))
 #endif
@@ -1488,6 +1585,20 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       displayedQueries->setSceneResults(std::move(boxes), std::move(hatches));
     }
     return *displayedQueries;
+  };
+  const auto hatchesAt = [&](int x, int y, bool all = false) -> std::vector<app::HatchHoverTarget> {
+    const auto& displayed = ensureDisplayedScene();
+#ifdef WEBOLUTION_GL_SCENE
+    if (nativeQueries && glScene && displayedFrame) {
+      auto targets = nativeLevelQueries.bounds(displayedFrame->scene, displayedFrame->scene.hatchQueries,
+          all ? std::nullopt : std::optional{std::pair{x, y}});
+      if (world)
+        for (auto& target : targets) target.remaining = world->remainingFromEntrance(target.index);
+      return targets;
+    }
+#endif
+    const auto targets = displayed.hatches();
+    return {targets.begin(), targets.end()};
   };
   const auto pickActorAt = [&](int x, int y, sim::Skill skill) {
     const bool firstLevelSupport = args.level == "MM_CLIMB_002";
@@ -1549,7 +1660,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const auto hatchPressTarget = [&](int x, int y, int button, bool actorCanReceiveSkill)
       -> std::optional<std::size_t> {
     if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y) >= 0) return std::nullopt;
-    const auto targets = ensureDisplayedScene().hatches();
+    const auto targets = hatchesAt(x, y);
     const auto hit = app::RuntimeReleaseRateControl::pressTarget(targets, x, y, button, actorCanReceiveSkill);
 #ifdef WEBOLUTION_GL_SCENE
     if (opaqueComparison && opaqueComparison->hasDisplayedFrame()) {
@@ -1579,8 +1690,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   };
   const auto advanceReleaseHold = [&](double elapsed) {
     if (!releaseControl || !releaseControl->holding()) return false;
-    const auto targets = ensureDisplayedScene().hatches();
     const auto [x, y] = scenePointer();
+    const auto targets = hatchesAt(x, y);
     return releaseControl->advance(elapsed, targets, x, y, *world);
   };
   const auto clearTouchHatch = [&] {
@@ -1594,7 +1705,6 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (releaseControl) releaseControl->reset();
     cancelFastForwardHold();
   };
-  const auto cameraDragging = [&] { return dragButton || touchDragging; };
   const auto beginCameraDrag = [&](Uint8 button, bool fromTouch = false) {
     if (fromTouch) {
       touchDragging = true;
@@ -1676,7 +1786,17 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     }
   };
   app::profile::Run frameProfile;
-  const char* profilePath = std::getenv("WEBOLUTION_FRAME_PROFILE");
+  if (profilePath && *profilePath) {
+    SDL_DisplayMode display{};
+    auto* window = presentation.window();
+    SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(window), &display);
+    int width = 0, height = 0;
+    if (presenter) SDL_GetRendererOutputSize(presenter, &width, &height);
+    else SDL_GL_GetDrawableSize(window, &width, &height);
+    std::fprintf(stderr, "profile: display=%d Hz window-scale=%d drawable=%dx%d\n",
+                 display.refresh_rate, presentation.scale(), width, height);
+  }
+  profileStartup("level loop ready");
   SDL_RendererInfo rendererInfo{};
   if (presenter && (logLevelDetails || (profilePath && *profilePath)) &&
       SDL_GetRendererInfo(presenter, &rendererInfo) == 0)
@@ -1940,9 +2060,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           releaseControl->reset();
           if (action.hatchSlide == app::TouchHatchSlide::Neutral) break;
           const int button = action.hatchSlide == app::TouchHatchSlide::Up ? SDL_BUTTON_RIGHT : SDL_BUTTON_LEFT;
-          const auto targets = ensureDisplayedScene().hatches();
           // The origin stays on the selected hatch while the finger slides.
           const auto [x, y] = scenePointer();
+          const auto targets = hatchesAt(x, y);
           if (app::hoveredHatch(targets, x, y, touchHatch)) startReleaseHold(touchHatch, button);
           break;
         }
@@ -1962,6 +2082,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     const auto pollStarted = SDL_GetTicks();
     SDL_Event event;
     while (running && SDL_PollEvent(&event)) {
+      if (args.profileMotion && event.type != SDL_QUIT) continue;
       if (app::isTouchMouseEvent(event)) continue;
 #ifdef WEBOLUTION_GL_SCENE
       if (opaqueComparison && event.type == SDL_KEYDOWN && !event.key.repeat &&
@@ -2028,6 +2149,32 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       }
       if (persistentFrontend && persistentFrontend->screen() != screen) resetTouch();
     }
+    if (running && args.profileMotion) {
+      focused = true;
+      pointerInWindow = args.testPointer.has_value();
+      if (*args.profileMotion == Args::ProfileMotion::Rotate) {
+        if (rendered == 0) {
+          SDL_Event down{};
+          down.type = SDL_MOUSEBUTTONDOWN;
+          down.button.button = SDL_BUTTON_RIGHT;
+          down.button.x = 550;
+          down.button.y = 400;
+          routeEvent(down);
+        }
+        SDL_Event motion{};
+        motion.type = SDL_MOUSEMOTION;
+        motion.motion.xrel = 8;
+        motion.motion.state = SDL_BUTTON_RMASK;
+        routeEvent(motion);
+      } else if (*args.profileMotion == Args::ProfileMotion::Fast && rendered == 0) {
+        SDL_Event down{};
+        down.type = SDL_MOUSEBUTTONDOWN;
+        down.button.button = SDL_BUTTON_LEFT;
+        down.button.x = 40;
+        down.button.y = 348;
+        routeEvent(down);
+      }
+    }
     if (running && focused && !menuOpen()) routeTouch(touch.advance(pollStarted), pollStarted);
 #ifdef __EMSCRIPTEN__
     // Consume wheel events over the canvas only while they control examine zoom.
@@ -2050,6 +2197,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     }
 #endif
     app::profile::Run::Frame measuredFrame(frameProfile, args.level.c_str(), rendered, options.injectedWalkers.size());
+    struct SealGpuProfile {
+      app::GlPresenter*& presenter;
+      ~SealGpuProfile() { if (presenter) presenter->endLevelGpuProfile(); }
+    } sealGpuProfile{glCompositor};
     processLevelEvents();
     if (!running) break; // Do not compose or observe another frame after close.
 #ifdef __EMSCRIPTEN__
@@ -2070,6 +2221,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     double elapsed = static_cast<double>(now - previous) / static_cast<double>(frequency);
     previous = now;
     if (args.frames > 0) elapsed = app::FixedCameraClock::stepSeconds;
+    if (args.profileMotion) elapsed = 1.0 / 60.0;
     if (runOptions.frameSeconds > 0) elapsed = runOptions.frameSeconds;
     const bool ownedClock = args.frames > 0 || runOptions.frameSeconds > 0;
     const auto [cursorX, cursorY] = scenePointer();
@@ -2195,9 +2347,11 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       windowSceneCurrent = false;
       resetDisplayedQueries();
       displayedFrame.reset();
+      nativeLevelQueries.nextFrame();
       // Sample the pose before advancing intro time. Pause freezes the intro clock.
       cameraIntro.advanceAfterFrame(elapsed, runtimeSim.paused());
       std::vector<app::LevelActorView> actors;
+      std::vector<app::HatchHoverTarget> nativeHatches;
       std::span<const app::HatchHoverTarget> hatches;
       bool touchMenuDrawn = false;
       [[maybe_unused]] std::optional<std::size_t> markedWalker;
@@ -2229,8 +2383,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           auto& layers = displayedFrame->layers;
           const auto& camera = queries.camera();
           const int panelIndex = app::runtimeSkillPanelIndex(cursorX, cursorY);
-          const bool canHover = focused && !menuOpen() && !cameraDragging() && panelIndex < 0;
-          const bool cursorInWindow = touchCursor.has_value() || pointerInWindow;
+          const bool pointerFocused = focused || args.testPointer.has_value();
+          const bool canHover = pointerFocused && !menuOpen() && !cameraDragging() && panelIndex < 0;
+          const bool cursorInWindow = args.testPointer || touchCursor || pointerInWindow;
           const auto hudCells = shell::fontCells();
           const auto hudLines = shell::layoutHud(app::runtimeHudValues(*world), {}, hudCells);
           const bool pointerOnHud = !teleportHover.empty() && canHover && cursorInWindow &&
@@ -2239,6 +2394,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           bool switchHover = false;
 #ifdef WEBOLUTION_GL_SCENE
           const auto meshBounds = [&](std::span<const app::PreparedHatchQuery> candidates) -> std::optional<app::PickBox> {
+            if constexpr (nativeQueries) {
+              for (const auto& target : nativeLevelQueries.bounds(displayedFrame->scene, candidates,
+                                                                  std::pair{cursorX, cursorY}))
+                if (app::pointerOverSceneBounds(cursorX, cursorY, target.left, target.top,
+                                               target.right, target.bottom))
+                  return app::PickBox{target.left, target.top, target.right, target.bottom};
+              return std::nullopt;
+            }
             auto bounds = glScene->readBounds(candidates);
             if (!bounds) { failPresentation(bounds.error()); return std::nullopt; }
             for (const auto& target : bounds->targets)
@@ -2252,11 +2415,17 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const auto* pads = pressurePadPresentation ? &*pressurePadPresentation : nullptr;
             const auto portals = pointerOnHud ? TeleportHoverBindings{} : teleportHover;
 #ifdef WEBOLUTION_GL_SCENE
-            if (glScene && trackSceneHover) {
+            if (glScene && displayedFrame->scene.trackHighlights) {
               app::SceneHighlightId pointerOwner{};
-              if (!portals.empty()) {
-                if (auto owner = glScene->readHighlight(cursorX, cursorY)) pointerOwner = *owner;
-                else failPresentation(owner.error());
+              if (!portals.empty() &&
+                  app::pointerOverSceneBounds(cursorX, cursorY, 0, 0, camera.width, camera.height)) {
+                if constexpr (nativeQueries) {
+                  const auto pixels = nativeLevelQueries.full(displayedFrame->scene).highlightPixels();
+                  if (!pixels.empty()) pointerOwner = pixels[std::size_t(cursorY) * camera.width + cursorX].owner;
+                } else {
+                  if (auto owner = glScene->readHighlight(cursorX, cursorY)) pointerOwner = *owner;
+                  else failPresentation(owner.error());
+                }
               }
               auto selected = backdrop->selectSwitchHover(world->setup(), levers, pads, portals, pointerOwner,
                   [&](std::size_t root) {
@@ -2267,9 +2436,15 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                 switchHover = true;
                 layers.draws.emplace_back(std::move(selected->targets));
                 for (const auto sensor : selected->sensors) {
-                  const auto marker = scene->prepareSensorMarker(camera, world->setup().occupancySensors[sensor]);
-                  if (auto clipped = glScene->clipSensor(marker, highlights); !clipped)
-                    failPresentation(clipped.error());
+                  const auto& entry = world->setup().occupancySensors[sensor];
+                  if constexpr (nativeQueries) {
+                    scene->prepareHoveredSensor(highlights, camera,
+                        nativeLevelQueries.full(displayedFrame->scene), entry);
+                  } else {
+                    const auto marker = scene->prepareSensorMarker(camera, entry);
+                    if (auto clipped = glScene->clipSensor(marker, highlights); !clipped)
+                      failPresentation(clipped.error());
+                  }
                 }
               }
             }
@@ -2281,8 +2456,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                   });
           }
           hatches = queries.hatches();
+#ifdef WEBOLUTION_GL_SCENE
+          if (nativeQueries && glScene && (levelObserver || (canHover && cursorInWindow))) {
+            nativeHatches = hatchesAt(cursorX, cursorY, bool(levelObserver));
+            hatches = nativeHatches;
+          }
+#endif
           std::optional<std::size_t> heldHatch;
-          if (releaseControl && cursorInWindow && focused && !menuOpen() && !cameraDragging()) {
+          if (releaseControl && cursorInWindow && pointerFocused && !menuOpen() && !cameraDragging()) {
             heldHatch = touchHatch && touchCursor
                 ? app::hoveredHatch(hatches, cursorX, cursorY, touchHatch)
                 : releaseControl->heldTarget(hatches, cursorX, cursorY);
@@ -2397,7 +2578,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           }
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
           const auto cursorState = menuOpen() ? persistentFrontend->cursorState() :
-              app::runtimeCursorState(focused, cameraDragging(), hover.has_value(),
+              app::runtimeCursorState(pointerFocused, cameraDragging(), hover.has_value(),
                   runtimeSim.paused(), heldHatch ? -1 : panelIndex, panelAvailability, hatchHover.has_value());
           if (const auto icon = runtimeCursor->prepare(cursorState, cursorX, cursorY))
             layers.draws.emplace_back(*icon);
@@ -2547,6 +2728,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
       }
       if (windowSceneCurrent) {
+        if (rendered == 0) profileStartup("level first present");
         touchMenuPresented = touchMenuDrawn;
         lemmingMotion.frameDrawn();
       }
@@ -2556,6 +2738,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     else { app::profile::Scope scope(app::profile::Idle); SDL_Delay(1); }
 #endif
   }
+  if (profilePath && *profilePath && world)
+    std::fprintf(stderr, "profile: frames=%d clock=%llu ms yaw=%.6f fast=%d\n", rendered,
+                 static_cast<unsigned long long>(world->levelClockMs()),
+                 app::resolvedYawUnits(controls.camera()), runtimeSim.fastForward());
   // End this level's hold after recording the last simulation budget.
   cancelFastForwardHold();
   recordCommands();
@@ -2609,6 +2795,11 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   }
   if (args.help) { printHelp(); return 0; }
   if (args.version) { std::puts("Lemmings Webolution " WEBOLUTION_VERSION_STRING); return 0; }
+  if (args.invalidProfileInput || ((args.testPointer || args.profileMotion) &&
+      (args.frames <= 0 || args.frontend || args.map || !args.shot.empty() || !args.replayFile.empty()))) {
+    std::fprintf(stderr, "--pointer X,Y and --profile-motion rest|rotate|fast require a bounded direct-level window run\n");
+    return 1;
+  }
   if (args.invalidOpaqueComparison ||
       (args.opaqueComparison.empty() && !args.opaqueCheckpoints.empty())) {
     std::fprintf(stderr, "--compare-opaque requires a directory and --compare-frame a nonnegative frame\n");
@@ -2737,7 +2928,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   constexpr CreateGlPresenter createGl = nullptr;
 #endif
   SdlWindow presentation(sound.windowScale, windowScaleOverride(args.windowScale, useAutomationScale),
-                         setIcon, args.renderer, createGl, &options.glComparison);
+                         setIcon, args.renderer, createGl, &options.glComparison, args.profileMotion.has_value());
   auto* sharedWindow = &presentation;
 #else
   SdlWindow* sharedWindow = nullptr;

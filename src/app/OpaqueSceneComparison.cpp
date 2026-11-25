@@ -742,7 +742,7 @@ int blendSelector(const SceneRasterOptions& material) {
 std::expected<void, std::string> OpaqueSceneComparison::draw(const PreparedLevelScene& frame,
     std::string_view level, int frameIndex, std::uint64_t levelClockMs, std::size_t terrainCellsChanged,
     std::size_t terrainBlocksRebuilt, bool checkpoint, const DisplayedFrameQueries* softwareQueries,
-    int pointerX, int pointerY) {
+    int pointerX, int pointerY, bool collectHatches) {
   displayed_ = false;
   if (!frame.tube) return std::unexpected("scene comparison requires a prepared tube pass");
   if (std::ranges::find(frame.passes, LevelScenePass::Tube) == frame.passes.end())
@@ -780,7 +780,7 @@ std::expected<void, std::string> OpaqueSceneComparison::draw(const PreparedLevel
     ~RestoreGl() { gpu.end(); }
   } restore{*gpu_};
   if (auto result = gpu_->begin(camera.width, camera.height, interval.minimum, interval.maximum,
-                                frame.trackHighlights); !result)
+                                frame.trackHighlights, frame.hasFluidDrowning); !result)
     return result;
 
   std::filesystem::path base;
@@ -838,7 +838,9 @@ std::expected<void, std::string> OpaqueSceneComparison::draw(const PreparedLevel
     const auto name = passName(pass.stage);
     std::vector<OpaqueDrawRange> ranges;
     ranges.reserve(pass.ranges.size());
-    for (const auto& range : pass.ranges) {
+    const bool compact = !checkpoint && !collectHatches;
+    if (compact && !pass.draws.empty()) ranges.push_back({0, -1, -1, pass.draws});
+    for (const auto& range : compact ? std::span<const Pass::Range>{} : std::span(pass.ranges)) {
       const auto draws = std::span(pass.draws).subspan(range.first, range.end - range.first);
       ranges.push_back({range.source, range.band, range.bank, draws});
       if (checkpoint) for (const auto& draw : draws) {
@@ -856,7 +858,10 @@ std::expected<void, std::string> OpaqueSceneComparison::draw(const PreparedLevel
         sources << '\n';
       }
     }
-    auto uploads = gpu_->draw(pass.stage, ranges);
+    std::shared_ptr<const void> stableGeometry;
+    if (compact && pass.stage == ScenePass::Primary) stableGeometry = frame.primary;
+    if (compact && pass.stage == ScenePass::Tube) stableGeometry = frame.tube;
+    auto uploads = gpu_->draw(pass.stage, ranges, std::move(stableGeometry));
     if (!uploads) return std::unexpected(uploads.error());
     if (!checkpoint) continue;
     for (const auto& upload : *uploads)
@@ -973,9 +978,13 @@ std::expected<void, std::string> OpaqueSceneComparison::draw(const PreparedLevel
     if (auto drawn = gpu_->draw(ScenePass::TeleportEffects, ranges); !drawn)
       return std::unexpected(drawn.error());
   }
-  auto hatches = gpu_->readHatches(frame.hatchQueries);
-  if (!hatches) return std::unexpected(hatches.error());
-  hatches_ = std::move(hatches->targets);
+  GlHatchQueries hatches;
+  if (checkpoint || collectHatches) {
+    auto result = gpu_->readHatches(frame.hatchQueries);
+    if (!result) return std::unexpected(result.error());
+    hatches = std::move(*result);
+  }
+  hatches_ = std::move(hatches.targets);
   boxes_ = frame.actors.boxes;
   if (checkpoint) {
     const auto cpuHatches = softwareQueries
@@ -986,7 +995,7 @@ std::expected<void, std::string> OpaqueSceneComparison::draw(const PreparedLevel
     queries << "actor_boxes\t" << boxes_.size() << '\t'
             << (!softwareQueries || std::ranges::equal(boxes_, softwareQueries->actorBoxes())) << '\n';
     queries << "hatch_bounds\t" << cpuHatches.size() << '\t' << hatches_.size() << '\t'
-            << std::ranges::equal(cpuHatches, hatches_, sameBounds) << '\t' << hatches->readbackMilliseconds << '\n';
+            << std::ranges::equal(cpuHatches, hatches_, sameBounds) << '\t' << hatches.readbackMilliseconds << '\n';
     for (const auto& h : cpuHatches)
       queries << "hatch\tCPU\t" << h.index << '\t' << h.left << '\t' << h.top << '\t' << h.right << '\t' << h.bottom << '\n';
     for (const auto& h : hatches_)

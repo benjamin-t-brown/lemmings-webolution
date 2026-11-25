@@ -30,9 +30,9 @@ uniform bool patchFluidDepth;
 uniform usampler2D previousHighlight;
 uniform bool trackHighlights;
 layout(location = 0) out vec4 colour;
-#ifdef WEBGL2
 uniform usampler2D visibility;
 uniform bool requireVisibility;
+#ifdef WEBGL2
 uniform vec3 footprintCentre; // anchor pixel x/y and its plane denominator
 uniform vec3 footprintOrigin;
 uniform vec3 footprintDx;
@@ -40,6 +40,7 @@ uniform vec3 footprintDy;
 layout(location = 2) out uvec4 actor;
 layout(location = 1) out uvec2 highlight;
 #else
+uniform bool hasPreviousActor;
 layout(location = 1) out uvec4 actor; // view Z words, owner + 1, fragment kind
 layout(location = 2) out uvec2 highlight;
 #endif
@@ -145,9 +146,7 @@ uvec4 sampleBody(ivec2 p) {
 }
 
 void main() {
-#ifdef WEBGL2
   if (requireVisibility && texelFetch(visibility, ivec2(0), 0).r == 0u) discard;
-#endif
   ivec2 texel = ivec2(gl_FragCoord.xy);
   ivec2 logical = ivec2(texel.x, viewport.y - 1 - texel.y);
   Real2 centre = Real2(logical) + Real2(0.5);
@@ -202,7 +201,11 @@ void main() {
     highlight = uvec2(0u);
     return;
   }
+#ifdef WEBGL2
   uvec4 priorActor = texelFetch(previousActor, texel, 0);
+#else
+  uvec4 priorActor = hasPreviousActor ? texelFetch(previousActor, texel, 0) : uvec4(0u);
+#endif
   highlight = uvec2(0u);
   if (mark) {
     if (priorActor.z != actorTint.a || any(notEqual(priorActor.xy, encodeDepth(z)))) discard;

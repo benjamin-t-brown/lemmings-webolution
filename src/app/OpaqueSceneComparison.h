@@ -76,9 +76,10 @@ class OpaqueGpu {
   virtual std::string_view precision() const = 0;
   virtual std::string_view driver() const = 0;
   virtual std::expected<void, std::string> begin(int width, int height,
-                                               double minimum, double maximum, bool trackHighlights = false) = 0;
+      double minimum, double maximum, bool trackHighlights = false, bool fluidSnapshots = false) = 0;
   virtual std::expected<std::vector<OpaqueUpload>, std::string> draw(
-      LevelScenePass pass, std::span<const OpaqueDrawRange>) = 0;
+      LevelScenePass pass, std::span<const OpaqueDrawRange>,
+      std::shared_ptr<const void> stableGeometry = {}) = 0;
   virtual std::expected<OpaqueGpuReadback, std::string> read() = 0;
   virtual std::expected<SceneDepthSnapshots, std::string> readDepthSnapshots() = 0;
   virtual std::expected<void, std::string> drawActors(const CameraBasis&,
@@ -98,7 +99,8 @@ class OpaqueGpu {
   virtual void end() = 0;
 };
 
-std::expected<std::unique_ptr<OpaqueGpu>, std::string> createOpaqueGpu();
+std::expected<std::unique_ptr<OpaqueGpu>, std::string> createOpaqueGpu(bool diagnostics = true,
+                                                                       GlProgramCache* programs = nullptr);
 
 class OpaqueSceneComparison {
  public:
@@ -108,7 +110,8 @@ class OpaqueSceneComparison {
   std::expected<void, std::string> draw(const PreparedLevelScene&, std::string_view level,
       int frame, std::uint64_t levelClockMs, std::size_t terrainCellsChanged,
       std::size_t terrainBlocksRebuilt, bool checkpoint,
-      const DisplayedFrameQueries* softwareQueries = nullptr, int pointerX = -1, int pointerY = -1);
+      const DisplayedFrameQueries* softwareQueries = nullptr, int pointerX = -1, int pointerY = -1,
+      bool collectHatches = true);
 
   bool hasDisplayedFrame() const { return displayed_; }
   auto actorBoxes() const { return std::span(boxes_); }

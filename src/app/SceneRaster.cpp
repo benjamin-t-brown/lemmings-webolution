@@ -140,12 +140,13 @@ std::expected<void, std::string> rasterizeSceneTriangle(
   const double maxX = std::max({a.screenX, b.screenX, c.screenX});
   const double minY = std::min({a.screenY, b.screenY, c.screenY});
   const double maxY = std::max({a.screenY, b.screenY, c.screenY});
-  if (maxX < o.sampleOffsetX || maxY < o.sampleOffsetY ||
-      minX > target.width - 1 + o.sampleOffsetX || minY > target.height - 1 + o.sampleOffsetY) return {};
-  const int xmin = static_cast<int>(std::max(0.0, std::ceil(minX - o.sampleOffsetX)));
-  const int xmax = static_cast<int>(std::min(double(target.width - 1), std::floor(maxX - o.sampleOffsetX)));
-  const int ymin = static_cast<int>(std::max(0.0, std::ceil(minY - o.sampleOffsetY)));
-  const int ymax = static_cast<int>(std::min(double(target.height - 1), std::floor(maxY - o.sampleOffsetY)));
+  const auto clip = target.clip.value_or(PickBox{0, 0, target.width, target.height});
+  if (maxX < clip.left + o.sampleOffsetX || maxY < clip.top + o.sampleOffsetY ||
+      minX > clip.right - 1 + o.sampleOffsetX || minY > clip.bottom - 1 + o.sampleOffsetY) return {};
+  const int xmin = static_cast<int>(std::max(double(clip.left), std::ceil(minX - o.sampleOffsetX)));
+  const int xmax = static_cast<int>(std::min(double(clip.right - 1), std::floor(maxX - o.sampleOffsetX)));
+  const int ymin = static_cast<int>(std::max(double(clip.top), std::ceil(minY - o.sampleOffsetY)));
+  const int ymax = static_cast<int>(std::min(double(clip.bottom - 1), std::floor(maxY - o.sampleOffsetY)));
   const auto drawRows = [&target, &depth, &texture, p, o, observer, area, xmin, xmax, rgb](int first, int last) -> std::expected<void, std::string> {
     const auto& a = p[0]; const auto& b = p[1]; const auto& c = p[2];
     for (int y = first; y <= last; ++y) for (int x = xmin; x <= xmax; ++x) {

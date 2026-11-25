@@ -31,7 +31,8 @@ class StaticProfileTests(unittest.TestCase):
         self.assertEqual(cmd[cmd.index('--setting-sources')+1], '')
         self.assertIn('--disable-slash-commands', cmd)
         self.assertEqual(cmd.count('--allowedTools'), 1)
-        self.assertIn('Bash(python tools/agent_control/verify.py --profile all)',cmd)
+        self.assertEqual(cmd[cmd.index('--allowedTools')+1], 'Bash')
+        self.assertLess(cmd.index('--disallowedTools'), cmd.index('--allowedTools'))
         self.assertEqual({s.removeprefix('mcp__rea_static__') for s in cmd
                           if s.startswith('mcp__rea_static__')}, proxy.ALLOWED)
 

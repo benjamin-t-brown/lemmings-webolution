@@ -198,12 +198,15 @@ when actually launched. CLI/model access has not been verified by previews.
 
 ## Permissions and limitations
 
-Claude implementation workers have file tools and narrowly approved verifier
-commands (main/recovery/all/help) plus the existing HEAD-main.cpp read.
+Claude implementation workers have file tools and Bash (user decision 2026-11-25),
+so they can build, run the source-built clone and run their own scripts. Deny rules
+(`CLAUDE_WORKER_DENY` in supervise.py) refuse git writes, network and package tools
+and any command naming the original game's exe. Unlike Codex there is no OS sandbox,
+and a worker script could reach what the deny rules refuse, so AGENTS.md stays the rule.
 Planning/review retain read-only file tools. All authorized roles use the explicit
 project-owned static REA profile; hooks/plugins and inherited settings stay isolated.
-No blanket shell approval or permission bypass is added. Current scope is in
-AGENTS.md; exact launch behavior is in supervise.py and the profile tests.
+No permission bypass is added. Current scope is in AGENTS.md; exact launch behavior
+is in supervise.py and the profile tests.
 
 Codex workers use `exec`, workspace-write and approval policy `never`, without bypass
 flags. The launcher explicitly selects `windows.sandbox="elevated"`, matching

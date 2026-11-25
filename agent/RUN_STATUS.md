@@ -40,11 +40,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-f6c1a5a68cce47be860031c21051a911/result.json`
-- Status: **blocked**
-- Duration: 2h 31m 08s
+- Result: `build/agent-runs/loop-5e9f8cbd0d0445ad81912ff57471f02e/result.json`
+- Status: **cancelled**
+- Duration: 0h 04m 47s
 - Completed in this invocation: none
-- Reason: Attempt limit reached for gl-perf-001
+- Reason: Worker cancelled
 
 ## Documentation handoff
 

@@ -106,6 +106,19 @@ def static_rea_enabled(task, read_only, role=None):
             (kind == 'research' and task.get('user_authorized') is True))
 
 
+# Deny rules take precedence over the Bash grant. They catch the plain command forms; a worker
+# script could still reach these, so AGENTS.md remains the rule and these are a guard rail.
+CLAUDE_WORKER_DENY = [
+    *[f'Bash(git {verb}:*)' for verb in (
+        'push', 'commit', 'reset', 'clean', 'stash', 'checkout', 'restore', 'switch', 'rebase',
+        'merge', 'cherry-pick', 'revert', 'tag', 'branch', 'am', 'rm', 'mv', 'worktree', 'config',
+        'remote', 'fetch', 'pull', 'clone', 'gc', 'filter-branch', 'update-ref')],
+    *[f'Bash({tool}:*)' for tool in (
+        'gh', 'curl', 'wget', 'pip', 'pip3', 'python -m pip', 'npm', 'npx', 'pnpm', 'yarn',
+        'pacman', 'winget', 'choco', 'scoop')],
+    'Bash(*Lemmings Revolution.exe*)']
+
+
 def command_for(backend, registry, run_dir, *, read_only=False, schema=None, task=None, role=None):
     selected = model_settings(backend, registry)
     executable = registry['tools'][backend]['path']
@@ -132,7 +145,8 @@ def command_for(backend, registry, run_dir, *, read_only=False, schema=None, tas
         if schema:
             command[-1:-1] = ['--output-schema', str(schema)]
         return command
-    # Workers can invoke only explicitly allowed build/history commands without prompts.
+    # Workers may build, run the clone and run their own scripts (user decision 2026-11-25);
+    # deny rules keep out git writes, network installs and the original game.
     # Planning/review retain read-only file tools plus explicitly scoped static MCP.
     # Safe mode skips local hooks/plugins; shared context is provided explicitly.
     command = [executable, '--print', '--safe-mode', '--model', selected['model'],
@@ -142,13 +156,8 @@ def command_for(backend, registry, run_dir, *, read_only=False, schema=None, tas
                'Read,Glob,Grep' if read_only else 'Read,Glob,Grep,Edit,Write,Bash',
                '--output-format', 'json' if schema else 'stream-json', '--verbose']
     if not read_only:
-        command += ['--allowedTools',
-                    'Bash(git --no-pager show --no-ext-diff --no-textconv HEAD:src/app/main.cpp)',
-                    'Bash(python tools/agent_control/verify.py --help)',
-                    'Bash(python tools/agent_control/verify.py --profile smoke)',
-                    'Bash(python tools/agent_control/verify.py --profile main)',
-                    'Bash(python tools/agent_control/verify.py --profile recovery)',
-                    'Bash(python tools/agent_control/verify.py --profile all)']
+        # --allowedTools stays last: the static MCP names below extend it.
+        command += ['--disallowedTools', *CLAUDE_WORKER_DENY, '--allowedTools', 'Bash']
     if static_rea_enabled(task, read_only, role):
         from rea_static_proxy import ALLOWED
         # Explicit local profile: no inherited hooks/plugins/MCP servers.
@@ -167,11 +176,13 @@ def command_for(backend, registry, run_dir, *, read_only=False, schema=None, tas
 def make_prompt(task, minutes, backend):
     """AGENTS.md carries the rules; this adds the task and per-run mechanics only."""
     instructions = (ROOT / 'AGENTS.md').read_text(encoding='utf-8')
-    bash = ('Claude workers have Bash for these exact commands, run verbatim and separately from the '
-            'repo root with no pipes, echo or wrappers: '
-            'git --no-pager show --no-ext-diff --no-textconv HEAD:src/app/main.cpp; '
-            'python tools/agent_control/verify.py --profile smoke (or main, recovery or all). '
-            'For verifier calls set timeout=600000 and run_in_background=false. '
+    bash = ('Claude workers have Bash (Git Bash) to build, run the source-built clone, tests and their '
+            'own scripts under build/. Build with the registered tools per '
+            '.claude/rules/windows-msys2-build.md, for example powershell -NoProfile -File '
+            'scripts/Invoke-Ucrt64.ps1 with the cmake command, and prepend /c/progs/msys2/ucrt64/bin to '
+            'PATH to run built executables. Git is read-only (status, diff, log, show); git writes, '
+            'network access, package installs and the original game are denied and must not be '
+            'attempted another way. For long commands set timeout=600000 and run_in_background=false. '
             if backend == 'claude' else '')
     return (f'{instructions}\n\nAssigned task:\n{json.dumps(task, indent=2)}\n\n'
             f'Complete only this task. Worker budget is {minutes:.1f} minutes. '

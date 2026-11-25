@@ -496,19 +496,18 @@ class LoopTests(unittest.TestCase):
         self.assertEqual(claude[claude.index('--model') + 1], 'claude-opus-5')
         self.assertEqual(claude[claude.index('--effort') + 1], 'high')
 
-    def test_claude_worker_has_scoped_verification_commands(self):
+    def test_claude_worker_has_guarded_shell(self):
         registry = {'agent_models': copy.deepcopy(MODELS),
                     'tools': {b: {'path': sys.executable} for b in MODELS}}
         cmd = worker.command_for('claude', registry, self.root)
         self.assertIn('Bash', cmd[cmd.index('--tools') + 1].split(','))
         allowed = cmd[cmd.index('--allowedTools') + 1:]
-        self.assertEqual(set(allowed), {
-            'Bash(git --no-pager show --no-ext-diff --no-textconv HEAD:src/app/main.cpp)',
-            'Bash(python tools/agent_control/verify.py --help)',
-            'Bash(python tools/agent_control/verify.py --profile smoke)',
-            'Bash(python tools/agent_control/verify.py --profile main)',
-            'Bash(python tools/agent_control/verify.py --profile recovery)',
-            'Bash(python tools/agent_control/verify.py --profile all)'})
+        self.assertEqual(allowed, ['Bash'])
+        denied = cmd[cmd.index('--disallowedTools') + 1:cmd.index('--allowedTools')]
+        self.assertEqual(denied, worker.CLAUDE_WORKER_DENY)
+        for rule in ('Bash(git push:*)', 'Bash(git commit:*)', 'Bash(git reset:*)', 'Bash(curl:*)',
+                     'Bash(*Lemmings Revolution.exe*)'):
+            self.assertIn(rule, denied)
         self.assertNotIn('bypassPermissions', cmd)
         self.assertEqual(cmd[cmd.index('--permission-prompts') + 1], 'none')
         review = worker.command_for('claude', registry, self.root, read_only=True)

@@ -66,6 +66,7 @@ class NativeGlPresenter final : public GlPresenter {
                                width, height, SDL_WINDOW_OPENGL |
                                    (hidden ? SDL_WINDOW_HIDDEN : SDL_WINDOW_SHOWN));
     if (!window_) return sdlError("SDL_CreateWindow (OpenGL)");
+    logStartup("SDL window");
     context_ = SDL_GL_CreateContext(window_);
     if (!context_) return sdlError("SDL_GL_CreateContext");
     if (!current()) return std::unexpected("SDL did not make the OpenGL context current");
@@ -122,6 +123,7 @@ class NativeGlPresenter final : public GlPresenter {
   SDL_Window* window() const override { return window_; }
   const std::string& description() const override { return description_; }
   bool gpuComposition() const override { return true; }
+  void setExactPageComposition(bool exact) override { exactPages_ = exact; }
   GlProgramCache* programCache() override { return &*programs_; }
 
   void beginLevelGpuProfile(int frame) override {
@@ -170,7 +172,7 @@ class NativeGlPresenter final : public GlPresenter {
                                                 const PreparedLevelLayers& layers) override {
     if (!current()) return std::unexpected("OpenGL composition requires its current SDL context");
     profile::Scope scope(profile::GlCompose);
-    return compositor_->compose(scene, page, layers);
+    return compositor_->compose(scene, page, layers, scene.depthScale != 0 || (!scene.colour && !exactPages_));
   }
 
   std::expected<void, std::string> readGl(Image& image) override {
@@ -352,6 +354,7 @@ class NativeGlPresenter final : public GlPresenter {
   GlFunctions gl_;
   std::optional<GlProgramCache> programs_;
   std::optional<GlCompositor> compositor_;
+  bool exactPages_ = false;
   GLuint program_ = 0, vao_ = 0, source_ = 0, targetColour_ = 0, target_ = 0;
   std::string description_;
 };

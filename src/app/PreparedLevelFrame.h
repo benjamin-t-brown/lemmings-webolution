@@ -1,4 +1,6 @@
 #pragma once
+#include <source_location>
+#include <cstdio>
 
 #include "app/BackdropScene.h"
 #include "app/FrameProfile.h"
@@ -224,8 +226,17 @@ class NativeLevelQueries {
  public:
   void nextFrame() { fullReady_ = false; }
 
-  const Raster& full(const PreparedLevelScene& frame) {
+  bool prepareActorMark(std::vector<HoverFragment>& fragments, const TubeScene& tube,
+      const PreparedLevelScene& frame, std::size_t actor) {
+    const auto& raster = full(frame);
+    return tube.prepareHoveredWalker(fragments, actor, frame.camera, frame.actors, raster,
+                                     software_.drowningDepth(), software_.pipeDepth());
+  }
+
+  const Raster& full(const PreparedLevelScene& frame, std::source_location where = std::source_location::current()) {
     if (!fullReady_) {
+      std::fprintf(stderr, "TRACEFULL %u
+", where.line());
       if (!full_) full_.emplace(frame.camera.width, frame.camera.height);
       detail::ScopedSerialRaster serial(true);
       BackdropStats stats;

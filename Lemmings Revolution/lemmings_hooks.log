@@ -1,18 +1,40 @@
---- lemmings hook harness attached 2026-10-29 12:27:08 ---
-module directory: C:\progs\Lemmings Revolution
+--- lemmings hook harness attached 2026-10-29 20:58:38 ---
+module directory: C:\progs\lemmings-webolution\Lemmings Revolution
 requested hook mode: shadow
-recovered allocator bound to the game CRT (new 0x0049c1a8, free 0x0049c13d), replacing the host pair at 71634050
-detour installed at 0x0041bc10 -> 0x716339a0 (trampoline 0x01160000, 6 bytes relocated)
+recovered allocator bound to the game CRT (new 0x0049c1a8, free 0x0049c13d), replacing the host pair at 717c4050
+detour installed at 0x0041bc10 -> 0x717c39a0 (trampoline 0x008c0000, 6 bytes relocated)
 append_native_int hook active in shadow mode
-detour installed at 0x0040de60 -> 0x71632680 (trampoline 0x02720000, 7 bytes relocated)
+detour installed at 0x0040de60 -> 0x717c2680 (trampoline 0x01070000, 7 bytes relocated)
 collision_cell hook active in shadow mode
-detour installed at 0x0040dec0 -> 0x71632c30 (trampoline 0x02730000, 7 bytes relocated)
+detour installed at 0x0040dec0 -> 0x717c2c30 (trampoline 0x01080000, 7 bytes relocated)
 wrap_cylinder_x hook active in shadow mode
 3 detour(s) installed
 selftest: 19728 in-process comparisons against the original bytes, 0 mismatches
 cylinder selftest: 4219 in-process comparisons against the original bytes, 0 mismatches
 startup selftest: PASS
-forwarding to C:\progs\Lemmings Revolution\patch_orig.dll (DirectDrawCreate=6cbc1bae, DirectDrawEnumerateA=6cbc1ae9)
+forwarding to C:\progs\lemmings-webolution\Lemmings Revolution\patch_orig.dll (DirectDrawCreate=6cbc1bae, DirectDrawEnumerateA=6cbc1ae9)
 CRT is up; running deferred selftests that use the game heap
 array selftest: 2340 in-process comparisons against the original bytes through the game heap, 0 mismatches, 0 guarded
 deferred selftest: PASS
+collision_cell: 1024 calls, 0 mismatches so far
+collision_cell: 2048 calls, 0 mismatches so far
+collision_cell: 4096 calls, 0 mismatches so far
+collision_cell: 8192 calls, 0 mismatches so far
+collision_cell: 16384 calls, 0 mismatches so far
+collision_cell: 32768 calls, 0 mismatches so far
+wrap_cylinder_x: 1024 calls, 0 mismatches so far
+wrap_cylinder_x: 2048 calls, 0 mismatches so far
+wrap_cylinder_x: 4096 calls, 0 mismatches so far
+wrap_cylinder_x: 8192 calls, 0 mismatches so far
+wrap_cylinder_x: 16384 calls, 0 mismatches so far
+collision_cell: 65536 calls, 0 mismatches so far
+wrap_cylinder_x: 32768 calls, 0 mismatches so far
+wrap_cylinder_x: 65536 calls, 0 mismatches so far
+collision_cell: 131072 calls, 0 mismatches so far
+wrap_cylinder_x: 131072 calls, 0 mismatches so far
+collision_cell: 262144 calls, 0 mismatches so far
+wrap_cylinder_x: 262144 calls, 0 mismatches so far
+append_native_int: 105 calls, 0 mismatches, 0 skipped, 0 guarded (shadow mode)
+wrap_cylinder_x: 290876 calls, 0 mismatches (shadow mode)
+collision_cell: 384576 calls, 0 mismatches (shadow mode)
+--- detached ---

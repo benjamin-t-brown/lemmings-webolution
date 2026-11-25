@@ -39312,7 +39312,7 @@
     {
       "id": "gl-perf-002",
       "title": "OpenGL performance: ordinary GL play on normal GPU drawing, exact path as comparison mode",
-      "status": "ready",
+      "status": "interrupted",
       "depends_on": [
         "gl-2d-play-001"
       ],
@@ -39329,12 +39329,12 @@
         "Pick, hover and highlight targets match software for the displayed frame, the exact comparison mode still meets the phase 1 to 7 parity rules on its retained checks, software stays the default and unchanged, the Emscripten software build compiles, the smoke profile passes, and the report ends with a what-to-check note."
       ],
       "lead_note": "gl-perf-001 stays blocked and was never accepted; its retained changes in 636a045 are part of the code this task is reviewed on. 2026-11-25 lead: attempt 1 (Codex) was cancelled by the user when Codex usage ran out, before any report or review. It left uncommitted partial work in the tree: new src/app/HardwareLevelScene.cpp, HardwareLevelScene.h and HardwareSceneShaders.h (about 1,000 lines) plus edits to main.cpp, NativeGlPresenter.cpp, NativeCompositor.h, CompositorShaders.h, PreparedLevelFrame.h, PresentationBackend.h, SdlWindow.hpp and CMakeLists.txt, and probes and a baseline under build/gl-perf-002/. The release target builds with it. Inspect it, keep what serves the task and finish or replace the rest; nothing in it is reviewed. The worker now runs on the Claude backend. 2026-11-25 lead: attempt count reset. Attempt 1 (Codex) was cancelled when usage ran out; attempt 2 (Claude) had no shell, so it only edited glGetError handling in HardwareLevelScene.cpp and NativeCompositor.h without compiling them, and its review asked for the full build, matrix, images, replays and Emscripten check; attempt 3 was cancelled at start. Claude workers now have a Bash shell for building, running the clone and running scripts (git writes, network installs and the original game are denied). Also delete the probe .exe and .obj files under build/gl-perf-002/ once they are no longer needed.",
-      "loop_attempts": 0,
-      "run_id": "20261125T192941-64804-7ee27e50",
-      "started": "2026-11-25T19:29:42.263821+00:00",
+      "loop_attempts": 1,
+      "run_id": "20261125T194510-67348-4d10bf1d",
+      "started": "2026-11-25T19:45:10.843500+00:00",
       "blocker": null,
-      "finished": "2026-11-25T19:30:00.641956+00:00",
-      "last_run": "build/agent-runs/20261125T192941-64804-7ee27e50",
+      "finished": "2026-11-25T20:00:05.404894+00:00",
+      "last_run": "build/agent-runs/20261125T194510-67348-4d10bf1d",
       "review_feedback": {
         "decision": "revise",
         "reason": "gl-perf-002 is not accepted. Its own report says it is incomplete, and the files under build/ agree. Attempt 2 had no permission to run Bash apart from verify.py. It could not build the Release webolution target, run any native GL launch, run matrix.py, run the replays or compare images. It made only two small edits, which skip glGetError after 16 frames, in HardwareLevelScene.cpp and NativeCompositor.h. Those edits were never compiled, because the smoke gate builds only smoke_tests and not the native GL target. The 108-workload matrix has no summary table or per-workload CSVs (build/gl-perf-002 has no summary.tsv). Criterion 2 therefore has no evidence for its p95, max, mean, GPU, swap and first-present limits. Criterion 3 has no final-tree images, heatmaps or difference counts, and the probes from attempt 1 were never run on the final tree. Criterion 1 and the second half of criterion 4 are only read from source. No replays were run and the Emscripten build was not checked. The probe .exe and .obj files under build/gl-perf-002/ were also not deleted, which the task required. The smoke and recovery profiles pass (95 and 84 tests), but that only shows the software gate still works. Next step: a worker session that can build and run the native GL target should build Release, run matrix.py, find what still makes the swap wait and delays first present, run the image comparisons and replays, check the Emscripten software build, delete the probe executables and objects, and finish the report.",

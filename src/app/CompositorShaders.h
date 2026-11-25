@@ -6,8 +6,12 @@ namespace webo::app {
 
 inline constexpr std::string_view kCompositorFragment = R"glsl(
 uniform sampler2D sourceImage;
+#ifdef HARDWARE_COMPOSITION
+uniform sampler2D sceneDepth;
+#else
 uniform sampler2D destinationImage;
 uniform highp usampler2D sceneDepth;
+#endif
 uniform highp isampler2D iconTaps;
 uniform highp usampler2D sceneHighlights;
 uniform highp usampler2D highlightOwners;
@@ -28,12 +32,16 @@ void main() {
   ivec2 offset = logical - destinationRect.xy;
   int blend = state.x, sampleMode = state.y;
   if (state.w != 0) {
+#ifdef HARDWARE_COMPOSITION
+    if (!(uintBitsToFloat(labelDepth.x) < texelFetch(sceneDepth, pixel, 0).r)) discard;
+#else
     uvec2 z = texelFetch(sceneDepth, pixel, 0).yz;
     // Labels carry positive view Z. Reject negative scene depth before
     // comparing the ordered IEEE words, including the positive clear sentinel.
     uint signWord = state.w == 2 ? z.y : z.x;
     if ((signWord & 0x80000000u) != 0u ||
         !(labelDepth.y < z.y || (labelDepth.y == z.y && labelDepth.x < z.x))) discard;
+#endif
   }
 
   ivec4 src = ink;
@@ -73,6 +81,13 @@ void main() {
     colour = vec4(src) / 255.0;
     return;
   }
+#ifdef HARDWARE_COMPOSITION
+  if (blend == 1) src.a = 255;
+  if (blend == 5) src.rgb = ink.rgb;
+  if (blend == 7) src.rgb = (src.rgb * src.a + 127) / 255;
+  colour = vec4(src) / 255.0;
+  if (blend == 8) colour.a = float(src.a) / float(captionScale);
+#else
   ivec4 dst = bytes(texelFetch(destinationImage, pixel, 0));
   if (blend == 1) {
     dst.rgb = src.rgb;
@@ -90,6 +105,7 @@ void main() {
     dst.rgb = (src.rgb * src.a + dst.rgb * (scale - src.a) + scale / 2) / scale;
   }
   colour = vec4(dst) / 255.0;
+#endif
 }
 )glsl";
 

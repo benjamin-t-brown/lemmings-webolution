@@ -32,6 +32,8 @@ struct GlSceneImage {
   bool depth64 = false;
   unsigned highlights = 0;
   bool consumableColour = false;
+  // A hardware depth texture stores (view Z - minimum) * scale.
+  float depthMinimum = 0, depthScale = 0;
 };
 
 // The presenter owns its window and context. The application borrows the
@@ -48,6 +50,7 @@ class GlPresenter {
   virtual std::expected<bool, std::string> fallbackToSoftware(std::string_view) { return false; }
   virtual std::expected<void, std::string> present(const Image& image, Image* readback) = 0;
   virtual bool gpuComposition() const { return false; }
+  virtual void setExactPageComposition(bool) {}
   virtual GlProgramCache* programCache() { return nullptr; }
   virtual void beginLevelGpuProfile(int) {}
   virtual void endLevelGpuProfile() {}

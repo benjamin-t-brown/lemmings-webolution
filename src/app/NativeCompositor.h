@@ -25,6 +25,9 @@ class GlCompositor {
     if (target_) gl_.DeleteFramebuffers(1, &target_);
     if (vao_) gl_.DeleteVertexArrays(1, &vao_);
     if (program_) gl_.DeleteProgram(program_);
+#ifndef __EMSCRIPTEN__
+    if (hardwareProgram_) gl_.DeleteProgram(hardwareProgram_);
+#endif
     if (colour_) gl_.DeleteTextures(1, &colour_);
     if (scratch_) gl_.DeleteTextures(1, &scratch_);
     if (iconTaps_) gl_.DeleteTextures(1, &iconTaps_);
@@ -44,25 +47,17 @@ class GlCompositor {
     copy_ = WEBO_GL_ENTRY(CopyTexSubImage2D, decltype(copy_));
     blit_ = WEBO_GL_ENTRY(BlitFramebuffer, decltype(blit_));
 #ifndef __EMSCRIPTEN__
-    if (SDL_GL_ExtensionSupported("GL_ARB_texture_barrier"))
-      textureBarrier_ = WEBO_GL_ENTRY(TextureBarrier, PFNGLTEXTUREBARRIERPROC);
+    enable_ = WEBO_GL_ENTRY(Enable, decltype(enable_));
+    blend_ = WEBO_GL_ENTRY(BlendFuncSeparate, decltype(blend_));
+    equation_ = WEBO_GL_ENTRY(BlendEquationSeparate, decltype(equation_));
+    if (!enable_ || !blend_ || !equation_)
+      return std::unexpected("OpenGL compositor blending is unavailable");
 #endif
     if (!location_ || !one_ || !four_ || !depthWords_ || !copy_ || !blit_)
       return std::unexpected("OpenGL compositor entry point is unavailable");
-    const auto linked = linkGlProgram(gl_, presentationShader(kSceneShaderDialect, kPresentationVertex),
-        presentationShader(kSceneShaderDialect, kCompositorFragment));
-    if (!linked) return std::unexpected(linked.error());
-    program_ = *linked;
-    gl_.UseProgram(program_);
-    one_(location_(program_, "sourceImage"), 0);
-    one_(location_(program_, "destinationImage"), 1);
-    one_(location_(program_, "sceneDepth"), 2);
-    one_(location_(program_, "iconTaps"), 3);
-    one_(location_(program_, "sceneHighlights"), 4);
-    one_(location_(program_, "highlightOwners"), 5);
-    uniforms_ = {location_(program_, "destinationRect"), location_(program_, "sourceRect"),
-        location_(program_, "state"), location_(program_, "ink"), location_(program_, "captionScale"),
-        location_(program_, "labelDepth")};
+#ifdef __EMSCRIPTEN__
+    if (auto linked = selectProgram(false); !linked) return linked;
+#endif
     gl_.GenFramebuffers(1, &target_);
     gl_.GenVertexArrays(1, &vao_);
     for (auto* handle : {&colour_, &scratch_, &iconTaps_, &hover_, &highlightOwners_}) *handle = newTexture();
@@ -112,12 +107,13 @@ class GlCompositor {
   }
 
   std::expected<void, std::string> compose(const GlSceneImage& scene, const PreparedPage& page,
-                                           const PreparedLevelLayers& layers) {
+                                           const PreparedLevelLayers& layers, bool hardware = false) {
     if (scene.width <= 0 || scene.height <= 0 || (!scene.colour && !page.image))
       return std::unexpected("OpenGL composition requires a viewport and a scene or page");
     if (page.image && (page.image->width != scene.width || page.image->height != scene.height ||
                        page.image->rgba.size() != page.image->pixelCount() * 4))
       return std::unexpected("OpenGL page must match the logical viewport in packed RGBA8");
+    if (auto linked = selectProgram(hardware); !linked) return linked;
     gl_.ActiveTexture(GL_TEXTURE0);
     if (auto allocated = allocateTarget(scene.width, scene.height); !allocated) return allocated;
     gl_.BindFramebuffer(GL_FRAMEBUFFER, target_);
@@ -133,6 +129,7 @@ class GlCompositor {
     drawBase = output == colour_;
     dirty_.clear();
     snapshotReady_ = false;
+    previousBlend_ = -1;
 #endif
     gl_.Disable(GL_DEPTH_TEST);
     gl_.Disable(GL_BLEND);
@@ -142,14 +139,13 @@ class GlCompositor {
 #endif
     gl_.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
     gl_.ReadBuffer(GL_COLOR_ATTACHMENT0);
-    gl_.UseProgram(program_);
     gl_.BindVertexArray(vao_);
 #ifdef __EMSCRIPTEN__
     bind(1, scratch_);
     bind(2, scene.depth ? scene.depth : emptyInteger_);
     bind(4, scene.highlights ? scene.highlights : emptyInteger_);
 #else
-    bind(1, textureBarrier_ ? targetColour_ : scratch_);
+    if (!hardware_) bind(1, textureBarrier_ ? targetColour_ : scratch_);
     bind(2, scene.depth);
     bind(4, scene.highlights);
 #endif
@@ -158,6 +154,8 @@ class GlCompositor {
     highlights_ = scene.highlights != 0;
     depth_ = scene.depth != 0;
     depth64_ = scene.depth64;
+    depthMinimum_ = scene.depthMinimum;
+    depthScale_ = scene.depthScale;
     const Rect full{0, 0, width_, height_};
     alpha_ = page.image ? page.image->alpha : AlphaMode::Opaque;
     if (page.image) {
@@ -176,6 +174,13 @@ class GlCompositor {
     for (const auto& layer : layers.draws) std::visit([this](const auto& item) { draw(item); }, layer);
     gl_.ActiveTexture(GL_TEXTURE0);
     gl_.BindFramebuffer(GL_FRAMEBUFFER, 0);
+    gl_.Disable(GL_BLEND);
+#ifndef __EMSCRIPTEN__
+    if (hardware_) equation_(GL_FUNC_ADD, GL_FUNC_ADD);
+    // Ordinary play stops asking for GL errors after a warm-up: the query
+    // synchronizes with a threaded driver. The exact path keeps its check.
+    if (hardware_ && hardwareComposed_++ >= 16) return {};
+#endif
     return status("compose OpenGL frame");
   }
 
@@ -207,6 +212,44 @@ class GlCompositor {
   struct Rect { int left, top, width, height; };
   enum Blend { Replace, SolidRgb, IconAlpha, TruncateRgb, RoundRgb, GlyphAlpha, AddRgb, AddAlpha, Caption };
   enum Sample { Constant, Point, IconTaps, Scene, Plate, SceneHighlights };
+
+  std::expected<void, std::string> selectProgram(bool hardware) {
+    GLuint* program = &program_;
+    Uniforms* uniforms = &exactUniforms_;
+#ifndef __EMSCRIPTEN__
+    if (hardware) {
+      program = &hardwareProgram_;
+      uniforms = &hardwareUniforms_;
+    }
+#endif
+    hardware_ = hardware;
+    if (!*program) {
+      auto fragment = presentationShader(kSceneShaderDialect,
+          hardware ? "#define HARDWARE_COMPOSITION\n" : "");
+      fragment += kCompositorFragment;
+      const auto linked = linkGlProgram(gl_, presentationShader(kSceneShaderDialect, kPresentationVertex), fragment);
+      if (!linked) return std::unexpected(linked.error());
+      *program = *linked;
+      gl_.UseProgram(*program);
+      const auto locate = [&](const char* name) { return location_(*program, name); };
+      one_(locate("sourceImage"), 0);
+      one_(locate("destinationImage"), 1);
+      one_(locate("sceneDepth"), 2);
+      one_(locate("iconTaps"), 3);
+      one_(locate("sceneHighlights"), 4);
+      one_(locate("highlightOwners"), 5);
+      *uniforms = {locate("destinationRect"), locate("sourceRect"), locate("state"),
+                   locate("ink"), locate("captionScale"), locate("labelDepth")};
+#ifndef __EMSCRIPTEN__
+      if (!hardware && SDL_GL_ExtensionSupported("GL_ARB_texture_barrier"))
+        textureBarrier_ = WEBO_GL_ENTRY(TextureBarrier, PFNGLTEXTUREBARRIERPROC);
+#endif
+    } else {
+      gl_.UseProgram(*program);
+    }
+    uniforms_ = *uniforms;
+    return {};
+  }
 
   std::expected<void, std::string> status(const char* operation) const {
     const auto error = gl_.GetError();
@@ -255,7 +298,7 @@ class GlCompositor {
     const int right = std::min(dest.left + dest.width, width_);
     const int bottom = std::min(dest.top + dest.height, height_);
     if (left >= right || top >= bottom) return;
-    if (blend != Replace) {
+    if (blend != Replace && !hardware_) {
 #ifndef __EMSCRIPTEN__
       // Disjoint operations can share a destination snapshot. Overlapping
       // operations still see all preceding byte-rounded writes.
@@ -280,7 +323,20 @@ class GlCompositor {
 #endif
     }
 #ifndef __EMSCRIPTEN__
-    dirty_.push_back({left, top, right - left, bottom - top});
+    if (hardware_ && blend != previousBlend_) {
+      previousBlend_ = blend;
+      if (blend == Replace) {
+        gl_.Disable(GL_BLEND);
+      } else {
+        enable_(GL_BLEND);
+        equation_(GL_FUNC_ADD, blend == IconAlpha ? GL_MAX : GL_FUNC_ADD);
+        if (blend == SolidRgb) blend_(GL_ONE, GL_ZERO, GL_ZERO, GL_ONE);
+        else if (blend == AddRgb || blend == AddAlpha) blend_(GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
+        else blend_(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO, GL_ONE);
+      }
+    } else if (!hardware_) {
+      dirty_.push_back({left, top, right - left, bottom - top});
+    }
 #endif
 #ifdef __EMSCRIPTEN__
     if (!source) source = emptyColour_;
@@ -294,8 +350,9 @@ class GlCompositor {
     four_(uniforms_.ink, rgb[0], rgb[1], rgb[2], alpha);
     one_(uniforms_.caption, scale);
     if (depthMode) {
-      auto stored = static_cast<float>(*depth);
-      if (stored > *depth) stored = std::nextafter(stored, -std::numeric_limits<float>::infinity());
+      const double value = hardware_ ? (*depth - depthMinimum_) * depthScale_ : *depth;
+      auto stored = static_cast<float>(value);
+      if (stored > value) stored = std::nextafter(stored, -std::numeric_limits<float>::infinity());
       const auto bits = depth64_ ? std::bit_cast<std::uint64_t>(*depth) : std::bit_cast<std::uint32_t>(stored);
       depthWords_(uniforms_.depth, GLuint(bits), GLuint(bits >> 32));
     }
@@ -434,7 +491,8 @@ class GlCompositor {
   GLuint emptyColour_ = 0, emptyInteger_ = 0;
 #endif
   int width_ = 0, height_ = 0;
-  bool depth_ = false, depth64_ = false, highlights_ = false;
+  bool depth_ = false, depth64_ = false, highlights_ = false, hardware_ = false;
+  float depthMinimum_ = 0, depthScale_ = 0;
   AlphaMode alpha_ = AlphaMode::Opaque;
   struct Page { const Image* image = nullptr; std::uint64_t revision = 0; GLuint texture = 0; };
   std::map<shell::Screen, Page> pages_;
@@ -442,7 +500,8 @@ class GlCompositor {
   std::vector<std::array<int, 2>> taps_;
   std::vector<std::uint8_t> hoverBytes_;
   std::vector<std::uint32_t> highlightIds_;
-  struct Uniforms { GLint dest, source, state, ink, caption, depth; } uniforms_{};
+  struct Uniforms { GLint dest, source, state, ink, caption, depth; };
+  Uniforms uniforms_{}, exactUniforms_{};
   PFNGLGETUNIFORMLOCATIONPROC location_ = nullptr;
   PFNGLUNIFORM1IPROC one_ = nullptr;
   PFNGLUNIFORM4IPROC four_ = nullptr;
@@ -450,6 +509,13 @@ class GlCompositor {
   decltype(&::glCopyTexSubImage2D) copy_ = nullptr;
   PFNGLBLITFRAMEBUFFERPROC blit_ = nullptr;
 #ifndef __EMSCRIPTEN__
+  GLuint hardwareProgram_ = 0;
+  unsigned hardwareComposed_ = 0;
+  Uniforms hardwareUniforms_{};
+  decltype(&::glEnable) enable_ = nullptr;
+  PFNGLBLENDFUNCSEPARATEPROC blend_ = nullptr;
+  PFNGLBLENDEQUATIONSEPARATEPROC equation_ = nullptr;
+  int previousBlend_ = -1;
   GLuint targetColour_ = 0;
   bool snapshotReady_ = false;
   std::vector<Rect> dirty_;

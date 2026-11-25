@@ -55,10 +55,10 @@ class SdlWindow {
                      RendererChoice requested = RendererChoice::Software,
                      CreateGlPresenter createGl = nullptr,
                      const GlFrameComparison* comparison = nullptr,
-                     bool useRequestedProfileScale = false)
+                     bool useRequestedProfileScale = false, bool exactGl = false)
       : choice_(choice), runOverride_(runOverride), setIcon_(setIcon),
         requested_(requested), createGl_(createGl), comparison_(comparison),
-        useRequestedProfileScale_(useRequestedProfileScale) {
+        useRequestedProfileScale_(useRequestedProfileScale), exactGl_(exactGl) {
 #ifndef __EMSCRIPTEN__
     scale_ = desktopWindowScale(windowScaleChoice(choice, runOverride), 0);
 #endif
@@ -103,11 +103,25 @@ class SdlWindow {
     };
     std::string glFailure;
     if (requested_ != RendererChoice::Software) {
-      auto result = createGl_ ? createGl_(title, width, height, desktop || !show) :
+      int glScale = initialScale;
+#ifndef __EMSCRIPTEN__
+      if (desktop) {
+        SDL_Rect usable{};
+        if (SDL_GetDisplayUsableBounds(0, &usable) == 0) {
+          // Start at the expected client size. configureWindow checks actual
+          // borders and display placement before the first present.
+          glScale = desktopWindowScale(windowScaleChoice(choice_, runOverride_),
+              largestFittingWindowScale(usable.w, usable.h - 32));
+        }
+        if (useRequestedProfileScale_ && runOverride_) glScale = runOverride_;
+      }
+#endif
+      auto result = createGl_ ? createGl_(title, kGameWidth * glScale, kGameHeight * glScale, desktop || !show) :
           std::expected<std::unique_ptr<GlPresenter>, std::string>(
               std::unexpected("OpenGL presentation is unavailable in this build"));
       if (result) {
         gl_ = std::move(*result);
+        gl_->setExactPageComposition(exactGl_ || hasGlComparison());
         window_ = gl_->window();
         configureWindow();
         logBackend("gl", gl_->description());
@@ -155,8 +169,9 @@ class SdlWindow {
   GlPresenter* glCompositor() const {
     return gl_ && gl_->gpuComposition() ? gl_.get() : nullptr;
   }
+  bool hasGlComparison() const { return comparison_ && comparison_->checkpoint && comparison_->compare; }
   bool compareGlFrame(shell::Screen screen, int frame) const {
-    return comparison_ && comparison_->checkpoint && comparison_->compare && comparison_->checkpoint(screen, frame);
+    return hasGlComparison() && comparison_->checkpoint(screen, frame);
   }
   void reportGlFrame(shell::Screen screen, int frame, const Image& cpu, const Image& gpu) const {
     comparison_->compare(screen, frame, cpu, gpu);
@@ -302,6 +317,7 @@ class SdlWindow {
   CreateGlPresenter createGl_;
   const GlFrameComparison* comparison_;
   [[maybe_unused]] bool useRequestedProfileScale_;
+  bool exactGl_;
   int scale_ = 1;
   SDL_Window* window_ = nullptr;
   SDL_Renderer* renderer_ = nullptr;

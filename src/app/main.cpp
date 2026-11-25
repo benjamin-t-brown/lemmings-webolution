@@ -94,6 +94,7 @@
 #include "app/SdlWindow.hpp"
 #ifdef WEBOLUTION_GL_SCENE
 #include "app/OpaqueSceneComparison.h"
+#include "app/HardwareLevelScene.h"
 #endif
 #ifdef WEBOLUTION_WINDOWS_ICON
 #include "app/WindowsWindowIcon.h"
@@ -153,6 +154,7 @@ struct Args {
   bool invalidWindowScale = false;
   app::RendererChoice renderer = app::RendererChoice::Software;
   bool invalidRenderer = false;
+  bool glExact = false;
   fs::path opaqueComparison;
   std::vector<int> opaqueCheckpoints;
   bool invalidOpaqueComparison = false;
@@ -192,7 +194,7 @@ Args parseArgs(int argc, char** argv) {
     const std::string arg = argv[i];
     if (arg != "--game-dir" && arg != "--no-audio" && arg != "--window-scale" &&
         arg != "--record" && arg != "--renderer" && arg != "--compare-opaque" &&
-        arg != "--compare-frame") defaultFrontend = false;
+        arg != "--compare-frame" && arg != "--gl-exact") defaultFrontend = false;
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
     else if (arg == "--version") a.version = true;
@@ -239,6 +241,7 @@ Args parseArgs(int argc, char** argv) {
       else if (value == "auto") a.renderer = app::RendererChoice::Auto;
       else a.invalidRenderer = true;
     }
+    else if (arg == "--gl-exact") a.glExact = true;
     else if (arg == "--compare-opaque") {
       a.opaqueComparison = next();
       a.invalidOpaqueComparison |= a.opaqueComparison.empty();
@@ -305,6 +308,7 @@ void printHelp() {
             "--level ID --sim starts direct play. Escape opens the level menu.\n"
             "--window-scale 1|2|3 overrides the saved Window size for this run.\n"
             "--renderer software|gl|auto selects window presentation (default software).\n"
+            "--gl-exact opts into the native OpenGL software-matching renderer.\n"
             "gl requires native OpenGL 3.3 core. auto tries GL and falls back to software.\n"
             "--compare-opaque DIR saves native GL and software scene, actor and effect comparisons at level frame 0,\n"
             "the first terrain edit, F10, and any repeatable --compare-frame N checkpoints.\n"
@@ -906,6 +910,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   using BackdropStage = app::BackdropScene::Stage;
   const bool describeComparison = !args.opaqueComparison.empty();
   bool prepareGpuScene = describeComparison;
+  bool recordComparisonRanges = describeComparison;
   const auto prepareLevelScene = [&](const app::CameraBasis& camera) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
     app::PreparedLevelScene frame;
@@ -926,21 +931,22 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         frame.primary = primaryDraws;
       } else {
         frame.primary = std::make_shared<app::BackdropScene::PreparedStage>(
-            backdrop->prepareStage(camera, *library, BackdropStage::Primary, false, c3Diagnostic, prepareGpuScene));
+            backdrop->prepareStage(camera, *library, BackdropStage::Primary, false, c3Diagnostic,
+                                   recordComparisonRanges));
         if (!c3Diagnostic && frame.cachePose) {
           primaryDraws = frame.primary;
           primaryPose = camera;
         }
       }
       frame.legacy = backdrop->prepareStage(camera, *library, BackdropStage::LegacyUnattributed,
-                                            trackSceneHover, false, prepareGpuScene);
+                                            trackSceneHover, false, recordComparisonRanges);
     }
     const auto revision = scene->terrainBlocksRebuilt() + scene->counterGateRevision();
     if (frame.cacheTube && tubeDraws && tubeTerrainRevision == revision && sameCamera(*tubePose, camera)) {
       frame.tube = tubeDraws;
     } else {
       frame.tube = std::make_shared<app::TubeScene::PreparedTube>(
-          scene->prepareTube(camera, options, trackSceneHover, prepareGpuScene));
+          scene->prepareTube(camera, options, trackSceneHover, recordComparisonRanges));
       if (frame.cacheTube && frame.cachePose) {
         tubeDraws = frame.tube;
         tubePose = camera;
@@ -949,7 +955,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     }
     if (backdrop) {
       const auto prepare = [&](BackdropStage stage) {
-        return backdrop->prepareStage(camera, *library, stage, trackSceneHover, false, prepareGpuScene);
+        return backdrop->prepareStage(camera, *library, stage, trackSceneHover, false, recordComparisonRanges);
       };
       frame.gadgetEffects = prepare(BackdropStage::GadgetEffect);
       frame.pipes = prepare(BackdropStage::FluidPipe);
@@ -965,7 +971,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     frame.particles = scene->prepareDeathParticles(camera, *library);
     if (backdrop)
       frame.teleportEffects = backdrop->prepareStage(camera, *library, BackdropStage::TeleportEffect,
-                                                     trackSceneHover, false, prepareGpuScene);
+                                                     trackSceneHover, false, recordComparisonRanges);
     return frame;
   };
   const auto renderLevelScene = [&](const app::PreparedLevelScene& frame, app::Raster& target) {
@@ -1060,8 +1066,33 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
 #ifdef WEBOLUTION_GL_SCENE
   std::optional<app::OpaqueSceneComparison> opaqueComparison;
   std::optional<app::OpaqueSceneComparison> glScene;
+  std::unique_ptr<app::HardwareLevelScene> hardwareScene;
   bool opaqueCaptureRequested = false, firstTerrainEditCaptured = false;
-  if (prepareGpuScene) {
+  const auto sceneStartFailed = [&](const std::string& error) {
+    const auto fallback = presentation.fallbackToSoftware(error);
+    if (!fallback || !*fallback) {
+      std::fprintf(stderr, "GL scene: %s\n", fallback ? error.c_str() : fallback.error().c_str());
+      return true;
+    }
+    prepareGpuScene = false;
+    recordComparisonRanges = false;
+    glCompositor = nullptr;
+    return false;
+  };
+#ifdef WEBOLUTION_NATIVE_GL
+  if (glCompositor && !args.glExact && !presentation.hasGlComparison()) {
+    auto gpu = app::createHardwareLevelScene(*glCompositor->programCache());
+    if (gpu) {
+      hardwareScene = std::move(*gpu);
+      if (logLevelDetails) std::printf("scene renderer: hardware OpenGL level=%s\n", args.level.c_str());
+    } else if (sceneStartFailed(gpu.error())) {
+      return 1;
+    }
+    profileStartup("hardware GL mesh program ready");
+  }
+#endif
+  if (prepareGpuScene && !hardwareScene) {
+    recordComparisonRanges = true;
     auto gpu = app::createOpaqueGpu(
 #ifdef WEBOLUTION_NATIVE_GL
         describeComparison || !args.shot.empty(),
@@ -1072,16 +1103,19 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     );
     profileStartup("GL scene programs ready");
     if (!gpu) {
-      if (auto fallback = presentation.fallbackToSoftware(gpu.error()); !fallback || !*fallback) {
-        std::fprintf(stderr, "GL scene: %s\n", fallback ? gpu.error().c_str() : fallback.error().c_str());
-        return 1;
-      }
-      prepareGpuScene = false;
-      glCompositor = nullptr;
+      if (sceneStartFailed(gpu.error())) return 1;
     }
     else if (describeComparison) opaqueComparison.emplace(std::move(*gpu), args.opaqueComparison);
     else glScene.emplace(std::move(*gpu), fs::path{});
   }
+  const auto drawGlScene = [&](const app::PreparedLevelScene& frame, int index, std::uint64_t clock,
+                                bool collectHatches = true) -> std::expected<void, std::string> {
+    if (hardwareScene) return hardwareScene->draw(frame);
+    return glScene->draw(frame, args.level, index, clock, 0, 0, false, nullptr, -1, -1, collectHatches);
+  };
+  const auto glSceneImage = [&] {
+    return hardwareScene ? hardwareScene->image() : glScene->sceneImage();
+  };
 #endif
 #else
   constexpr bool glCompositor = false;
@@ -1099,7 +1133,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     }
 #ifdef WEBOLUTION_GL_SCENE
     else if (!args.shot.empty()) {
-      if (auto drawn = glScene->draw(initialScene, args.level, 0, 0, 0, 0, false); !drawn) {
+      if (auto drawn = drawGlScene(initialScene, 0, 0, !hardwareScene); !drawn) {
         std::fprintf(stderr, "screenshot: %s\n", drawn.error().c_str());
         return 1;
       }
@@ -1216,8 +1250,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     }
     Image image;
 #ifdef WEBOLUTION_GL_SCENE
-    if (glScene) {
-      auto captured = glCompositor->composeGl(glScene->sceneImage(), {}, layers);
+    if (glCompositor) {
+      auto captured = glCompositor->composeGl(glSceneImage(), {}, layers);
       if (captured) captured = glCompositor->readGl(image);
       if (!captured) { std::fprintf(stderr, "screenshot: %s\n", captured.error().c_str()); return 1; }
     } else
@@ -1440,7 +1474,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   [[maybe_unused]] app::NativeLevelQueries nativeLevelQueries;
   const auto resetDisplayedQueries = [&] {
 #ifdef WEBOLUTION_GL_SCENE
-    if (glScene) {
+    if (glCompositor) {
       displayedQueries.emplace(displayedCamera, [&](int x, int y) -> std::pair<std::size_t, double> {
         if constexpr (nativeQueries) {
           if (!displayedFrame) return {app::ActorDepth::noOwner, std::numeric_limits<double>::infinity()};
@@ -1512,7 +1546,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (!windowSceneCurrent) {
       displayedFrame.emplace(app::PreparedLevelFrame{prepareLevelScene(displayedCamera), {}});
 #ifdef WEBOLUTION_GL_SCENE
-      if (glScene) {
+      if (glCompositor) {
         if constexpr (nativeQueries) {
           auto& prepared = displayedFrame->scene;
           const auto [x, y] = scenePointer();
@@ -1548,8 +1582,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         }
         glCompositor->beginLevelGpuProfile(rendered);
         app::profile::Scope profileScene(app::profile::GlScene);
-        if (auto drawn = glScene->draw(displayedFrame->scene, args.level, rendered,
-            world ? world->levelClockMs() : 0, 0, 0, false, nullptr, -1, -1, !nativeQueries); !drawn) {
+        if (auto drawn = drawGlScene(displayedFrame->scene, rendered,
+            world ? world->levelClockMs() : 0, !nativeQueries); !drawn) {
 #ifdef __EMSCRIPTEN__
           if (!recoverLevelRenderer(drawn.error()))
 #endif
@@ -1572,7 +1606,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           std::vector<std::optional<app::ActorSpritePlacement>>{};
       std::vector<app::HatchHoverTarget> hatches;
 #ifdef WEBOLUTION_GL_SCENE
-      if (glScene) hatches.assign(glScene->hatches().begin(), glScene->hatches().end());
+      if (glCompositor) {
+        if (glScene) hatches.assign(glScene->hatches().begin(), glScene->hatches().end());
+      }
       else
 #endif
       if (backdrop) {
@@ -1589,7 +1625,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const auto hatchesAt = [&](int x, int y, bool all = false) -> std::vector<app::HatchHoverTarget> {
     const auto& displayed = ensureDisplayedScene();
 #ifdef WEBOLUTION_GL_SCENE
-    if (nativeQueries && glScene && displayedFrame) {
+    if (nativeQueries && glCompositor && displayedFrame) {
       auto targets = nativeLevelQueries.bounds(displayedFrame->scene, displayedFrame->scene.hatchQueries,
           all ? std::nullopt : std::optional{std::pair{x, y}});
       if (world)
@@ -2415,7 +2451,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const auto* pads = pressurePadPresentation ? &*pressurePadPresentation : nullptr;
             const auto portals = pointerOnHud ? TeleportHoverBindings{} : teleportHover;
 #ifdef WEBOLUTION_GL_SCENE
-            if (glScene && displayedFrame->scene.trackHighlights) {
+            if (glCompositor && displayedFrame->scene.trackHighlights) {
               app::SceneHighlightId pointerOwner{};
               if (!portals.empty() &&
                   app::pointerOverSceneBounds(cursorX, cursorY, 0, 0, camera.width, camera.height)) {
@@ -2434,7 +2470,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
                   });
               if (selected) {
                 switchHover = true;
-                layers.draws.emplace_back(std::move(selected->targets));
+                if (hardwareScene) {
+                  const auto pixels = nativeLevelQueries.full(displayedFrame->scene).highlightPixels();
+                  for (std::size_t p = 0; p < pixels.size(); ++p)
+                    if (std::ranges::find(selected->targets, pixels[p].owner) != selected->targets.end())
+                      highlights.push_back({p, pixels[p].rgb});
+                } else {
+                  layers.draws.emplace_back(std::move(selected->targets));
+                }
                 for (const auto sensor : selected->sensors) {
                   const auto& entry = world->setup().occupancySensors[sensor];
                   if constexpr (nativeQueries) {
@@ -2457,7 +2500,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           }
           hatches = queries.hatches();
 #ifdef WEBOLUTION_GL_SCENE
-          if (nativeQueries && glScene && (levelObserver || (canHover && cursorInWindow))) {
+          if (nativeQueries && glCompositor && (levelObserver || (canHover && cursorInWindow))) {
             nativeHatches = hatchesAt(cursorX, cursorY, bool(levelObserver));
             hatches = nativeHatches;
           }
@@ -2488,7 +2531,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const auto walker = std::count_if(lemmings.begin(), lemmings.begin() + *hover,
                                               [](const sim::Lemming& l) { return l.alive(); });
 #ifdef WEBOLUTION_GL_SCENE
-            if (glScene) {
+            if (hardwareScene) {
+              if (nativeLevelQueries.prepareActorMark(highlights, *scene, displayedFrame->scene, walker))
+                view.markedActor = hover;
+            } else if (glScene) {
               markedWalker = walker;
               if (auto marked = glScene->markActor(displayedFrame->scene, walker, bool(levelObserver))) {
                 if (*marked) view.markedActor = hover;
@@ -2507,7 +2553,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           } else if (canHover && cursorInWindow && backdrop && !hover && !switchHover) {
             std::optional<app::PickBox> exit;
 #ifdef WEBOLUTION_GL_SCENE
-            if (glScene) exit = meshBounds(backdrop->prepareExitQueries(camera, cursorX, cursorY));
+            if (glCompositor) exit = meshBounds(backdrop->prepareExitQueries(camera, cursorX, cursorY));
 #endif
             if (windowRaster) exit = backdrop->exitHoverTarget(camera, *windowRaster, cursorX, cursorY);
             if (exit) {
@@ -2607,8 +2653,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           view.hatches = hatches;
         }
 #ifdef WEBOLUTION_GL_SCENE
-        if (glScene) {
-          if (auto composed = glCompositor->composeGl(glScene->sceneImage(), {}, displayedFrame->layers);
+        if (glCompositor) {
+          if (auto composed = glCompositor->composeGl(glSceneImage(), {}, displayedFrame->layers);
               !composed) failPresentation(composed.error());
         }
 #endif
@@ -2805,6 +2851,14 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
     std::fprintf(stderr, "--compare-opaque requires a directory and --compare-frame a nonnegative frame\n");
     return 1;
   }
+  if (args.glExact) {
+#ifdef WEBOLUTION_NATIVE_GL
+    args.renderer = RendererChoice::Gl;
+#else
+    std::fprintf(stderr, "--gl-exact requires the native OpenGL build\n");
+    return 1;
+#endif
+  }
   if (!args.opaqueComparison.empty()) {
 #ifdef WEBOLUTION_NATIVE_GL
     if (args.map || !args.shot.empty() || !args.replayFile.empty() || args.skillPanel ||
@@ -2928,7 +2982,8 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   constexpr CreateGlPresenter createGl = nullptr;
 #endif
   SdlWindow presentation(sound.windowScale, windowScaleOverride(args.windowScale, useAutomationScale),
-                         setIcon, args.renderer, createGl, &options.glComparison, args.profileMotion.has_value());
+                         setIcon, args.renderer, createGl, &options.glComparison, args.profileMotion.has_value(),
+                         args.glExact || !args.opaqueComparison.empty());
   auto* sharedWindow = &presentation;
 #else
   SdlWindow* sharedWindow = nullptr;

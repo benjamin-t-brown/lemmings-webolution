@@ -129,3 +129,13 @@ Implementation waited for playable v1 until the user pulled phases forward (belo
 The user pulled phases 1 to 7 forward ahead of playable v1, on the `opengl` branch
 ([request](playtest/2026-11-24-opengl-request.md)). Phase 8 waits for a reported W1 pose and
 phase 9 for the user's hardware runs.
+
+### User decision (2026-11-25): ordinary GPU drawing
+After the first GL play ran at about 55 fps on the 144 Hz main machine, gl-perf-001 removed the
+per-frame GPU readbacks but kept exact software matching, which still cost about 2.5 ms of GPU time
+per frame. The user chose speed: ordinary GL play draws with hardware rasterization, the depth test
+and ordinary blending, and must be considerably faster than software. The exact path stays as a
+comparison mode with the parity rules above. In ordinary play the rule becomes visual equivalence:
+the same objects, layers and effects, with small differences allowed at triangle edges, depth ties
+and blend rounding. Picking still matches software. Queued as gl-perf-002
+([request](playtest/2026-11-24-opengl-request.md)).

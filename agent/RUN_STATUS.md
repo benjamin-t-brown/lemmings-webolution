@@ -12,6 +12,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
 - gl-presenter-web-001: **blocked** — OpenGL phase 2b: WebGL2 presenter, Start-page renderer choice and software fallback
 - gl-perf-001: **blocked** — OpenGL performance: native GL frame cost far below software, no per-frame GPU stalls
+- gl-perf-002: **ready** — OpenGL performance: ordinary GL play on normal GPU drawing, exact path as comparison mode
 - gl-web-001: **blocked** — OpenGL web: the finished GL renderer on WebGL2, with the parked presenter of gl-presenter-web-001
 
 ## Recently completed queue entries

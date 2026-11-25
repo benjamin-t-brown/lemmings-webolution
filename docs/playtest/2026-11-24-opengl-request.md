@@ -33,3 +33,12 @@ time is a GPU wait, not CPU work). The user expects thousands of frames per seco
 native performance part of phase 9 forward: measure GL and GPU time, remove every per-frame GPU wait from
 ordinary play and bring GL below software. gl-web-001 now follows it. Lead measurements:
 build/gl-perf-001/lead/summary.md.
+
+gl-perf-001 outcome (2026-11-25): blocked at its attempt limit, unreviewed work committed in 636a045.
+Ordinary play no longer reads back from the GPU and GL beat software on mean and p95 in all 108
+workloads, but only 40 met the 2 ms p95; the exact-matching shaders still cost about 2.5 ms of GPU
+time, swaps still hitched (one 76 ms frame) and first present took about 1 s against 0.25 s.
+User decision (2026-11-25): ordinary GL play uses normal GPU drawing; the exact path becomes a
+comparison mode. Queued gl-perf-002 (GL p95 at most 1.5 ms and at most half the software mean in every
+workload, GPU p95 at most 0.5 ms, no hitch above 6.9 ms, first present no slower than software);
+gl-web-001 follows it.

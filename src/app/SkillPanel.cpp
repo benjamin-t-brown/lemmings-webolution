@@ -119,10 +119,11 @@ void drawIconRect(Image& dest, const Image& sheet, const SpriteFrame& f, SkillPa
   }
 }
 
-void drawPortraitIcon(Image& dest, const Image& sheet, const SpriteFrame& frame, std::size_t index) {
+void drawPortraitIcon(Image& dest, const Image& sheet, const SpriteFrame& frame, std::size_t index,
+                      LevelLayout layout) {
   constexpr double scales[] = {0.81, 0.59, 1.0, 0.76, 0.79, 0.78, 0.68, 0.85, 1.2, 1.25};
-  const auto plate = skillPlate(static_cast<int>(index), true);
-  const double x = plate.x + (index == 9 ? 45 : 29), y = plate.y + plate.height / 2.0;
+  const auto plate = skillPlate(static_cast<int>(index), layout);
+  const double x = plate.x + (index >= 8 ? 23 : 29), y = plate.y + plate.height / 2.0;
   const double halfWidth = frame.width * scales[index] / 2;
   const double halfHeight = frame.height * scales[index] / 2;
   drawIconRect(dest, sheet, frame, {x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight});
@@ -322,11 +323,11 @@ std::expected<SkillPanelIconAnimation, std::string> SkillPanelIconAnimation::cre
   return result;
 }
 
-void SkillPanelIconAnimation::drawIcon(Image& dest, std::size_t index, bool portrait) const {
+void SkillPanelIconAnimation::drawIcon(Image& dest, std::size_t index, LevelLayout layout) const {
   if (index >= icons_.size()) return;
   const auto& icon = icons_[index];
   const auto& pose = icon.poses[icon.current];
-  if (portrait) drawPortraitIcon(dest, textures_[pose.texture], pose.frame, index);
+  if (layout.portrait()) drawPortraitIcon(dest, textures_[pose.texture], pose.frame, index, layout);
   else drawSkillPanelIcon(dest, textures_[pose.texture], pose.frame, icon.x, icon.y, icon.scaleDelta);
 }
 
@@ -366,23 +367,23 @@ void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
 
 void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
                             std::optional<int> selectedIndex, bool fastForward,
-                            const SkillPanelIconAnimation* animation, bool portrait) const {
+                            const SkillPanelIconAnimation* animation, LevelLayout layout) const {
   for (int i = 0; i < 10; ++i)
-    drawSkillPanelPlateQuad(dest, plate_, skillPlate(i, portrait));
+    drawSkillPanelPlateQuad(dest, plate_, skillPlate(i, layout));
   if (selectedIndex && *selectedIndex >= 0 && *selectedIndex < 10)
-    drawSkillPanelPlateQuad(dest, selectedPlate_, skillPlate(*selectedIndex, portrait));
-  if (fastForward) drawSkillPanelPlateQuad(dest, selectedPlate_, skillPlate(8, portrait));
-  if (portrait) {
+    drawSkillPanelPlateQuad(dest, selectedPlate_, skillPlate(*selectedIndex, layout));
+  if (fastForward) drawSkillPanelPlateQuad(dest, selectedPlate_, skillPlate(8, layout));
+  if (layout.portrait()) {
     for (int i = 0; i < 8; ++i) {
-      const auto plate = skillPlate(i, true);
+      const auto plate = skillPlate(i, layout);
       drawPanelCount(dest, font_, counts[i], plate.x + 57, plate.y + 15, 8, 18);
     }
   } else drawSkillPanelCounts(dest, font_, counts);
   for (std::size_t i = 0; i < icons_.size(); ++i) {
-    if (animation && i < 8) animation->drawIcon(dest, i, portrait);
+    if (animation && i < 8) animation->drawIcon(dest, i, layout);
     else {
       const auto& icon = icons_[i];
-      if (portrait) drawPortraitIcon(dest, icon.texture, icon.frame, i);
+      if (layout.portrait()) drawPortraitIcon(dest, icon.texture, icon.frame, i, layout);
       else drawSkillPanelIcon(dest, icon.texture, icon.frame, icon.x, icon.y, icon.scaleDelta);
     }
   }

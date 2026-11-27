@@ -46,8 +46,10 @@ launch it without `--game-dir`.
 
 ## Emscripten
 
-With CMake, Ninja and Python 3 installed, set up the Emscripten SDK. This uses
-the same SDK version as the browser workflow.
+With CMake, Ninja and Python 3 installed, run `bash serve-web.sh` from the
+repo root to set up the SDK if needed, build the game, and start the local
+server. For manual setup, use the commands below. They use the same SDK
+version as the browser workflow.
 
 ```sh
 git clone --depth 1 --branch 5.0.3 https://github.com/emscripten-core/emsdk.git build/emsdk

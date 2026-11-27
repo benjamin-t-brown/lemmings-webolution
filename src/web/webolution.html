@@ -13,8 +13,16 @@
     display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 1rem;
   }
-  button { padding: .6rem 1rem; font: inherit; cursor: pointer; }
-  button:disabled { cursor: wait; }
+  button {
+    min-height: 2.75rem; padding: .45rem .95rem;
+    border: 2px solid #404040; border-radius: 0;
+    background: #ed1000; color: #000;
+    font: 700 1rem/1.2 system-ui, sans-serif;
+    cursor: pointer;
+  }
+  #start:enabled, button:enabled:is(:hover, :focus-visible, :active) { background: #e08000; }
+  button:focus-visible { outline: 2px solid #ffda78; outline-offset: 2px; }
+  button:disabled { background: #474747; color: #ddd; cursor: wait; }
   #setup, #status, #data-notes {
     width: min(40rem, calc(100vw - 2rem)); overflow-wrap: anywhere;
   }
@@ -48,9 +56,8 @@
   canvas[data-window-scale="2"] { width: 1280px; }
   canvas[data-window-scale="3"] { width: 1920px; }
   canvas[data-portrait-level] {
-    width: min(100vw, calc(100vh * 390 / 844));
-    width: min(100dvw, calc(100dvh * 390 / 844));
-    aspect-ratio: 390 / 844;
+    width: 100vw; width: 100dvw;
+    height: 100vh; height: 100dvh;
   }
   canvas:focus { outline: none; }
   [hidden] { display: none; }

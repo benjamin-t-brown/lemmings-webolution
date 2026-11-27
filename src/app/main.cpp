@@ -356,49 +356,49 @@ constexpr int kTouchZoomXWord = 640;
 
 std::string_view touchZoomLabel(bool zoomed) { return zoomed ? "-" : "+"; }
 
-shell::MenuParams touchZoomParams(bool zoomed, bool portrait) {
-  if (portrait) return app::portraitButtonParams(app::kPortraitZoom, touchZoomLabel(zoomed));
+shell::MenuParams touchZoomParams(bool zoomed, app::LevelLayout layout) {
+  if (layout.portrait()) return app::portraitButtonParams(app::portraitZoomButton(layout), touchZoomLabel(zoomed));
   return {.xWord = kTouchZoomXWord, .baseY = kTouchZoomBaseY, .highlight = -1};
 }
 
-bool touchZoomButtonAt(int x, int y, bool zoomed, bool portrait) {
-  if (portrait) return app::kPortraitZoom.contains(x, y);
+bool touchZoomButtonAt(int x, int y, bool zoomed, app::LevelLayout layout) {
+  if (layout.portrait()) return app::portraitZoomButton(layout).contains(x, y);
   const auto& cells = shell::fontCells();
   const auto label = touchZoomLabel(zoomed);
-  const auto params = touchZoomParams(zoomed, false);
+  const auto params = touchZoomParams(zoomed, layout);
   const auto [left, top, right, bottom] = shell::menuPlateBounds(shell::labelLeft(label, cells, params.xWord),
       params.baseY, shell::textWidth(label, cells), params);
   return left <= x && x < right && top <= y && y < bottom;
 }
 
-void drawTouchZoomButton(Image& image, const Image& font, bool zoomed, bool portrait) {
+void drawTouchZoomButton(Image& image, const Image& font, bool zoomed, app::LevelLayout layout) {
   const std::array labels{std::string(touchZoomLabel(zoomed))};
-  shell::drawMenuRows(image, font, labels, touchZoomParams(zoomed, portrait), shell::fontCells());
+  shell::drawMenuRows(image, font, labels, touchZoomParams(zoomed, layout), shell::fontCells());
 }
 
-app::CameraParams levelDisplayPose(app::CameraParams pose, bool portrait) {
-  if (!portrait) return pose;
+app::CameraParams levelDisplayPose(app::CameraParams pose, app::LevelLayout layout) {
+  if (!layout.portrait()) return pose;
   // Keep the tube large enough to pick actors, with a slightly wider field of
   // view to compensate for the narrower viewport. The longer view is real scene
   // geometry, so drawing and picking use the same projection.
   constexpr double focalScale = 0.88;
   const double radiansPerAngleUnit = pose.lensPi / pose.angleUnitsPerTurn;
   const double tangent = std::tan(pose.angleDegrees * radiansPerAngleUnit) /
-      focalScale * app::kPortraitHeight / pose.height;
+      focalScale * layout.height() / pose.height;
   pose.angleDegrees = std::atan(tangent) / radiansPerAngleUnit;
-  pose.cx += (app::kPortraitWidth - pose.width) / 2.0;
-  pose.cy += (app::kPortraitHeight - pose.height) / 2.0 + app::kPortraitHorizonOffset;
-  pose.width = app::kPortraitWidth;
-  pose.height = app::kPortraitHeight;
+  pose.cx += (layout.width() - pose.width) / 2.0;
+  pose.cy += (layout.height() - pose.height) / 2.0 + app::kPortraitHorizonOffset;
+  pose.width = layout.width();
+  pose.height = layout.height();
   pose.aspect = double(pose.width) / pose.height;
   return pose;
 }
 
-app::EntryCueFrame levelDisplayCue(app::EntryCueFrame cue, bool portrait) {
-  if (!portrait) return cue;
-  cue.rect[0] = cue.rect[0] * app::kPortraitWidth / app::kGameWidth;
-  cue.rect[2] = cue.rect[2] * app::kPortraitWidth / app::kGameWidth;
-  constexpr int offset = (app::kPortraitHeight - app::kGameHeight) / 2 + app::kPortraitHorizonOffset;
+app::EntryCueFrame levelDisplayCue(app::EntryCueFrame cue, app::LevelLayout layout) {
+  if (!layout.portrait()) return cue;
+  cue.rect[0] = cue.rect[0] * layout.width() / app::kGameWidth;
+  cue.rect[2] = cue.rect[2] * layout.width() / app::kGameWidth;
+  const int offset = (layout.height() - app::kGameHeight) / 2 + app::kPortraitHorizonOffset;
   cue.rect[1] += offset;
   cue.rect[3] += offset;
   return cue;
@@ -1148,11 +1148,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     std::fprintf(stderr, "SDL texture scale: %s\n", SDL_GetError()); return 1;
   }
 
-  bool portrait = false, layoutAwaitingFrame = false;
+  app::LevelLayout levelLayout;
+  bool layoutAwaitingFrame = false;
   params.width = app::kGameWidth; params.height = app::kGameHeight; params.aspect = 4.0 / 3.0;
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
                                   static_cast<int>(params.levelEyeHeight));
-  const auto currentDisplayPose = [&] { return levelDisplayPose(cameraIntro.pose(controls.camera()), portrait); };
+  const auto currentDisplayPose = [&] { return levelDisplayPose(cameraIntro.pose(controls.camera()), levelLayout); };
   app::Raster windowRaster(app::kGameWidth, app::kGameHeight);
   bool running = true, leftDown = false, focused = true;
   Uint8 dragButton = 0;
@@ -1226,7 +1227,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   };
   const auto hudIconPlacement = [&](const HudIcon& icon) {
     auto placement = icon.placement;
-    if (portrait) {
+    if (levelLayout.portrait()) {
       placement.destX = icon.portraitX;
       placement.destY = 19;
     }
@@ -1234,7 +1235,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   };
   const auto levelHudLines = [&](std::span<const shell::GlyphCell> cells) {
     auto lines = shell::layoutHud(app::runtimeHudValues(*world), {}, cells);
-    if (portrait) {
+    if (levelLayout.portrait()) {
       lines[0].x = 150;
       lines[1].x = 227;
       lines[2].x = 308;
@@ -1348,12 +1349,16 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   bool touchMenuPresented = false;
   bool touchZoomPresented = false;
   const auto zoomButtonAt = [&](int x, int y) {
-    return touchZoomButtonAt(x, y, controls.camera().zoomShift != 0, portrait);
+    return touchZoomButtonAt(x, y, controls.camera().zoomShift != 0, levelLayout);
+  };
+  const auto rotateButtonAt = [&](int x, int y) {
+    return levelLayout.portrait() && app::kPortraitRotate.contains(x, y);
   };
   const auto portraitControlAt = [&](int x, int y) {
-    return portrait && (app::runtimeSkillPanelIndex(x, y, true) >= 0 ||
+    return levelLayout.portrait() && (app::runtimeSkillPanelIndex(x, y, levelLayout) >= 0 ||
+        app::kPortraitRotate.contains(x, y) ||
         (touchMenuPresented && app::kPortraitMenu.contains(x, y)) ||
-        (touchZoomPresented && app::kPortraitZoom.contains(x, y)));
+        (touchZoomPresented && app::portraitZoomButton(levelLayout).contains(x, y)));
   };
   const auto cancelFastForwardHold = [&] {
     leftDown = false;
@@ -1363,7 +1368,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const auto updateFastForwardHold = [&] {
     // Provisional clone input: hold button 0 over plate 8, including dragging onto it.
     const auto onPlate = [&](int x, int y) {
-      return app::runtimeSkillPanelCommand(x, y, portrait) == app::RuntimePanelCommand::FastForward;
+      return app::runtimeSkillPanelCommand(x, y, levelLayout) == app::RuntimePanelCommand::FastForward;
     };
     const bool active = (leftDown && onPlate(pointerX, pointerY)) ||
         (touchHold && onPlate(app::touchPixel(touchHold->x), app::touchPixel(touchHold->y)));
@@ -1397,7 +1402,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const auto zoomAtPointer = [&](int x, int y) -> std::optional<app::CameraZoomPose> {
     if (controls.camera().zoomShift != 0 || rendered == 0 ||
         x < 0 || x >= displayedCamera.width || y < 0 || y >= displayedCamera.height ||
-        (runtimePanel && app::runtimeSkillPanelIndex(x, y, portrait) >= 0))
+        (runtimePanel && app::runtimeSkillPanelIndex(x, y, levelLayout) >= 0))
       return std::nullopt;
     ensureDisplayedScene();
     const auto pixel = std::size_t(y) * displayedCamera.width + x;
@@ -1416,7 +1421,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   std::optional<Uint64> releasePressedAt;
   const auto hatchPressTarget = [&](int x, int y, int button, bool actorCanReceiveSkill)
       -> std::optional<std::size_t> {
-    if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y, portrait) >= 0 ||
+    if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y, levelLayout) >= 0 ||
         portraitControlAt(x, y)) return std::nullopt;
     ensureDisplayedScene();
     const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
@@ -1546,8 +1551,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (!runtimeSim.paused()) runtimeSim.togglePause();
     uiClick(); // Provisional pause feedback.
     resetMenuInput();
-    // The dialog uses landscape coordinates, starting with its first frame.
-    if (portrait) menuDismissedThisFrame = true;
+    // Do not route queued touches into the menu before its first frame.
+    if (levelLayout.portrait()) menuDismissedThisFrame = true;
   };
   const auto activateMenu = [&](app::LevelMenuAction action) {
     switch (action) {
@@ -1576,23 +1581,27 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
 #ifdef __EMSCRIPTEN__
   const bool canShowPortrait = runtimePanel && args.c3WriteMask.empty() && args.c3WriteEvents.empty();
   bool portraitUnavailable = false;
+  int portraitTextureHeight = 0;
   const auto updateLevelLayout = [&] {
-    const bool wanted = canShowPortrait && !menuOpen() && !portraitUnavailable && web::prefersPortraitLevel();
-    if (wanted == portrait) return;
-    const int width = wanted ? app::kPortraitWidth : app::kGameWidth;
-    const int height = wanted ? app::kPortraitHeight : app::kGameHeight;
-    if (wanted && !portraitTexture) {
+    auto wanted = app::webCanvasLayout(canShowPortrait && !portraitUnavailable);
+    if (wanted.portraitHeight == levelLayout.portraitHeight) return;
+    if (wanted.portrait() && portraitTextureHeight != wanted.height()) {
       portraitTexture.reset(makeTexture(uploadRgbx ? SDL_PIXELFORMAT_RGBX32 : SDL_PIXELFORMAT_RGB24,
-                                        width, height));
+                                         wanted.width(), wanted.height()));
       if (!portraitTexture || SDL_SetTextureScaleMode(portraitTexture.get(), SDL_ScaleModeNearest) != 0) {
         std::fprintf(stderr, "SDL portrait texture: %s\n", SDL_GetError());
         portraitUnavailable = true;
-        return;
+        app::webCanvasLayout(false);
+        if (!levelLayout.portrait()) return;
+        wanted = {};
+      } else {
+        portraitTextureHeight = wanted.height();
       }
     }
     resetMenuInput();
-    portrait = wanted;
-    presentation.setLevelPortrait(portrait);
+    levelLayout = wanted;
+    presentation.setWebViewport(levelLayout);
+    const int width = levelLayout.width(), height = levelLayout.height();
     windowRaster = app::Raster(width, height);
     touch.setViewport(width, height);
     menuTouch.setViewport(width, height);
@@ -1603,7 +1612,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     layoutAwaitingFrame = true;
     pointerX = width / 2;
     pointerY = height / 2;
-    pointerInWindow = !portrait;
+    pointerInWindow = !levelLayout.portrait();
     touchMenuPresented = touchZoomPresented = false;
   };
 #endif
@@ -1648,7 +1657,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           pointerX = event.button.x; pointerY = event.button.y;
         }
         if (persistentFrontend->screen() == shell::Screen::KeyboardShortcuts) {
-          app::handleSoundOptionsInput(*persistentFrontend, event, presentation);
+          app::handleSoundOptionsInput(*persistentFrontend, event, presentation, levelLayout);
         } else if (event.type == SDL_KEYDOWN && !event.key.repeat &&
                    event.key.keysym.scancode == SDL_SCANCODE_O) {
           // READ45D575: O closes all UI2 pages directly to paused UI1.
@@ -1657,15 +1666,15 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           resetMenuInput();
           menuDismissedThisFrame = true;
         } else if (persistentFrontend->screen() == shell::Screen::SoundOptions) {
-          app::handleSoundOptionsInput(*persistentFrontend, event, presentation);
+          app::handleSoundOptionsInput(*persistentFrontend, event, presentation, levelLayout);
           if (persistentFrontend->screen() == shell::Screen::Dialog) {
             levelMenu->open(); // caller 1F is rebuilt with Resume focused
             menuDismissedThisFrame = true;
           }
         } else if (event.type == SDL_MOUSEMOTION) {
-          levelMenu->hover(pointerX, pointerY);
+          levelMenu->hover(pointerX, pointerY, levelLayout);
         } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-          activateMenu(levelMenu->actionAt(pointerX, pointerY));
+          activateMenu(levelMenu->actionAt(pointerX, pointerY, levelLayout));
         } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
           const auto key = event.key.keysym.scancode;
           if (key == SDL_SCANCODE_ESCAPE) activateMenu(app::LevelMenuAction::Resume);
@@ -1673,7 +1682,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           else if (key == SDL_SCANCODE_UP || key == SDL_SCANCODE_DOWN)
             levelMenu->moveFocus(key == SDL_SCANCODE_UP ? -1 : 1);
         }
-      } else if (portrait && touchMenuPresented && focused && !dragButton &&
+      } else if (levelLayout.portrait() && touchMenuPresented && focused && !dragButton &&
                  event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT &&
                  app::kPortraitMenu.contains(event.button.x, event.button.y)) {
         openMenu();
@@ -1713,24 +1722,25 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         updateFastForwardHold();
         if (args.sim && world && focused && !dragButton) {
           pointerX = event.button.x; pointerY = event.button.y;
-          nukeInput.release(pointerX, pointerY, event.button.timestamp, *world, portrait);
+          nukeInput.release(pointerX, pointerY, event.button.timestamp, *world, levelLayout);
         } else nukeInput.reset();
       } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
                  event.button.button == SDL_BUTTON_LEFT) {
         // Consume panel clicks before actor picking, including command plates.
         if (focused && !dragButton) {
           pointerX = event.button.x; pointerY = event.button.y;
+          if (rotateButtonAt(pointerX, pointerY)) return;
           if (touchZoomPresented && applyTouchZoom(pointerX, pointerY)) return;
           if (applyHatchRateButton(pointerX, pointerY)) return;
           leftDown = true;
-          nukeInput.press(pointerX, pointerY, portrait);
+          nukeInput.press(pointerX, pointerY, levelLayout);
           updateFastForwardHold();
-          const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY, portrait);
+          const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY, levelLayout);
           const auto panelCounts = app::runtimeSkillPanelCounts(*world);
           if ((panelIndex >= 0 && panelIndex < 8 && panelCounts[panelIndex] > 0) ||
               (panelIndex == 9 && world->setup().nukeStock > 0 && !world->nukeRequested()))
             uiClick(); // 0x45AC5C selects stocked skills and Nuke via Changeop.
-          if (!skillSelection.consumePanelClick(pointerX, pointerY, panelCounts, portrait)) {
+          if (!skillSelection.consumePanelClick(pointerX, pointerY, panelCounts, levelLayout)) {
             const auto skill = skillSelection.selectedSkill();
             const auto hit = pickActorAt(pointerX, pointerY, skill);
             const bool actorCanReceiveSkill = hit && world->canAssign(*hit, skill);
@@ -1742,7 +1752,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         }
       } else if (event.type == SDL_MOUSEMOTION) {
         if (focused) {
-          if (portrait) pointerInWindow = true;
+          if (levelLayout.portrait()) pointerInWindow = true;
           if (!touchDragging && !touchMotion && (dragButton || !runtimeSim.examining())) {
             pending.mouse(double(event.motion.xrel) / presentation.scale(),
                           double(event.motion.yrel) / presentation.scale());
@@ -1820,14 +1830,13 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       using Kind = app::TouchActionKind;
       if (action.kind == Kind::None || menuDismissedThisFrame) return;
       if (action.kind == Kind::Tap) {
-        const int x = app::touchPixel(action.point.x), y = app::touchPixel(action.point.y);
-        if (touchZoomPresented && applyTouchZoom(x, y)) {
-          recordCommands();
-          return;
-        }
-        if (applyHatchRateButton(x, y)) {
-          recordCommands();
-          return;
+        if (!menuOpen()) {
+          const int x = app::touchPixel(action.point.x), y = app::touchPixel(action.point.y);
+          if (rotateButtonAt(x, y)) return;
+          if ((touchZoomPresented && applyTouchZoom(x, y)) || applyHatchRateButton(x, y)) {
+            recordCommands();
+            return;
+          }
         }
         // A tap leaves the targeting cursor at the contact point. A second
         // finger may assign while a spawner button is held; keep that hold's
@@ -1849,13 +1858,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           beginCameraDrag(SDL_BUTTON_RIGHT, true);
           touchCursor.reset();
           clearTouchHatch();
-          touchMotion.reset();
           break;
         case Kind::Drag: {
           // Touch rotation starts opposite the mouse. The Options setting flips
           // both together, so On restores the mouse-like direction for touch.
           const double sign = (persistentFrontend && persistentFrontend->reverseDrag()) ? 1.0 : -1.0;
-          const double sensitivity = portrait ? double(app::kGameWidth) / app::kPortraitWidth : 1.0;
+          const double sensitivity = double(app::kGameWidth) / levelLayout.width();
           if (!touchMotion) touchMotion.emplace();
           touchMotion->x += action.delta.x * sign * sensitivity;
           touchMotion->y += action.delta.y * sign * sensitivity;
@@ -1863,7 +1871,6 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         }
         case Kind::EndDrag:
           endCameraDrag(true);
-          touchMotion.reset();
           break;
         case Kind::CancelDrag:
           endCameraDrag(true);
@@ -1914,7 +1921,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           // still drives assignment so the dragged target stays selected.
           touchCursor = action.releasePoint;
           const int x = app::touchPixel(action.point.x), y = app::touchPixel(action.point.y);
-          if (!runtimeSim.examining() && app::runtimeSkillPanelIndex(x, y, portrait) < 0 &&
+          if (!runtimeSim.examining() && app::runtimeSkillPanelIndex(x, y, levelLayout) < 0 &&
               !zoomButtonAt(x, y) && !portraitControlAt(x, y) && !hatchRateTarget(x, y)) {
             const auto skill = skillSelection.selectedSkill();
             if (const auto hit = pickActorAt(x, y, skill); hit && world->canAssign(*hit, skill)) {
@@ -1963,11 +1970,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         const auto point = presentation.touchCoordinates(event.tfinger);
         if (!point || !focused || menuDismissedThisFrame) continue;
         const app::TouchId id{event.tfinger.touchId, event.tfinger.fingerId};
+        const int x = app::touchPixel(point->x), y = app::touchPixel(point->y);
+        const bool touchDown = event.type == SDL_FINGERDOWN;
+        const bool rotationPadHeld = touch.rotationPadHeld();
         // A contact on the plate belongs to the menu even if a scene gesture
-        // is in progress. Its motion and lift never enter the scene recognizer.
-        if (menuTouch.tracking(id) ||
-            (event.type == SDL_FINGERDOWN && touchMenuPresented && !menuOpen() &&
-             levelMenu->touchButtonAt(app::touchPixel(point->x), app::touchPixel(point->y), portrait))) {
+        // is in progress, unless the rotation pad has claimed the gesture.
+        if (!rotationPadHeld && (menuTouch.tracking(id) ||
+            (touchDown && touchMenuPresented && !menuOpen() &&
+             levelMenu->touchButtonAt(x, y, levelLayout.portrait())))) {
           if (presentation.feedTouch(menuTouch, event.tfinger, *point).kind ==
               app::TouchActionKind::Tap) {
             openMenu();
@@ -1978,11 +1988,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         const auto timestamp = event.tfinger.timestamp;
         // A zoom plate is its own tap target. Another finger may also tap while
         // a touch or mouse holds fast-forward or a spawner rate button.
-        const bool secondaryTap = tapTouch.tracking(id) ||
-            (event.type == SDL_FINGERDOWN &&
-              ((touchZoomPresented && !menuOpen() &&
-                zoomButtonAt(app::touchPixel(point->x), app::touchPixel(point->y))) ||
-              touchHold.has_value() || touchRateButton != 0 || runtimeSim.fastForward()));
+        const bool secondaryTap = !rotationPadHeld && (tapTouch.tracking(id) ||
+            (touchDown && ((touchZoomPresented && !menuOpen() && zoomButtonAt(x, y)) ||
+               touchHold.has_value() || touchRateButton != 0 || runtimeSim.fastForward())));
         if (secondaryTap) {
           const auto action = presentation.feedTouch(tapTouch, event.tfinger, *point);
           if (action.kind == app::TouchActionKind::Tap) routeTouch(action, timestamp);
@@ -1995,10 +2003,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         using Target = app::TouchTarget;
         auto target = Target::Tap;
         std::optional<std::size_t> downActor;
-        if (event.type == SDL_FINGERDOWN && touch.idle() && !menuOpen()) {
-          const int x = app::touchPixel(point->x), y = app::touchPixel(point->y);
-          const int plate = runtimePanel ? app::runtimeSkillPanelIndex(x, y, portrait) : -1;
-          if (hatchRateTarget(x, y)) target = Target::Holdable;
+        if (touchDown && touch.idle() && !menuOpen()) {
+          const int plate = runtimePanel ? app::runtimeSkillPanelIndex(x, y, levelLayout) : -1;
+          if (rotateButtonAt(x, y)) {
+            nukeInput.reset();
+            menuTouch.reset();
+            tapTouch.reset();
+            target = Target::RotatePad;
+          } else if (hatchRateTarget(x, y)) target = Target::Holdable;
           else if (!runtimePanel) target = Target::DragOnly;
           else if (plate == 8 && !runtimeSim.examining()) target = Target::Holdable;
           else if (plate < 0) {
@@ -2082,7 +2094,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     const auto [cursorX, cursorY] = scenePointer();
     if (panelIconAnimation) {
       const int hover = focused && !menuOpen() && !cameraDragging() ?
-          app::runtimeSkillPanelIndex(cursorX, cursorY, portrait) : -1;
+          app::runtimeSkillPanelIndex(cursorX, cursorY, levelLayout) : -1;
       // UI animation uses frame time independently of simulation pause and fast-forward.
       // Provisional policy suspends it while a menu is open or focus is lost.
       panelIconAnimation->advanceIcons(focused && !menuOpen() ? elapsed : 0.0,
@@ -2197,7 +2209,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       // explicit automation scope opts into inspectLevelFrame() for pixels,
       // hover, visible actor boxes and hatch depth; all other fields are ready.
       auto cueFrame = mapPlay && entryCue ? entryCue->frame() : std::nullopt;
-      if (cueFrame) *cueFrame = levelDisplayCue(*cueFrame, portrait);
+      if (cueFrame) *cueFrame = levelDisplayCue(*cueFrame, levelLayout);
       std::optional<app::LevelFrameView> pendingView;
       if (args.sim && world && runtimeFont && runtimePanel)
         pendingView.emplace(app::LevelFrameView{rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
@@ -2219,7 +2231,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           auto& view = *pendingView;
           app::profile::Scope profileHud(app::profile::Hud);
           image = toImage(windowRaster.framebuffer());
-          const int panelIndex = app::runtimeSkillPanelIndex(cursorX, cursorY, portrait);
+          const int panelIndex = app::runtimeSkillPanelIndex(cursorX, cursorY, levelLayout);
           const bool canHover = focused && !menuOpen() && !cameraDragging() && panelIndex < 0 &&
               !portraitControlAt(cursorX, cursorY);
           const bool cursorInWindow = touchCursor.has_value() || pointerInWindow;
@@ -2289,22 +2301,35 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             if (const auto exit = backdrop->exitHoverTarget(displayedCamera, windowRaster, cursorX, cursorY))
               app::drawExitHover(image, *runtimeFont, *exit, world->setup().saveTarget);
           }
-          app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
-                                     &*panelIconAnimation, portrait);
-          if (portrait) {
-            const auto speed = app::skillPlate(8, true), nuke = app::skillPlate(9, true);
-            const std::array<shell::HudLine, 4> commands{{
-                {"Fast Forward", speed.x + 49, speed.y + 5, {255,255,255}, 0.9},
-                {"Hold", speed.x + 50, speed.y + 28, {252,209,141}, 0.62},
-                {"Nuke", nuke.x + 67, nuke.y + 5, {255,255,255}, 0.9},
-                {"Double Tap", nuke.x + 68, nuke.y + 28, {252,209,141}, 0.62},
-            }};
-            shell::drawHud(image, *runtimeFont, commands, hudCells);
+          const bool portraitMenu = levelLayout.portrait() && menuOpen();
+          if (!portraitMenu) {
+            app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
+                                       &*panelIconAnimation, levelLayout);
+            if (levelLayout.portrait()) {
+              const auto speed = app::kPortraitFastForward, nuke = app::kPortraitNuke;
+              const auto rotate = app::kPortraitRotate;
+              constexpr shell::Rgb hint{252, 209, 141}, label{255, 255, 255};
+              const auto rotateColour = touch.rotationPadHeld() ? shell::Rgb{255, 232, 160} : hint;
+              constexpr double hintScale = 0.62;
+              std::array<shell::HudLine, 6> commands{{
+                  {"Fast Fwd", speed.x + 42, speed.y + 6, label, 0.76},
+                  {"Hold", speed.x + 43, speed.y + 28, hint, hintScale},
+                  {"Nuke", nuke.x + 43, nuke.y + 6, label, 0.85},
+                  {"Dbl Tap", nuke.x + 42, nuke.y + 28, hint, 0.54},
+                  {"2 Finger", 0, rotate.y + 7, rotateColour, hintScale},
+                  {"Rotate", 0, rotate.y + 25, rotateColour, hintScale},
+              }};
+              for (auto& line : std::span(commands).last<2>()) {
+                const int width = static_cast<int>(std::lround(shell::textWidth(line.text, hudCells) * line.scale));
+                line.x = rotate.x + (rotate.width - width) / 2;
+              }
+              shell::drawHud(image, *runtimeFont, commands, hudCells);
+            }
+            for (std::size_t i = 0; i < hudIcons.size(); ++i)
+              app::compositeIconRegion(image, runtimeHudIcons[i], hudIconPlacement(hudIcons[i]));
+            shell::drawHud(image, *runtimeFont, hudLines, hudCells);
+            app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed(), levelLayout);
           }
-          for (std::size_t i = 0; i < hudIcons.size(); ++i)
-            app::compositeIconRegion(image, runtimeHudIcons[i], hudIconPlacement(hudIcons[i]));
-          shell::drawHud(image, *runtimeFont, hudLines, hudCells);
-          app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed(), portrait);
           // Draw a countdown over each lemming with a lit fuse.
           if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
                           [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
@@ -2338,26 +2363,32 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const int phaseMs = digit * 1000 - remainingMs;
             const int dx = 150 * phaseMs / 1000, dy = 195 * phaseMs / 1000;
             const app::EntryCueFrame countdown{{320 - dx, 240 - dy, 330 + dx, 252 + dy}, true};
-            app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), levelDisplayCue(countdown, portrait));
+            app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), levelDisplayCue(countdown, levelLayout));
           }
-          if (menuOpen() && persistentFrontend->screen() == shell::Screen::SoundOptions) {
-            persistentFrontend->setWindowScaleMenu(presentation.windowScaleMenu());
-            image = persistentFrontend->renderSoundOptions(image);
-          } else if (menuOpen() && persistentFrontend->screen() == shell::Screen::KeyboardShortcuts) {
-            image = persistentFrontend->image();
-          } else if (menuOpen()) {
-            levelMenu->draw(image);
-          } else if (portrait || (levelMenu && presentation.receivedTouch())) {
+          if (menuOpen()) {
+            const auto screen = persistentFrontend->screen();
+            if (portraitMenu && screen != shell::Screen::KeyboardShortcuts)
+              shell::drawCaptionPanel(image, {.rect = {0, 0, image.width, image.height}, .alpha = 160});
+            if (screen == shell::Screen::SoundOptions) {
+              persistentFrontend->setWindowScaleMenu(presentation.windowScaleMenu());
+              image = persistentFrontend->renderSoundOptions(image, levelLayout);
+            } else if (screen == shell::Screen::KeyboardShortcuts) {
+              image = portraitMenu ? persistentFrontend->renderKeyboardShortcuts(image, levelLayout)
+                                   : persistentFrontend->image();
+            } else {
+              levelMenu->draw(image, levelLayout);
+            }
+          } else if (levelLayout.portrait() || (levelMenu && presentation.receivedTouch())) {
             if (levelMenu) {
-              levelMenu->drawTouchButton(image, portrait);
+              levelMenu->drawTouchButton(image, levelLayout.portrait());
               touchMenuDrawn = true;
             }
-            drawTouchZoomButton(image, *runtimeFont, controls.camera().zoomShift != 0, portrait);
+            drawTouchZoomButton(image, *runtimeFont, controls.camera().zoomShift != 0, levelLayout);
             touchZoomDrawn = true;
           }
           const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
-          const auto cursorState = portrait && !cursorInWindow ? app::CursorState::Hidden :
+          const auto cursorState = levelLayout.portrait() && !cursorInWindow ? app::CursorState::Hidden :
               menuOpen() ? persistentFrontend->cursorState() :
               app::runtimeCursorState(focused, cameraDragging(), hover.has_value(),
                   runtimeSim.paused(), heldHatch ? -1 : panelIndex, panelAvailability, hatchHover.has_value());
@@ -2367,9 +2398,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             if (runtimeSim.examining()) shell::drawExamineCaption(image, *runtimeFont, shell::fontCells());
             else if (runtimeSim.paused()) {
               shell::CaptionParams caption;
-              if (portrait) {
+              if (levelLayout.portrait()) {
                 caption.textX = (image.width - shell::textWidth(caption.text, hudCells)) / 2;
-                caption.textY = app::kPortraitZoom.y + 8;
+                caption.textY = app::portraitZoomButton(levelLayout).y + 8;
                 caption.rect = {caption.textX - 8, caption.textY,
                                 image.width - caption.textX + 8, caption.textY + 32};
               }
@@ -2431,7 +2462,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           }
         }
         if (finalShot && !finalWindowFrame) finalWindowFrame = toImage(windowRaster.framebuffer());
-        auto* output = portrait ? portraitTexture.get() : texture.get();
+        auto* output = levelLayout.portrait() ? portraitTexture.get() : texture.get();
         const int pitch = windowRaster.framebuffer().width * (uploadRgbx ? 4 : 3);
         { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(output, nullptr, pixels, pitch); }
         { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, output, nullptr, nullptr); }
@@ -2452,7 +2483,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   recordCommands();
   SDL_SetRelativeMouseMode(SDL_FALSE);
 #ifdef __EMSCRIPTEN__
-  if (portrait) presentation.setLevelPortrait(false);
+  if (levelLayout.portrait()) {
+    presentation.setWebViewport(app::webCanvasLayout(false));
+  }
   SDL_EventState(SDL_MOUSEWHEEL, SDL_IGNORE);
 #endif
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);

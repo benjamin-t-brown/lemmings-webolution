@@ -15,6 +15,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -38,12 +39,12 @@ class FrontendSession {
 
   const Image& image() const;
   // Present the cached base scene with map hover text, then draw the cursor last.
-  Image composeFrame() const;
+  Image composeFrame(LevelLayout viewport = {}) const;
   // SDL supplies absolute coordinates. 453C3A..453D23 clamps relative
   // DirectInput deltas to these same inclusive extents.
-  void setPointer(int x, int y) {
-    pointerX_ = std::clamp(x, 0, 640);
-    pointerY_ = std::clamp(y, 0, 480);
+  void setPointer(int x, int y, LevelLayout viewport = {}) {
+    pointerX_ = std::clamp(x, 0, viewport.width());
+    pointerY_ = std::clamp(y, 0, viewport.height());
   }
   void setButtons(bool left, bool right) { leftHeld_ = left; rightHeld_ = right; }
   void setFocused(bool focused) {
@@ -60,10 +61,10 @@ class FrontendSession {
   }
   shell::Screen screen() const { return state_.screen(); }
   int constructionCounter() const { return state_.counter(); }
-  shell::Outcome pressReturn();
+  shell::Outcome pressReturn(LevelLayout viewport = {});
   shell::Outcome pressEscape();
-  void hoverMenu(int x, int y);
-  bool moveMenuFocus(int direction);
+  void hoverMenu(int x, int y, LevelLayout viewport = {});
+  bool moveMenuFocus(int direction, LevelLayout viewport = {});
   int menuFocus() const { return state_.highlight(); }
   bool quitRequested() const { return state_.quitRequested(); }
   shell::Outcome openLevelMenu();
@@ -75,10 +76,11 @@ class FrontendSession {
   void setWindowScaleMenu(WindowScaleMenu window) { windowScaleMenu_ = window; }
   shell::Outcome openSoundOptions();
   shell::Outcome closeSoundOptions(bool accept);
-  bool adjustSound(int direction);
-  void hoverSound(int x, int y);
-  Image renderSoundOptions(const Image& backdrop) const;
-  bool click(int x, int y);
+  bool adjustSound(int direction, LevelLayout viewport = {});
+  void hoverSound(int x, int y, LevelLayout viewport = {});
+  Image renderSoundOptions(const Image& backdrop, LevelLayout viewport = {}) const;
+  Image renderKeyboardShortcuts(const Image& backdrop, LevelLayout viewport) const;
+  bool click(int x, int y, LevelLayout viewport = {});
   bool clickMap(int x, int y);
   const std::optional<std::string>& selectedLevel() const { return selectedLevel_; }
   bool levelIntroEnabled() const { return levelIntroEnabled_; }
@@ -95,6 +97,9 @@ class FrontendSession {
   FrontendSession() = default;
   shell::Outcome confirmChoice(bool yes);
   void refreshMap();
+  std::span<const std::string> portraitMenuLabels() const;
+  Image composePortraitMenu(LevelLayout viewport) const;
+  int menuRowAt(int x, int y, LevelLayout viewport) const;
   shell::Frontend state_;
   SoundMenu soundMenu_;
   save::SoundSettings acceptedSound_, editingSound_;
@@ -110,12 +115,15 @@ class FrontendSession {
   mutable Image menu_;
   mutable int menuImageHighlight_ = 0;
   Image menuBackdrop_, confirmBackdrop_;
+  mutable Image portraitBackdrop_;
+  mutable shell::Screen portraitBackdropScreen_ = shell::Screen::Menu;
   mutable Image confirm_;
   Image languageImage_;
   Image mapImage_;
   mutable int confirmImageFocus_ = 0;
   std::vector<std::string> menuLabels_;
   std::array<std::string, 2> confirmLabels_;
+  std::array<std::string, 1> languageLabels_;
   std::string confirmQuestion_;
   Image font_;
   std::string mapFooterLabel_;

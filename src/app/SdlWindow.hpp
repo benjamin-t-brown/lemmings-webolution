@@ -36,6 +36,13 @@ inline bool isTouchMouseEvent(const SDL_Event& event) {
 
 inline int touchPixel(double position) { return static_cast<int>(std::floor(position)); }
 
+#ifdef __EMSCRIPTEN__
+inline LevelLayout webCanvasLayout(bool allowPortrait) {
+  const int height = web::layoutPortraitCanvas(allowPortrait, kPortraitWidth);
+  return {height ? std::max(kMinPortraitHeight, height) : 0};
+}
+#endif
+
 // A recognized tap enters the left-click handlers directly in presentation pixels.
 inline SDL_Event touchButton(Uint32 type, TouchPoint point, Uint32 timestamp) {
   SDL_Event event{};
@@ -107,10 +114,8 @@ class SdlWindow {
   SDL_Renderer* renderer() const { return renderer_; }
   int scale() const { return scale_; }
 #ifdef __EMSCRIPTEN__
-  void setLevelPortrait(bool portrait) {
-    SDL_SetWindowSize(window_, portrait ? kPortraitWidth : kGameWidth,
-                     portrait ? kPortraitHeight : kGameHeight);
-    web::setCanvasPortrait(portrait);
+  void setWebViewport(LevelLayout layout) {
+    SDL_SetWindowSize(window_, layout.width(), layout.height());
   }
 #endif
   void updateWindowScale(std::optional<int> choice, bool displayChanged = false) {

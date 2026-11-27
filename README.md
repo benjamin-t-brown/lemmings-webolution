@@ -40,8 +40,9 @@ at a switch to see what it controls. **P** or **Esc** resumes play.
 
 In the browser, holding a touch-first device upright automatically switches
 levels to portrait mode. The job plates move to two rows at the bottom, with
-**Fast Forward**, **Nuke** and the level stats at the top. Turn the device
-sideways for the original layout. Menus and the level map use the wider layout.
+**Fast Fwd**, **Nuke**, **2 Finger Rotate** and the level stats at the top. Turn the device
+sideways for the original layout. The title screen and in-level menu also support
+portrait mode. The level map uses the wider layout.
 
 - **Tap** a skill plate, then tap a lemming to assign it. Tapping the scene
   also moves the targeting cursor to that spot. Tapping the **Menu** button at
@@ -50,8 +51,11 @@ sideways for the original layout. Menus and the level map use the wider layout.
   about one fingertip above your finger so it stays visible; release assigns
   the selected skill at that aimed position, then the cursor settles at the
   spot where you lifted your finger.
-- **Two-finger drag** rotates the camera. This starts in the opposite direction
-  to mouse drag; the **Reverse camera drag** option flips both together.
+- Hold **2 Finger Rotate** with one finger, then drag with another to rotate the
+  camera. You can lift and reposition the dragging finger while keeping the
+  first finger down. You can also plant the first finger on an empty part of the scene.
+  Touch rotation starts in the opposite direction to mouse drag; the
+  **Reverse camera drag** option flips both together.
 - Use the single **+ / −** plate near the bottom of the scene to toggle zoom in and out.
   It zooms toward the current targeting cursor, and the label shows the next
   action. Pinch zoom was removed.

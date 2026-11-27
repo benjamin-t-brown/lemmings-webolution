@@ -23,5 +23,10 @@ boxes to `GameData/` and progress to `SavedGame.dat` under
 `$XDG_DATA_HOME/LemmingsWebolution` or `~/.local/share/LemmingsWebolution` by default.
 The Windows data folder is `%LOCALAPPDATA%\LemmingsWebolution`.
 
-**Check desktop builds** builds Linux and Windows for pushes and pull requests to
-`main` without publishing. Use a new version for each published release.
+The browser game published to GitHub Pages and the desktop build checks use the
+same version on `main`. The first numbered build is `1.0.1`, and each subsequent
+commit on the first-parent history of `main` increments the patch number. Reruns
+keep the same version; a push with several commits can skip patch numbers.
+
+**Check desktop builds** also runs for pull requests. Desktop packages are
+published separately using the version entered above or the pushed tag.

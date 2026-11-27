@@ -1,11 +1,30 @@
 cmake_minimum_required(VERSION 3.28)
 
 project(webolution
-  VERSION 0.1.0
+  VERSION 1.0.1
   DESCRIPTION "Open reimplementation of Lemmings Revolution"
   LANGUAGES CXX)
 
-set(WEBOLUTION_VERSION "${PROJECT_VERSION}-dev" CACHE STRING "Build version shown to players")
+set(WEBOLUTION_VERSION "" CACHE STRING "Override the build version shown to players")
+option(WEBOLUTION_MAIN_BUILD "Number builds from the first-parent history of main" OFF)
+if(WEBOLUTION_VERSION STREQUAL "")
+  set(WEBOLUTION_VERSION "${PROJECT_VERSION}")
+  if(WEBOLUTION_MAIN_BUILD)
+    find_package(Git REQUIRED)
+    # The first commit on main after this baseline builds as 1.0.1.
+    execute_process(
+      COMMAND "${GIT_EXECUTABLE}" rev-list --first-parent --count
+        d8f53e7d85d917090790c65d963e18223db0a799..HEAD
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      OUTPUT_VARIABLE main_commits
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND_ERROR_IS_FATAL ANY)
+    if(main_commits GREATER 0)
+      math(EXPR build_patch "${PROJECT_VERSION_PATCH} + ${main_commits} - 1")
+      set(WEBOLUTION_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${build_patch}")
+    endif()
+  endif()
+endif()
 if(NOT WEBOLUTION_VERSION MATCHES "^[0-9A-Za-z][0-9A-Za-z.+-]*$")
   message(FATAL_ERROR "WEBOLUTION_VERSION must contain only version characters")
 endif()

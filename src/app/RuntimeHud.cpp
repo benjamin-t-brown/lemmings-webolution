@@ -129,11 +129,11 @@ void drawExitHover(Image& image, const Image& font, const PickBox& box, int save
 }
 
 void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world,
-                             bool armed, bool portrait) {
+                              bool armed, LevelLayout layout) {
   if (!armed && !world.nukeRequested()) return;
   // PROVISIONAL control feedback: gold outline and confirmation/status hint.
   // The large countdown is composed with the level's Let's Go text in main.
-  const auto [left, top, width, height] = skillPlate(9, portrait);
+  const auto [left, top, width, height] = skillPlate(9, layout);
   const int right = left + width, bottom = top + height;
   for (int y = top; y < std::min(bottom, image.height); ++y)
     for (int x = left; x < std::min(right, image.width); ++x)
@@ -142,6 +142,7 @@ void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& 
         image.rgba[p] = 255; image.rgba[p+1] = 220; image.rgba[p+2] = 64;
       }
   const auto& cells = shell::fontCells();
+  const bool portrait = layout.portrait();
   const std::string text = world.nukeRequested() ? "NUKE" : (portrait ? "TAP AGAIN" : "CLICK AGAIN");
   const auto line = portrait ? centredLine(image, cells, text, left, right, bottom, {255,220,64})
                              : shell::HudLine{text, 100, 380, {255,220,64}};

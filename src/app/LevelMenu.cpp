@@ -13,9 +13,14 @@ constexpr int kMenuBaseY = 100;
 constexpr int kTitleTop = 60;
 constexpr int kTitleShadow = 2;
 constexpr int kTitleLineStep = shell::kLineHeight + kTitleShadow;
-constexpr int kTitleMaxWidth = kGameWidth - 2 * (16 + kTitleShadow);
+constexpr int kPortraitMenuBaseY = 40;
+constexpr int kPortraitRowStep = 40, kPortraitRowHeight = 38;
 constexpr shell::MenuParams kTouchButtonParams{.xWord = kGameWidth, .baseY = 8, .highlight = -1};
 const std::array<std::string, 1> kTouchButtonLabel{"Menu"};
+
+LevelButton portraitMenuRow(int baseY, int row, std::string_view label) {
+  return portraitTextButton(label, baseY + row * kPortraitRowStep, kPortraitRowHeight);
+}
 
 bool containsStrict(int x, int y, int baseY, std::size_t row, std::string_view label) {
   const auto& cells = shell::fontCells();
@@ -64,37 +69,53 @@ std::expected<LevelMenu, std::string> LevelMenu::load(const AssetLibrary& librar
   }
   const auto levels = loadLevelMap(library);
   const auto* level = levels ? findLevelMapEntry(*levels, levelId) : nullptr;
-  menu.layoutTitle(level && !level->name.empty() ? std::string_view(level->name) : levelId);
+  const auto title = level && !level->name.empty() ? std::string_view(level->name) : levelId;
+  menu.landscapeTitle_ = layoutTitle(title, false);
+  menu.portraitTitle_ = layoutTitle(title, true);
   return menu;
 }
 
-void LevelMenu::layoutTitle(std::string_view title) {
-  constexpr int kTitleMaxLines = 1 + (kGameHeight - kMenuBaseY -
+LevelMenu::TitleLayout LevelMenu::layoutTitle(std::string_view title, bool portrait) {
+  const int width = portrait ? kPortraitWidth : kGameWidth;
+  const int maxWidth = width - 2 * (16 + kTitleShadow);
+  const int titleTop = portrait ? 0 : kTitleTop;
+  const int rowBaseY = portrait ? kPortraitMenuBaseY : kMenuBaseY;
+  constexpr int landscapeMaxLines = 1 + (kGameHeight - kMenuBaseY -
       static_cast<int>(kRows.size()) * shell::kLineHeight) / kTitleLineStep;
-  rowBaseY_ = kMenuBaseY;
+  constexpr int portraitMaxLines = 3;
+  const int maxLines = portrait ? portraitMaxLines : landscapeMaxLines;
+  TitleLayout result{.lines = {}, .rowBaseY = rowBaseY};
   // Clone heading: centre the map hover's black-over-red text above the rows.
   // Wrap on spaces when possible, or at a glyph boundary in a long word.
-  for (int line = 0; line < kTitleMaxLines && !title.empty(); ++line) {
-    auto [count, width] = fitTitleLine(title, kTitleMaxWidth);
-    const bool ellipsize = line + 1 == kTitleMaxLines && count < title.size();
+  for (int line = 0; line < maxLines && !title.empty(); ++line) {
+    auto [count, textWidth] = fitTitleLine(title, maxWidth);
+    const bool ellipsize = line + 1 == maxLines && count < title.size();
     constexpr std::string_view ellipsis = "...";
     if (ellipsize) {
       const int ellipsisWidth = shell::textWidth(ellipsis, shell::fontCells());
-      const auto fitted = fitTitleLine(title, kTitleMaxWidth - ellipsisWidth);
+      const auto fitted = fitTitleLine(title, maxWidth - ellipsisWidth);
       count = fitted.first;
-      width = fitted.second + ellipsisWidth;
+      textWidth = fitted.second + ellipsisWidth;
     }
     std::string text(title.substr(0, count));
     if (ellipsize) text += ellipsis;
-    const int x = (kGameWidth - width) / 2;
-    const int y = kTitleTop + line * kTitleLineStep;
-    titleLines_.push_back({text, x + kTitleShadow, y + kTitleShadow, {220, 50, 50}});
-    titleLines_.push_back({std::move(text), x, y, {0, 0, 0}});
-    rowBaseY_ = kMenuBaseY + line * kTitleLineStep;
+    const int x = (width - textWidth) / 2;
+    const int y = titleTop + line * kTitleLineStep;
+    const shell::Rgb shadow = portrait ? shell::Rgb{0, 0, 0} : shell::Rgb{220, 50, 50};
+    const shell::Rgb colour = portrait ? shell::Rgb{255, 216, 120} : shell::Rgb{0, 0, 0};
+    result.lines.push_back({text, x + kTitleShadow, y + kTitleShadow, shadow});
+    result.lines.push_back({std::move(text), x, y, colour});
+    result.rowBaseY = rowBaseY + line * kTitleLineStep;
     const auto next = title.find_first_not_of(' ', count);
     if (next == std::string_view::npos) break;
     title.remove_prefix(next);
   }
+  return result;
+}
+
+int LevelMenu::portraitMenuTop(LevelLayout layout) const {
+  constexpr int rowsHeight = (static_cast<int>(kRows.size()) - 1) * kPortraitRowStep + kPortraitRowHeight;
+  return (layout.height() - portraitTitle_.rowBaseY - rowsHeight) / 2;
 }
 
 void LevelMenu::open() {
@@ -110,22 +131,25 @@ void LevelMenu::moveFocus(int direction) {
   focusedIndex_ = (focusedIndex_ + rows + direction) % rows;
 }
 
-void LevelMenu::hover(int x, int y) {
-  if (!open_) return;
-  for (std::size_t i = 0; i < kRows.size(); ++i) {
-    if (containsStrict(x, y, rowBaseY_, i, labels_[i])) {
-      focusedIndex_ = static_cast<int>(i);
-      return;
-    }
-  }
-  // Pointer misses preserve keyboard/programmatic focus.
+int LevelMenu::rowAt(int x, int y, LevelLayout layout) const {
+  if (!open_) return -1;
+  const int baseY = layout.portrait() ? portraitMenuTop(layout) + portraitTitle_.rowBaseY
+                                      : landscapeTitle_.rowBaseY;
+  for (int i = 0; i < static_cast<int>(kRows.size()); ++i)
+    if (layout.portrait() ? portraitMenuRow(baseY, i, labels_[i]).contains(x, y)
+                          : containsStrict(x, y, baseY, i, labels_[i]))
+      return i;
+  return -1;
 }
 
-LevelMenuAction LevelMenu::actionAt(int x, int y) const {
-  if (!open_) return LevelMenuAction::None;
-  for (std::size_t i = 0; i < kRows.size(); ++i)
-    if (containsStrict(x, y, rowBaseY_, i, labels_[i])) return kRows[i].action;
-  return LevelMenuAction::None;
+void LevelMenu::hover(int x, int y, LevelLayout layout) {
+  // Pointer misses preserve keyboard/programmatic focus.
+  if (const int row = rowAt(x, y, layout); row >= 0) focusedIndex_ = row;
+}
+
+LevelMenuAction LevelMenu::actionAt(int x, int y, LevelLayout layout) const {
+  const int row = rowAt(x, y, layout);
+  return row >= 0 ? kRows[row].action : LevelMenuAction::None;
 }
 
 LevelMenuAction LevelMenu::focusedAction() const {
@@ -134,12 +158,25 @@ LevelMenuAction LevelMenu::focusedAction() const {
   return kRows[static_cast<std::size_t>(focusedIndex_)].action;
 }
 
-void LevelMenu::draw(Image& frame) const {
+void LevelMenu::draw(Image& frame, LevelLayout layout) const {
   if (!open_) return;
   const auto& cells = shell::fontCells();
-  shell::drawHud(frame, font_, titleLines_, cells);
+  if (layout.portrait()) {
+    const int top = portraitMenuTop(layout);
+    auto lines = portraitTitle_.lines;
+    for (auto& line : lines) line.y += top;
+    shell::drawHud(frame, font_, lines, cells);
+    for (int i = 0; i < static_cast<int>(kRows.size()); ++i) {
+      const auto row = portraitMenuRow(top + portraitTitle_.rowBaseY, i, labels_[i]);
+      auto params = portraitButtonParams(row, labels_[i]);
+      params.highlight = i == focusedIndex_ ? 0 : -1;
+      shell::drawMenuRows(frame, font_, std::span(&labels_[i], 1), params, cells);
+    }
+    return;
+  }
+  shell::drawHud(frame, font_, landscapeTitle_.lines, cells);
   shell::MenuParams params;
-  params.baseY = rowBaseY_;
+  params.baseY = landscapeTitle_.rowBaseY;
   params.highlight = focusedIndex_;
   shell::drawMenuRows(frame, font_, labels_, params, cells);
 }

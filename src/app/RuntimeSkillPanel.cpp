@@ -83,13 +83,13 @@ bool RuntimeReleaseRateControl::advance(double seconds, std::span<const HatchHov
 }
 
 
-void RuntimeNukeInput::press(int x, int y, bool portrait) {
-  pressed_ = runtimeSkillPanelIndex(x, y, portrait) == 9;
+void RuntimeNukeInput::press(int x, int y, LevelLayout layout) {
+  pressed_ = runtimeSkillPanelIndex(x, y, layout) == 9;
   if (!pressed_) armed_ = false;
 }
 
-void RuntimeNukeInput::release(int x, int y, unsigned int timestampMs, sim::World& world, bool portrait) {
-  const bool plate = pressed_ && runtimeSkillPanelIndex(x, y, portrait) == 9;
+void RuntimeNukeInput::release(int x, int y, unsigned int timestampMs, sim::World& world, LevelLayout layout) {
+  const bool plate = pressed_ && runtimeSkillPanelIndex(x, y, layout) == 9;
   pressed_ = false;
   if (!plate || world.nukeRequested() || world.setup().nukeStock <= 0) {
     armed_ = false;
@@ -128,14 +128,14 @@ bool RuntimeSkillSelection::selectAvailableIndex(
   return true;
 }
 
-int runtimeSkillPanelIndex(int x, int y, bool portrait) {
+int runtimeSkillPanelIndex(int x, int y, LevelLayout layout) {
   for (int i = 0; i < 10; ++i)
-    if (skillPlate(i, portrait).contains(x, y)) return i;
+    if (skillPlate(i, layout).contains(x, y)) return i;
   return -1;
 }
 
-RuntimePanelCommand runtimeSkillPanelCommand(int x, int y, bool portrait) {
-  switch (runtimeSkillPanelIndex(x, y, portrait)) {
+RuntimePanelCommand runtimeSkillPanelCommand(int x, int y, LevelLayout layout) {
+  switch (runtimeSkillPanelIndex(x, y, layout)) {
     case 8: return RuntimePanelCommand::FastForward;
     case 9: return RuntimePanelCommand::Armageddon;
     default: return RuntimePanelCommand::None;
@@ -143,8 +143,8 @@ RuntimePanelCommand runtimeSkillPanelCommand(int x, int y, bool portrait) {
 }
 
 bool RuntimeSkillSelection::consumePanelClick(
-    int x, int y, const std::array<int, 9>& counts, bool portrait) {
-  const int index = runtimeSkillPanelIndex(x, y, portrait);
+    int x, int y, const std::array<int, 9>& counts, LevelLayout layout) {
+  const int index = runtimeSkillPanelIndex(x, y, layout);
   if (index < 0) return false;
   if (index >= 0 && index < 8) selectAvailableIndex(index, counts);
   // Consume command plates before actor picking. Plate 8 bypasses stock
@@ -170,8 +170,8 @@ void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
 void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
                             const sim::World& world,
                             const RuntimeSkillSelection& selection, bool fastForward,
-                            const SkillPanelIconAnimation* animation, bool portrait) {
-  panel.draw(dest, runtimeSkillPanelCounts(world), selection.selectedIndex(), fastForward, animation, portrait);
+                            const SkillPanelIconAnimation* animation, LevelLayout layout) {
+  panel.draw(dest, runtimeSkillPanelCounts(world), selection.selectedIndex(), fastForward, animation, layout);
 }
 
 }  // namespace webo::app

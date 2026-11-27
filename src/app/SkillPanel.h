@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "app/LevelLayout.h"
 #include "assets/Bitmap.h"
 #include "assets/Sprite.h"
 
@@ -68,7 +69,7 @@ class RetailSkillPanel {
   const std::array<int, 9>& initialCounts() const { return initialCounts_; }
   void draw(webo::Image& dest, const std::array<int, 9>& counts,
             std::optional<int> selectedIndex, bool fastForward,
-            const SkillPanelIconAnimation* animation, bool portrait = false) const;
+            const SkillPanelIconAnimation* animation, LevelLayout layout = {}) const;
 
  private:
   RetailSkillPanel() = default;
@@ -88,7 +89,7 @@ class SkillPanelIconAnimation {
   static std::expected<SkillPanelIconAnimation, std::string> create(const AssetLibrary& library);
   // Original 45AF0E advances selection; hover animation is provisional feedback.
   void advanceIcons(double seconds, std::optional<int> selectedIndex, int hoveredIndex);
-  void drawIcon(Image& dest, std::size_t index, bool portrait = false) const;
+  void drawIcon(Image& dest, std::size_t index, LevelLayout layout = {}) const;
  private:
   struct Icon {
     struct Pose { SpriteFrame frame; std::size_t texture; };

@@ -27,7 +27,7 @@ void updateFrontendCursorInput(FrontendSession& session, const SDL_Event& event)
 
 // Shared SDL input adapter while either caller owns sound page 9.
 void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event,
-                             const SdlWindow& presentation);
+                              const SdlWindow& presentation, LevelLayout viewport = {});
 
 // Return immediately on level selection so the caller can present the level.
 std::expected<std::optional<std::string>, std::string> runFrontendWindow(

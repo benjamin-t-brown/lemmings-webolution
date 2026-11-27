@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Build WebAssembly
         shell: bash
         run: |
@@ -27,7 +29,7 @@ jobs:
           "$RUNNER_TEMP/emsdk/emsdk" install "$EMSDK_VERSION"
           "$RUNNER_TEMP/emsdk/emsdk" activate "$EMSDK_VERSION"
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
-          cmake --preset emscripten-release
+          cmake --preset emscripten-release -DWEBOLUTION_MAIN_BUILD=${{ github.ref == 'refs/heads/main' && 'ON' || 'OFF' }}
           cmake --build --preset emscripten-release --parallel 2
       - name: Stage site
         run: |

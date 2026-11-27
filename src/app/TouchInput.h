@@ -3,6 +3,7 @@
 #include "app/WindowScale.h"
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace webo::app {
@@ -16,7 +17,7 @@ struct TouchId {
   bool operator==(const TouchId&) const = default;
 };
 
-enum class TouchTarget { Tap, Scene, DragOnly, AssignableActor, Holdable, Hatch };
+enum class TouchTarget { Tap, Scene, DragOnly, AssignableActor, Holdable, Hatch, RotatePad };
 enum class TouchHatchSlide { Neutral, Up, Down };
 enum class TouchActionKind {
   None, Tap, Assign, BeginDrag, Drag, EndDrag, CancelDrag,
@@ -44,11 +45,12 @@ class TouchInput {
   TouchAction advance(std::uint32_t now);
   bool idle() const { return contacts_.empty(); }
   bool tracking(TouchId id) const;
+  bool rotationPadHeld() const;
   void reset();
   void setViewport(int width, int height);
 
  private:
-  enum class Phase { Candidate, Cursor, Hold, HatchHold, Rotate, Moved, Suppressed };
+  enum class Phase { Candidate, Cursor, Hold, HatchHold, RotateReady, Rotate, Moved, Suppressed };
   struct Contact { TouchId id; TouchPoint point; };
 
   TouchPoint clampPoint(TouchPoint point) const;
@@ -57,6 +59,7 @@ class TouchInput {
   int width_ = kGameWidth, height_ = kGameHeight;
   double gestureScale_ = 1;
   std::vector<Contact> contacts_;
+  std::optional<TouchId> steeringFinger_;
   Phase phase_ = Phase::Suppressed;
   TouchTarget target_ = TouchTarget::Tap;
   TouchPoint origin_;

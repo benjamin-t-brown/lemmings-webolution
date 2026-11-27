@@ -1,6 +1,7 @@
 #include "app/FrontendWindow.h"
 
 #include "assets/Png.h"
+#include <cstdio>
 #include <memory>
 #ifdef __EMSCRIPTEN__
 #include "web/Browser.h"
@@ -30,6 +31,27 @@ struct CursorVisibility {
 std::string sdlError(const char* action) {
   return std::string(action) + ": " + SDL_GetError();
 }
+
+#ifdef __EMSCRIPTEN__
+bool supportsPortrait(shell::Screen screen) {
+  switch (screen) {
+    case shell::Screen::Menu:
+    case shell::Screen::Confirm:
+    case shell::Screen::Language:
+    case shell::Screen::SoundOptions:
+    case shell::Screen::KeyboardShortcuts: return true;
+    default: return false;
+  }
+}
+
+struct RestorePortraitViewport {
+  SdlWindow& presentation;
+  const LevelLayout& viewport;
+  ~RestorePortraitViewport() {
+    if (viewport.portrait()) presentation.setWebViewport(webCanvasLayout(false));
+  }
+};
+#endif
 }  // namespace
 
 void updateFrontendCursorInput(FrontendSession& session, const SDL_Event& event) {
@@ -44,18 +66,18 @@ void updateFrontendCursorInput(FrontendSession& session, const SDL_Event& event)
 }
 
 void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event,
-                             const SdlWindow& presentation) {
+                              const SdlWindow& presentation, LevelLayout viewport) {
   session.setWindowScaleMenu(presentation.windowScaleMenu());
   if (event.type == SDL_MOUSEMOTION) {
-    session.hoverSound(event.motion.x, event.motion.y);
+    session.hoverSound(event.motion.x, event.motion.y, viewport);
   } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-    session.click(event.button.x, event.button.y);
+    session.click(event.button.x, event.button.y, viewport);
   } else if (event.type == SDL_KEYDOWN) {
     const auto key = event.key.keysym.sym;
-    if (key == SDLK_LEFT || key == SDLK_RIGHT) session.adjustSound(key == SDLK_LEFT ? -1 : 1);
+    if (key == SDLK_LEFT || key == SDLK_RIGHT) session.adjustSound(key == SDLK_LEFT ? -1 : 1, viewport);
     else if (!event.key.repeat) {
-      if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
-      else if (key == SDLK_RETURN) session.pressReturn();
+      if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1, viewport);
+      else if (key == SDLK_RETURN) session.pressReturn(viewport);
       else if (key == SDLK_ESCAPE) session.pressEscape();
     }
   }
@@ -76,12 +98,14 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
   presentation.updateWindowScale(session.windowScale());
   if (auto ready = presentation.ensure(); !ready) return std::unexpected(ready.error());
   auto* renderer = presentation.renderer();
-  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> texture(
-      SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 640, 480),
-      SDL_DestroyTexture);
+  using Texture = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
+  Texture texture(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
+                                    kGameWidth, kGameHeight), SDL_DestroyTexture);
   if (!texture) return std::unexpected(sdlError("SDL_CreateTexture"));
   if (SDL_SetTextureScaleMode(texture.get(), SDL_ScaleModeNearest) != 0)
     return std::unexpected(sdlError("SDL_SetTextureScaleMode"));
+  Texture portraitTexture(nullptr, SDL_DestroyTexture);
+  LevelLayout viewport;
 
   CursorVisibility cursorVisibility;
 
@@ -93,19 +117,45 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
   int frames = 0;
   TouchInput touch;
   std::optional<Image> lastPresented;
+#ifdef __EMSCRIPTEN__
+  const RestorePortraitViewport restoreViewport{presentation, viewport};
+  bool portraitUnavailable = false;
+  int portraitTextureHeight = 0;
+  const auto updateViewport = [&] {
+    auto wanted = webCanvasLayout(supportsPortrait(session.screen()) && !portraitUnavailable);
+    if (wanted.portraitHeight == viewport.portraitHeight) return;
+    if (wanted.portrait() && portraitTextureHeight != wanted.height()) {
+      portraitTexture.reset(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
+                                              wanted.width(), wanted.height()));
+      if (!portraitTexture || SDL_SetTextureScaleMode(portraitTexture.get(), SDL_ScaleModeNearest) != 0) {
+        std::fprintf(stderr, "SDL portrait frontend texture: %s\n", SDL_GetError());
+        portraitUnavailable = true;
+        wanted = webCanvasLayout(false);
+        if (!viewport.portrait()) return;
+      } else {
+        portraitTextureHeight = wanted.height();
+      }
+    }
+    viewport = wanted;
+    presentation.setWebViewport(viewport);
+    touch.setViewport(viewport.width(), viewport.height());
+    session.setPointer(viewport.width() / 2, viewport.height() / 2, viewport);
+  };
+  updateViewport();
+#endif
   const auto routeEvent = [&](const SDL_Event& event) {
     updateFrontendCursorInput(session, event);
     if (!session.focused()) return;
-    if (event.type == SDL_MOUSEMOTION) session.setPointer(event.motion.x, event.motion.y);
+    if (event.type == SDL_MOUSEMOTION) session.setPointer(event.motion.x, event.motion.y, viewport);
     if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
-      session.setPointer(event.button.x, event.button.y);
+      session.setPointer(event.button.x, event.button.y, viewport);
     if (session.screen() == shell::Screen::SoundOptions ||
         session.screen() == shell::Screen::KeyboardShortcuts) {
-      handleSoundOptionsInput(session, event, presentation);
+      handleSoundOptionsInput(session, event, presentation, viewport);
     } else if (event.type == SDL_MOUSEMOTION) {
-      session.hoverMenu(session.pointerX(), session.pointerY());
+      session.hoverMenu(session.pointerX(), session.pointerY(), viewport);
     } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-      session.click(session.pointerX(), session.pointerY());
+      session.click(session.pointerX(), session.pointerY(), viewport);
     } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
       const auto key = event.key.keysym.sym;
       if (key == SDLK_RETURN) session.pressReturn();
@@ -144,15 +194,20 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
 
     // All queued mouse events above belong to the old client size.
     presentation.updateWindowScale(session.windowScale(), displayChanged);
+#ifdef __EMSCRIPTEN__
+    updateViewport();
+#endif
     if (session.screen() == shell::Screen::SoundOptions)
       session.setWindowScaleMenu(presentation.windowScaleMenu());
-    const Image image = session.composeFrame();
-    if (image.width != 640 || image.height != 480 || image.rgba.size() != 640u * 480u * 4u)
-      return std::unexpected("frontend image must be tightly packed 640x480 RGBA");
-    if (SDL_UpdateTexture(texture.get(), nullptr, image.rgba.data(), 640 * 4) != 0)
+    const Image image = session.composeFrame(viewport);
+    if (image.width != viewport.width() || image.height != viewport.height() ||
+        image.rgba.size() != image.pixelCount() * 4)
+      return std::unexpected("frontend image must be tightly packed RGBA at the viewport size");
+    auto* output = viewport.portrait() ? portraitTexture.get() : texture.get();
+    if (SDL_UpdateTexture(output, nullptr, image.rgba.data(), image.width * 4) != 0)
       return std::unexpected(sdlError("SDL_UpdateTexture"));
     if (SDL_RenderClear(renderer) != 0 ||
-        SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr) != 0)
+        SDL_RenderCopy(renderer, output, nullptr, nullptr) != 0)
       return std::unexpected(sdlError("SDL_RenderCopy"));
     SDL_RenderPresent(renderer);
     if (!options.finalFramePath.empty()) lastPresented = image;

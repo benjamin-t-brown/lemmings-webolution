@@ -21,19 +21,22 @@ EM_JS(void, getCanvasFillSize, (int* width, int* height), {
 
 void canvasFillSize(int& width, int& height) { getCanvasFillSize(&width, &height); }
 
-EM_JS(int, portraitLevelMediaMatches, (), {
+EM_JS(int, applyPortraitCanvasLayout, (int allowed, int renderWidth), {
+  if (typeof window === 'undefined') return 0;
+  const canvas = Module['canvas'];
   const media = Module['portraitLevelMedia'] ||
       (Module['portraitLevelMedia'] = window.matchMedia('(orientation: portrait) and (pointer: coarse)'));
-  return media.matches;
+  const portrait = !!allowed && media.matches;
+  canvas.toggleAttribute('data-portrait-level', portrait);
+  if (!portrait) return 0;
+  // Measure the dynamic CSS viewport so browser chrome and rotation are reflected in the projection.
+  const {width, height} = canvas.getBoundingClientRect();
+  if (width > 0 && height > 0) return Math.round(renderWidth * height / width);
+  canvas.removeAttribute('data-portrait-level');
+  return 0;
 });
 
-bool prefersPortraitLevel() { return portraitLevelMediaMatches() != 0; }
-
-EM_JS(void, applyCanvasPortrait, (int portrait), {
-  Module['canvas'].toggleAttribute('data-portrait-level', !!portrait);
-});
-
-void setCanvasPortrait(bool portrait) { applyCanvasPortrait(portrait); }
+int layoutPortraitCanvas(bool allowed, int renderWidth) { return applyPortraitCanvasLayout(allowed, renderWidth); }
 
 EM_ASYNC_JS(void, waitForFrame, (), {
   await new Promise(resolve => requestAnimationFrame(resolve));

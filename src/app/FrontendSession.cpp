@@ -3,6 +3,7 @@
 #include "app/EnglishStrings.h"
 #include "shell/HudText.h"
 #include "shell/MenuRender.h"
+#include "shell/PauseCaption.h"
 
 #include <string_view>
 #include <cctype>
@@ -11,6 +12,53 @@
 #include <vector>
 
 namespace webo::app {
+namespace {
+
+// The two original 640x480 backdrops leave black space around the splash.
+constexpr LevelButton kMainSplash{104, 4, 432, 316};
+constexpr LevelButton kConfirmSplash{164, 4, 312, 234};
+constexpr int kSplashMargin = 12, kConfirmHeadingSpace = 37;
+
+struct PortraitMenuLayout {
+  LevelButton splash, source;
+  int firstRowY, rowStep;
+
+  LevelButton row(int index, std::string_view label) const {
+    return portraitTextButton(label, firstRowY + index * rowStep, rowStep - 4);
+  }
+};
+
+PortraitMenuLayout portraitMenuLayout(LevelLayout viewport, int rowCount, bool confirming) {
+  const auto source = confirming ? kConfirmSplash : kMainSplash;
+  const int rowStep = std::clamp(viewport.height() / 11, 34, 44);
+  const int rowsHeight = rowCount * rowStep - 4;
+  const int gap = kSplashMargin + (confirming ? kConfirmHeadingSpace : 0);
+  const int availableHeight = viewport.height() - 2 * kSplashMargin - gap - rowsHeight;
+  const int width = std::min(viewport.width() - 2 * kSplashMargin, availableHeight * source.width / source.height);
+  const int height = width * source.height / source.width;
+  const int top = (viewport.height() - height - gap - rowsHeight) / 2;
+  return {{(viewport.width() - width) / 2, top, width, height}, source, top + height + gap, rowStep};
+}
+
+Image portraitSplash(const Image& original, LevelLayout viewport, const PortraitMenuLayout& layout) {
+  Image frame{viewport.width(), viewport.height(), AlphaMode::Opaque, {}};
+  frame.rgba.resize(frame.pixelCount() * 4);
+  for (std::size_t i = 3; i < frame.rgba.size(); i += 4) frame.rgba[i] = 255;
+  const auto& [left, top, width, height] = layout.splash;
+  const auto& source = layout.source;
+  for (int y = 0; y < height; ++y) {
+    const int sy = source.y + y * source.height / height;
+    for (int x = 0; x < width; ++x) {
+      const int sx = source.x + x * source.width / width;
+      const auto src = (std::size_t(sy) * original.width + sx) * 4;
+      const auto dst = (std::size_t(top + y) * frame.width + left + x) * 4;
+      std::copy_n(original.rgba.data() + src, 4, frame.rgba.data() + dst);
+    }
+  }
+  return frame;
+}
+
+} // namespace
 
 std::expected<FrontendSession, std::string> FrontendSession::create(
     const AssetLibrary& library, std::shared_ptr<save::SaveStore> store,
@@ -72,7 +120,8 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
 
   // Selector 0x0C uses MAIN_LOGO and the shared row origin (0x48E197).
   // UK[115] is the original first choice and the clone's only current language.
-  const std::array english{std::string((*strings)[115])};
+  result.languageLabels_ = {std::string((*strings)[115])};
+  const auto& english = result.languageLabels_;
   const shell::MenuParams languageParams;
   result.languageImage_ = shell::renderMainMenu(*logo, *font, english, languageParams, cells);
   result.languageBoxes_[0] = shell::menuPlateBounds(
@@ -197,8 +246,48 @@ const Image& FrontendSession::image() const {
   }
 }
 
-Image FrontendSession::composeFrame() const {
-  Image composed = image();
+std::span<const std::string> FrontendSession::portraitMenuLabels() const {
+  switch (screen()) {
+    case shell::Screen::Menu: return menuLabels_;
+    case shell::Screen::Confirm: return confirmLabels_;
+    case shell::Screen::Language: return languageLabels_;
+    default: return {};
+  }
+}
+
+Image FrontendSession::composePortraitMenu(LevelLayout viewport) const {
+  const auto labels = portraitMenuLabels();
+  const bool confirming = screen() == shell::Screen::Confirm;
+  const auto backdropScreen = labels.empty() ? shell::Screen::Menu : screen();
+  const auto layout = portraitMenuLayout(
+      viewport, static_cast<int>(labels.empty() ? menuLabels_.size() : labels.size()), confirming);
+  if (portraitBackdrop_.height != viewport.height() || portraitBackdropScreen_ != backdropScreen) {
+    portraitBackdrop_ = portraitSplash(confirming ? confirmBackdrop_ : menuBackdrop_, viewport, layout);
+    portraitBackdropScreen_ = backdropScreen;
+  }
+  if (screen() == shell::Screen::KeyboardShortcuts)
+    return renderKeyboardShortcuts(portraitBackdrop_, viewport);
+  Image frame = portraitBackdrop_;
+  if (screen() == shell::Screen::SoundOptions) {
+    shell::drawCaptionPanel(frame, {.rect = {0, 0, frame.width, frame.height}, .alpha = 170});
+    return renderSoundOptions(frame, viewport);
+  }
+  const auto& cells = shell::fontCells();
+  if (confirming) {
+    const shell::HudLine heading{confirmQuestion_, shell::labelLeft(confirmQuestion_, cells, viewport.width()),
+                                  layout.firstRowY - kConfirmHeadingSpace, {255, 0, 0}};
+    shell::drawHud(frame, font_, std::span(&heading, 1), cells);
+  }
+  for (int row = 0; row < static_cast<int>(labels.size()); ++row) {
+    auto params = portraitButtonParams(layout.row(row, labels[row]), labels[row]);
+    params.highlight = row == menuFocus() ? 0 : -1;
+    shell::drawMenuRows(frame, font_, labels.subspan(row, 1), params, cells);
+  }
+  return frame;
+}
+
+Image FrontendSession::composeFrame(LevelLayout viewport) const {
+  Image composed = viewport.portrait() ? composePortraitMenu(viewport) : image();
   if (screen() == shell::Screen::Map && focused_) {
     // 49B2F6 shows the indexed-mask tooltip for state2/3. Compose over the base
     // map each frame. Provisional clone policy hides it while unfocused.
@@ -210,7 +299,7 @@ Image FrontendSession::composeFrame() const {
   return composed;
 }
 
-shell::Outcome FrontendSession::pressReturn() {
+shell::Outcome FrontendSession::pressReturn(LevelLayout viewport) {
   if (screen() == shell::Screen::Language) {
     const auto outcome = state_.press(shell::Key::Return);
     if (outcome == shell::Outcome::Handled && languageFile_) {
@@ -222,6 +311,7 @@ shell::Outcome FrontendSession::pressReturn() {
     return outcome;
   }
   if (screen() == shell::Screen::SoundOptions) {
+    if (!SoundMenu::rowEnabled(menuFocus(), viewport)) return shell::Outcome::Ignored;
     if (menuFocus() == SoundMenu::Accept) return closeSoundOptions(true);
     if (menuFocus() == SoundMenu::KeyboardShortcuts) return state_.openKeyboardShortcuts();
     if (menuFocus() == SoundMenu::UnlockAll)
@@ -229,7 +319,7 @@ shell::Outcome FrontendSession::pressReturn() {
     else if (menuFocus() == SoundMenu::ReverseDrag)
       editingSound_.reverseDrag = !editingSound_.reverseDrag;
     else
-      adjustSound(menuFocus() == SoundMenu::WindowSize ? 1 : -1);
+      adjustSound(menuFocus() == SoundMenu::WindowSize ? 1 : -1, viewport);
     return shell::Outcome::Handled;
   }
   // SDL Return activates the footer row focused by the native shared builder.
@@ -244,11 +334,13 @@ shell::Outcome FrontendSession::pressEscape() {
   return state_.press(shell::Key::Esc);
 }
 
-bool FrontendSession::moveMenuFocus(int direction) {
+bool FrontendSession::moveMenuFocus(int direction, LevelLayout viewport) {
   if (direction != -1 && direction != 1) return false;
   if (screen() == shell::Screen::SoundOptions) {
     constexpr int rows = SoundMenu::RowCount;
-    state_.setHighlight((menuFocus() + direction + rows) % rows);
+    int next = (menuFocus() + direction + rows) % rows;
+    if (!SoundMenu::rowEnabled(next, viewport)) next = (next + direction + rows) % rows;
+    state_.setHighlight(next);
     return true;
   }
   if (screen() != shell::Screen::Menu && screen() != shell::Screen::Confirm) return false;
@@ -315,8 +407,9 @@ shell::Outcome FrontendSession::closeSoundOptions(bool accept) {
   return state_.returnFromSoundOptions();
 }
 
-bool FrontendSession::adjustSound(int direction) {
+bool FrontendSession::adjustSound(int direction, LevelLayout viewport) {
   if (screen() != shell::Screen::SoundOptions || menuFocus() >= SoundMenu::KeyboardShortcuts ||
+      !SoundMenu::rowEnabled(menuFocus(), viewport) ||
       (direction != -1 && direction != 1)) return false;
   if (menuFocus() == SoundMenu::UnlockAll) {
     editingSound_.unlockAllLevels = direction > 0;
@@ -340,47 +433,65 @@ bool FrontendSession::adjustSound(int direction) {
   return true;
 }
 
-void FrontendSession::hoverSound(int x, int y) {
+void FrontendSession::hoverSound(int x, int y, LevelLayout viewport) {
   if (screen() == shell::Screen::SoundOptions)
-    if (auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_, windowScaleMenu_))
+    if (auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_, windowScaleMenu_, viewport))
       state_.setHighlight(hit->row);
 }
 
-Image FrontendSession::renderSoundOptions(const Image& backdrop) const {
-  return soundMenu_.render(backdrop, font_, soundBaseY(), menuFocus(), editingSound_, windowScaleMenu_);
+Image FrontendSession::renderSoundOptions(const Image& backdrop, LevelLayout viewport) const {
+  return soundMenu_.render(backdrop, font_, soundBaseY(), menuFocus(), editingSound_, windowScaleMenu_, viewport);
 }
 
-void FrontendSession::hoverMenu(int x, int y) {
-  int row;
-  switch (screen()) {
-    case shell::Screen::Menu: row = shell::menuPanelAt(menuBoxes_, x, y); break;
-    case shell::Screen::Confirm: row = shell::menuPanelAt(confirmBoxes_, x, y); break;
-    case shell::Screen::Results: row = results_->rowAt(x, y); break;
-    default: return;
+Image FrontendSession::renderKeyboardShortcuts(const Image& backdrop, LevelLayout viewport) const {
+  return SoundMenu::renderShortcuts(backdrop, font_, viewport);
+}
+
+int FrontendSession::menuRowAt(int x, int y, LevelLayout viewport) const {
+  if (viewport.portrait()) {
+    const auto labels = portraitMenuLabels();
+    if (labels.empty()) return -1;
+    const auto layout = portraitMenuLayout(viewport, static_cast<int>(labels.size()),
+                                            screen() == shell::Screen::Confirm);
+    for (int row = 0; row < static_cast<int>(labels.size()); ++row)
+      if (layout.row(row, labels[row]).contains(x, y)) return row;
+    return -1;
   }
+  switch (screen()) {
+    case shell::Screen::Menu: return shell::menuPanelAt(menuBoxes_, x, y);
+    case shell::Screen::Confirm: return shell::menuPanelAt(confirmBoxes_, x, y);
+    case shell::Screen::Language: return shell::menuPanelAt(languageBoxes_, x, y);
+    case shell::Screen::Results: return results_->rowAt(x, y);
+    default: return -1;
+  }
+}
+
+void FrontendSession::hoverMenu(int x, int y, LevelLayout viewport) {
+  if (screen() == shell::Screen::Language) return;
+  const int row = menuRowAt(x, y, viewport);
   if (row >= 0) state_.setHighlight(row);
 }
 
-bool FrontendSession::click(int x, int y) {
+bool FrontendSession::click(int x, int y, LevelLayout viewport) {
   if (screen() == shell::Screen::Menu) {
-    const int row = shell::menuPanelAt(menuBoxes_, x, y);
+    const int row = menuRowAt(x, y, viewport);
     if (row < 0) return false;
     state_.setHighlight(row);
     return pressReturn() == shell::Outcome::Handled;
   }
   if (screen() == shell::Screen::Language)
-    return shell::menuPanelAt(languageBoxes_, x, y) == 0 && pressReturn() == shell::Outcome::Handled;
+    return menuRowAt(x, y, viewport) == 0 && pressReturn() == shell::Outcome::Handled;
   if (screen() == shell::Screen::SoundOptions) {
-    const auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_, windowScaleMenu_);
+    const auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_, windowScaleMenu_, viewport);
     if (!hit) return false;
     state_.setHighlight(hit->row);
-    if (hit->direction == 0) return pressReturn() == shell::Outcome::Handled;
-    return adjustSound(hit->direction);
+    if (hit->direction == 0) return pressReturn(viewport) == shell::Outcome::Handled;
+    return adjustSound(hit->direction, viewport);
   }
   if (screen() == shell::Screen::KeyboardShortcuts)
-    return SoundMenu::shortcutsBackAt(x, y) && pressReturn() == shell::Outcome::Handled;
+    return SoundMenu::shortcutsBackAt(x, y, viewport) && pressReturn() == shell::Outcome::Handled;
   if (screen() == shell::Screen::Confirm) {
-    const int row = shell::menuPanelAt(confirmBoxes_, x, y);
+    const int row = menuRowAt(x, y, viewport);
     return row >= 0 && confirmChoice(row == 0) == shell::Outcome::Handled;
   }
   if (screen() == shell::Screen::Map && x >= mapFooterBox_[0] && x < mapFooterBox_[2] &&

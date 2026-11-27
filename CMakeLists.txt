@@ -194,12 +194,15 @@ if(EMSCRIPTEN)
     --pre-js "${web_dir}/node-mount.js"
     "--js-library=${web_dir}/web-audio.js")
   set(web_files "${web_dir}/webolution.html" "${web_dir}/web-game-data.mjs" "${web_dir}/isolate.js")
+  set(loading_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/app/icon/loading")
+  list(APPEND web_files "${loading_dir}/basher.gif" "${loading_dir}/blocker.gif")
   set_property(TARGET webolution APPEND PROPERTY LINK_DEPENDS
     "${web_dir}/node-mount.js" "${web_dir}/web-audio.js" ${web_files} "${webolution_icon_png}")
   add_custom_command(TARGET webolution POST_BUILD
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/webolution.wasm" "${CMAKE_CURRENT_BINARY_DIR}/webolution.html"
       "${CMAKE_CURRENT_BINARY_DIR}/web-game-data.mjs" "${CMAKE_CURRENT_BINARY_DIR}/isolate.js"
       "${CMAKE_CURRENT_BINARY_DIR}/favicon.png"
+      "${CMAKE_CURRENT_BINARY_DIR}/basher.gif" "${CMAKE_CURRENT_BINARY_DIR}/blocker.gif"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${web_files} "${CMAKE_CURRENT_BINARY_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${webolution_icon_png}" "${CMAKE_CURRENT_BINARY_DIR}/favicon.png"
     VERBATIM)

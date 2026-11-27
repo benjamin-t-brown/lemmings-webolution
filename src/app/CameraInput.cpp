@@ -67,24 +67,34 @@ void CameraController::update(const CameraInput& in, double dt) {
     if (flipElapsed_ >= flipDuration) flipElapsed_ = -1.0;
   }
 
+  const double step = in.leftShift ? 3.0 : 1.0;
+  if ((in.arrowLeft != in.arrowRight) && in.uiAllowsCamera && (in.uiState == 0 || in.uiState == 1)) {
+    // Clone addition: arrows turn like held numpad 4/6 during a drag.
+    // Reverse camera drag also flips the arrow direction.
+    const double turn = (in.arrowLeft != in.reverseDrag) ? step : -step;
+    camera_.yawUnits += turn;
+    pickReference_[0] = wrapTargetYaw(pickReference_[0] + turn);
+  }
+
   if (grabbed_) {
+    const double sign = in.reverseDrag ? -1.0 : 1.0;
+    const double dx = sign * in.mouseDx, dy = sign * in.mouseDy;
     const double previousYaw = camera_.yawUnits;
-    const double step = in.leftShift ? 3.0 : 1.0;
     if (in.numpad4) camera_.yawUnits += step;
     if (in.numpad6) camera_.yawUnits -= step;
-    camera_.yawUnits += (10.0 / 24.0) * in.mouseDx;
+    camera_.yawUnits += (10.0 / 24.0) * dx;
     pickReference_[0] = wrapTargetYaw(pickReference_[0] + (camera_.yawUnits - previousYaw));
     if (camera_.zoomShift == 0) {
-      displayedElevation_ -= 0.5 * in.mouseDy;
-      pickReference_[1] -= 0.5 * in.mouseDy;
+      displayedElevation_ -= 0.5 * dy;
+      pickReference_[1] -= 0.5 * dy;
     } else {
       const double elevation = camera_.elevation;
       // An anchor outside the drag limits can move back toward the range at
       // the usual speed. Its current elevation is the temporary outer limit.
-      camera_.elevation = clamp(elevation + 1.5 * in.mouseDy,
+      camera_.elevation = clamp(elevation + 1.5 * dy,
           std::min(minElevation, elevation), std::max(maxElevation, elevation));
-      displayedElevation_ -= 0.125 * in.mouseDy;
-      pickReference_[1] -= 0.125 * in.mouseDy;
+      displayedElevation_ -= 0.125 * dy;
+      pickReference_[1] -= 0.125 * dy;
     }
   } else {
     if (in.numpad4) cursorX_ -= 4.8;

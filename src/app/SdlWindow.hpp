@@ -6,6 +6,7 @@
 #if defined(WEBOLUTION_HAVE_SDL2) && WEBOLUTION_HAVE_SDL2
 #include <SDL.h>
 #include "app/SdlShutdown.hpp"
+#include "app/LevelLayout.h"
 #include "app/TouchInput.h"
 #include "app/WindowScale.h"
 #ifdef __EMSCRIPTEN__
@@ -96,7 +97,7 @@ class SdlWindow {
       applyWindowScale();
       if (desktop) SDL_ShowWindow(window_);
     }
-    // Scale the final 640x480 texture on the GPU when available. Headless
+    // Scale the final texture on the GPU when available. Headless
     // drivers use the software fallback. The renderer choice is scale-independent.
     renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer_) renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_SOFTWARE);
@@ -105,6 +106,13 @@ class SdlWindow {
   }
   SDL_Renderer* renderer() const { return renderer_; }
   int scale() const { return scale_; }
+#ifdef __EMSCRIPTEN__
+  void setLevelPortrait(bool portrait) {
+    SDL_SetWindowSize(window_, portrait ? kPortraitWidth : kGameWidth,
+                     portrait ? kPortraitHeight : kGameHeight);
+    web::setCanvasPortrait(portrait);
+  }
+#endif
   void updateWindowScale(std::optional<int> choice, bool displayChanged = false) {
     const bool changed = choice && *choice != choice_;
     if (changed) choice_ = *choice;

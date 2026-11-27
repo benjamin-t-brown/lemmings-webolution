@@ -1,12 +1,14 @@
 #pragma once
 
 #include "app/Pick.h"
+#include "app/WindowScale.h"
 #include "assets/Bitmap.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <span>
+#include <utility>
 
 namespace webo::app {
 
@@ -38,8 +40,24 @@ inline std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget>
   }
   return std::nullopt;
 }
+// adjustingRate adds the held-slide RATE line. noticeRate temporarily replaces
+// the remaining count with a RATE line after a one-step button adjustment.
 void drawHatchHover(Image&, const Image& font, const HatchHoverTarget&,
-                    std::optional<int> adjustingRate = std::nullopt);
+                    std::optional<int> adjustingRate = std::nullopt,
+                    std::optional<int> noticeRate = std::nullopt);
+
+// Clone addition: tap text flanking each entrance. Direction +1 raises the
+// release rate and -1 lowers it; hatch is the serialized entrance index.
+struct HatchRateButton {
+  std::size_t hatch = 0;
+  int direction = 0;
+};
+std::optional<HatchRateButton> hatchRateButtonAt(std::span<const HatchHoverTarget> targets,
+                                                 int x, int y, int width = kGameWidth,
+                                                 int height = kGameHeight);
+void drawHatchRateButtons(Image&, const Image& font, std::span<const HatchHoverTarget> targets,
+                          std::optional<std::pair<int, int>> hover = std::nullopt);
+
 void drawExitHover(Image&, const Image& font, const PickBox&, int saveTarget);
 
 } // namespace webo::app

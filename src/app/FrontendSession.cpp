@@ -226,6 +226,8 @@ shell::Outcome FrontendSession::pressReturn() {
     if (menuFocus() == SoundMenu::KeyboardShortcuts) return state_.openKeyboardShortcuts();
     if (menuFocus() == SoundMenu::UnlockAll)
       editingSound_.unlockAllLevels = !editingSound_.unlockAllLevels;
+    else if (menuFocus() == SoundMenu::ReverseDrag)
+      editingSound_.reverseDrag = !editingSound_.reverseDrag;
     else
       adjustSound(menuFocus() == SoundMenu::WindowSize ? 1 : -1);
     return shell::Outcome::Handled;
@@ -238,7 +240,7 @@ shell::Outcome FrontendSession::pressReturn() {
 }
 
 shell::Outcome FrontendSession::pressEscape() {
-  if (screen() == shell::Screen::SoundOptions) return closeSoundOptions(false);
+  if (screen() == shell::Screen::SoundOptions) return closeSoundOptions(true);
   return state_.press(shell::Key::Esc);
 }
 
@@ -318,6 +320,10 @@ bool FrontendSession::adjustSound(int direction) {
       (direction != -1 && direction != 1)) return false;
   if (menuFocus() == SoundMenu::UnlockAll) {
     editingSound_.unlockAllLevels = direction > 0;
+    return true;
+  }
+  if (menuFocus() == SoundMenu::ReverseDrag) {
+    editingSound_.reverseDrag = direction > 0;
     return true;
   }
   if (menuFocus() == SoundMenu::WindowSize) {

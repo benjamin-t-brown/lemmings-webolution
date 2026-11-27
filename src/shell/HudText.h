@@ -47,6 +47,7 @@ struct HudLine {
   int x = 0;
   int y = 0;
   Rgb colour{255, 255, 255};
+  double scale = 1;
 };
 
 // "%d" of the argument; Saved goes through `movsx word` first (0x44D316).

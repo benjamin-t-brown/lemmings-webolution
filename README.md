@@ -36,6 +36,34 @@ Press **Enter** (including keypad Enter) or **Pause/Break** to toggle examine
 pause. While paused, drag with either mouse button, scroll to zoom, and point
 at a switch to see what it controls. **P** or **Esc** resumes play.
 
+### Touch controls
+
+In the browser, holding a touch-first device upright automatically switches
+levels to portrait mode. The job plates move to two rows at the bottom, with
+**Fast Forward**, **Nuke** and the level stats at the top. Turn the device
+sideways for the original layout. Menus and the level map use the wider layout.
+
+- **Tap** a skill plate, then tap a lemming to assign it. Tapping the scene
+  also moves the targeting cursor to that spot. Tapping the **Menu** button at
+  the top opens and pauses the level menu; tap a menu row to choose it.
+- **One-finger drag** on the scene moves the targeting cursor. The cursor sits
+  about one fingertip above your finger so it stays visible; release assigns
+  the selected skill at that aimed position, then the cursor settles at the
+  spot where you lifted your finger.
+- **Two-finger drag** rotates the camera. This starts in the opposite direction
+  to mouse drag; the **Reverse camera drag** option flips both together.
+- Use the single **+ / −** plate near the bottom of the scene to toggle zoom in and out.
+  It zooms toward the current targeting cursor, and the label shows the next
+  action. Pinch zoom was removed.
+- **Hold** the fast-forward plate to speed up time. A second finger can tap a
+  lemming without stopping fast-forward.
+- Each entrance has **−** and **+** text buttons on either side for release
+  rate changes. Tapping changes one step; holding repeats like holding the
+  mouse button. After a tap, the hatch briefly shows `RATE n`, then returns to
+  the normal remaining count. You can also **hold** the hatch and slide **up**
+  to raise its rate or **down** to lower it.
+- **Double-tap** the Nuke plate to use it.
+
 ## Play on Windows or Linux
 
 Download and extract the Windows x64 zip or Linux x64 tarball. On Windows,

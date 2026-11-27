@@ -22,6 +22,8 @@ class RuntimeReleaseRateControl {
   std::optional<std::size_t> heldTarget(std::span<const HatchHoverTarget> targets,
                                        int x, int y) const;
   bool press(std::optional<std::size_t> hatch, int button, sim::World& world);
+  // One-shot tap adjustment for the flanking entrance rate plates.
+  bool adjust(std::size_t hatch, int delta, sim::World& world);
   void release(int button) { if (button == heldButton_) reset(); }
   void reset() { heldButton_ = 0; heldHatch_.reset(); repeatSeconds_ = 0; }
   bool advance(double seconds, std::span<const HatchHoverTarget> targets,
@@ -40,21 +42,21 @@ class RuntimeReleaseRateControl {
 };
 
 // Same SOURCE plate geometry for hover and click; -1 means outside all plates.
-int runtimeSkillPanelIndex(int x, int y);
+int runtimeSkillPanelIndex(int x, int y, bool portrait = false);
 
 // Plate 8 is fast-forward on hover with button 0 held (0x455AFF).
 // Plate 9 is Armageddon.
 enum class RuntimePanelCommand { None, FastForward, Armageddon };
 
 // Uses runtimeSkillPanelIndex to share command and click hit regions.
-RuntimePanelCommand runtimeSkillPanelCommand(int x, int y);
+RuntimePanelCommand runtimeSkillPanelCommand(int x, int y, bool portrait = false);
 
 // For the release pair at 0x483B5D/0x454725, provisional clone input
 // requires two complete clicks on the plate less than 500 ms apart.
 class RuntimeNukeInput {
  public:
-  void press(int x, int y);
-  void release(int x, int y, unsigned int timestampMs, sim::World& world);
+  void press(int x, int y, bool portrait = false);
+  void release(int x, int y, unsigned int timestampMs, sim::World& world, bool portrait = false);
   void reset() { pressed_ = armed_ = false; }
   bool armed() const { return armed_; }
  private:
@@ -62,7 +64,7 @@ class RuntimeNukeInput {
   unsigned int lastReleaseMs_ = 0;
 };
 void drawRuntimeNukeFeedback(Image& image, const Image& font,
-                             const sim::World& world, bool armed);
+                             const sim::World& world, bool armed, bool portrait = false);
 
 // A skill needs positive stock for plate selection. Keyboard input and
 // click geometry use clone mappings.
@@ -72,7 +74,7 @@ class RuntimeSkillSelection {
   sim::Skill selectedSkill() const;
   bool selectIndex(int index);
   bool selectAvailableIndex(int index, const std::array<int, 9>& counts);
-  bool consumePanelClick(int x, int y, const std::array<int, 9>& counts);
+  bool consumePanelClick(int x, int y, const std::array<int, 9>& counts, bool portrait = false);
 
  private:
   int selectedIndex_ = 0;
@@ -88,6 +90,6 @@ void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
 void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
                            const sim::World& world,
                            const RuntimeSkillSelection& selection, bool fastForward,
-                           const SkillPanelIconAnimation* animation);
+                           const SkillPanelIconAnimation* animation, bool portrait = false);
 
 }  // namespace webo::app

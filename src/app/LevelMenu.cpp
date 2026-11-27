@@ -1,6 +1,7 @@
 #include "app/LevelMenu.h"
 
 #include "app/EnglishStrings.h"
+#include "app/LevelLayout.h"
 #include "app/WindowScale.h"
 
 #include <utility>
@@ -143,7 +144,8 @@ void LevelMenu::draw(Image& frame) const {
   shell::drawMenuRows(frame, font_, labels_, params, cells);
 }
 
-bool LevelMenu::touchButtonAt(int x, int y) const {
+bool LevelMenu::touchButtonAt(int x, int y, bool portrait) const {
+  if (portrait) return kPortraitMenu.contains(x, y);
   const auto& cells = shell::fontCells();
   const auto& label = kTouchButtonLabel.front();
   const auto bounds = shell::menuPlateBounds(shell::labelLeft(label, cells, kTouchButtonParams.xWord),
@@ -151,8 +153,10 @@ bool LevelMenu::touchButtonAt(int x, int y) const {
   return shell::menuPanelAt(std::span(&bounds, 1), x, y) == 0;
 }
 
-void LevelMenu::drawTouchButton(Image& frame) const {
-  shell::drawMenuRows(frame, font_, kTouchButtonLabel, kTouchButtonParams, shell::fontCells());
+void LevelMenu::drawTouchButton(Image& frame, bool portrait) const {
+  const auto params = portrait ? portraitButtonParams(kPortraitMenu, kTouchButtonLabel.front())
+                               : kTouchButtonParams;
+  shell::drawMenuRows(frame, font_, kTouchButtonLabel, params, shell::fontCells());
 }
 
 } // namespace webo::app

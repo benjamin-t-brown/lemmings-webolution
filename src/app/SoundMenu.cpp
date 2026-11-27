@@ -34,10 +34,15 @@ constexpr ShortcutLine kShortcuts[]{
     {"Enter / Pause/Break", "Examine Level", "SDL_SCANCODE_RETURN SDL_SCANCODE_PAUSE"},
     {"Keypad Enter", "Examine Level", "SDL_SCANCODE_KP_ENTER"},
     {"Escape", "Open level menu", "SDL_SCANCODE_ESCAPE"},
+    {"Left / Right", "Rotate camera (Shift: faster)", "SDL_SCANCODE_LEFT SDL_SCANCODE_RIGHT"},
 };
 
 constexpr std::string_view kShortcutsLabel = "Keyboard Shortcuts", kBackLabel = "Back";
 constexpr int kBackY = 447;
+
+// The accept/exit row keeps a warmer idle plate and turns red on hover/focus.
+constexpr shell::Rgb kAcceptOrange{0xE0, 0x80, 0};
+constexpr shell::Rgb kAcceptHoverRed{255, 0, 0};
 
 std::array<Row, SoundMenu::RowCount> layout(
     const std::array<std::string, SoundMenu::RowCount>& labels, int baseY) {
@@ -72,17 +77,17 @@ std::expected<SoundMenu, std::string> SoundMenu::load(const AssetLibrary& librar
   if (!right) return std::unexpected(right.error());
   SoundMenu menu;
   // Clone additions in the existing Options layout.
-  menu.labels_[false] = {std::string(strings[11]), std::string(strings[12]),
-                         "Unlock all levels (Off)", {}, std::string(kShortcutsLabel), std::string(strings[24])};
-  menu.labels_[true] = menu.labels_[false];
-  menu.labels_[true][UnlockAll] = "Unlock all levels (On)";
+  menu.labels_ = {std::string(strings[11]), std::string(strings[12]), {}, {}, {},
+                  std::string(kShortcutsLabel), std::string(strings[24])};
   menu.arrows_ = {std::move(*left), std::move(*right)};
   return menu;
 }
 
 std::array<std::string, SoundMenu::RowCount> SoundMenu::labels(
     save::SoundSettings settings, const WindowScaleMenu& window) const {
-  auto rows = labels_[settings.unlockAllLevels];
+  auto rows = labels_;
+  rows[UnlockAll] = settings.unlockAllLevels ? "Unlock all levels (On)" : "Unlock all levels (Off)";
+  rows[ReverseDrag] = settings.reverseDrag ? "Reverse camera drag (On)" : "Reverse camera drag (Off)";
   auto& label = rows[WindowSize];
   label = "Window size - ";
   const int choice = settings.windowScale;
@@ -135,9 +140,14 @@ Image SoundMenu::render(const Image& backdrop, const Image& font, int baseY, int
   Image frame = backdrop;
   for (int i = 0; i < RowCount; ++i) {
     const auto& row = rows[i];
-    params.baseY = row.top;
-    params.highlight = i == focus ? 0 : -1;
-    shell::drawMenuRows(frame, font, std::span(&text[i], 1), params, shell::fontCells());
+    shell::MenuParams rowParams = params;
+    rowParams.baseY = row.top;
+    rowParams.highlight = i == focus ? 0 : -1;
+    if (i == Accept) {
+      rowParams.panelNormal = kAcceptOrange;
+      rowParams.panelHighlight = kAcceptHoverRed;
+    }
+    shell::drawMenuRows(frame, font, std::span(&text[i], 1), rowParams, shell::fontCells());
     if (hasArrows(i)) {
       for (int side = 0; side < 2; ++side) {
         const auto& art = arrows_[side];

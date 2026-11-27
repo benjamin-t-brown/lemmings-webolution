@@ -34,8 +34,8 @@ class LevelMenu {
   LevelMenuAction focusedAction() const;
   int focusedIndex() const { return focusedIndex_; }
   void draw(Image& frame) const;
-  bool touchButtonAt(int x, int y) const;
-  void drawTouchButton(Image& frame) const;
+  bool touchButtonAt(int x, int y, bool portrait = false) const;
+  void drawTouchButton(Image& frame, bool portrait = false) const;
 
  private:
   struct Row {

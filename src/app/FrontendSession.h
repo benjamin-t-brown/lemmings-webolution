@@ -71,6 +71,7 @@ class FrontendSession {
   void configureSound(save::SoundSettings levels, std::shared_ptr<save::SaveSink> file,
                       std::function<void(save::SoundSettings, bool previewSfx)> preview);
   int windowScale() const { return acceptedSound_.windowScale; }
+  bool reverseDrag() const { return acceptedSound_.reverseDrag; }
   void setWindowScaleMenu(WindowScaleMenu window) { windowScaleMenu_ = window; }
   shell::Outcome openSoundOptions();
   shell::Outcome closeSoundOptions(bool accept);

@@ -1,11 +1,15 @@
 #include "app/RuntimeHud.h"
+#include "app/LevelLayout.h"
 #include "app/RuntimeSkillPanel.h"
 
 #include "shell/HudText.h"
+#include "shell/MenuRender.h"
 #include "app/HoverFeedback.h"
 
 #include <algorithm>
 #include <cmath>
+#include <string>
+#include <utility>
 
 namespace webo::app {
 
@@ -18,23 +22,33 @@ int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index)
 }
 
 namespace {
-shell::HudLine hoverCountLine(const Image& image, std::span<const shell::GlyphCell> cells,
-                             int count, int left, int right, int y) {
-  shell::HudLine line{shell::counterText(count), 0, 0, {255,255,255}};
+shell::HudLine centredLine(const Image& image, std::span<const shell::GlyphCell> cells,
+                           std::string text, int left, int right, int y, shell::Rgb colour) {
+  shell::HudLine line{std::move(text), 0, 0, colour};
   const int width = shell::textWidth(line.text, cells);
   line.x = std::clamp((left+right-width)/2, 0, std::max(0, image.width-width));
   line.y = std::clamp(y, 0, std::max(0, image.height-shell::kLineHeight));
   return line;
 }
+
+shell::HudLine hoverCountLine(const Image& image, std::span<const shell::GlyphCell> cells,
+                              int count, int left, int right, int y) {
+  return centredLine(image, cells, shell::counterText(count), left, right, y, {255,255,255});
+}
 }  // namespace
 
 void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
-                    std::optional<int> adjustingRate) {
+                    std::optional<int> adjustingRate, std::optional<int> noticeRate) {
   const auto cells = shell::fontCells();
   // The clone displays remaining population. Native 0x454B95 passes release rate.
   // 454C34..454C64 centres text on projected hatch Y - (44 << mode).
   // Provisional 640x480 display uses ^Font, mesh centre and viewport clamping.
-  auto line = hoverCountLine(image, cells, h.remaining, h.left, h.right, (h.top+h.bottom)/2 - 44);
+  const int countY = (h.top+h.bottom)/2 - 44;
+  const bool showingNotice = noticeRate && !adjustingRate;
+  auto line = showingNotice
+      ? centredLine(image, cells, "RATE " + std::to_string(*noticeRate), h.left, h.right, countY,
+                    {255,232,96})
+      : hoverCountLine(image, cells, h.remaining, h.left, h.right, countY);
   shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
   // Keep the rate visible while the player holds a hatch button to adjust it.
   if (adjustingRate) {
@@ -49,6 +63,62 @@ void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
   }
 }
 
+namespace {
+
+constexpr std::string_view kRateDecrease = "-", kRateIncrease = "+";
+constexpr shell::Rgb kRateOrange{0xE0, 0x80, 0}, kRateHoverRed{255, 0, 0};
+
+struct RateButtonGeometry {
+  int x = 0, y = 0;
+  std::array<int, 4> bounds{};
+};
+
+RateButtonGeometry rateButtonGeometry(const HatchHoverTarget& h, int direction,
+                                      int frameWidth, int frameHeight) {
+  const auto& cells = shell::fontCells();
+  const auto label = direction > 0 ? kRateIncrease : kRateDecrease;
+  const int width = shell::textWidth(label, cells);
+  const int y = std::clamp((h.top + h.bottom) / 2 - shell::kLineHeight / 2,
+      0, std::max(0, frameHeight - shell::kLineHeight));
+  constexpr int gap = 10, padX = 4, padY = 2;
+  const int wantedX = direction > 0 ? h.right + gap : h.left - gap - width;
+  const int x = std::clamp(wantedX, 0, std::max(0, frameWidth - width));
+  const auto bounds = std::array<int, 4>{
+      std::max(0, x - padX), std::max(0, y - padY),
+      std::min(frameWidth, x + width + padX), std::min(frameHeight, y + shell::kLineHeight + padY)};
+  return {x, y, bounds};
+}
+
+}  // namespace
+
+std::optional<HatchRateButton> hatchRateButtonAt(std::span<const HatchHoverTarget> targets,
+                                                 int x, int y, int width, int height) {
+  for (const auto& h : targets)
+    for (const int direction : {-1, 1}) {
+      const auto [textX, textY, bounds] = rateButtonGeometry(h, direction, width, height);
+      (void)textX;
+      (void)textY;
+      if (pointerOverSceneBounds(x, y, bounds[0], bounds[1], bounds[2], bounds[3]))
+        return HatchRateButton{h.index, direction};
+    }
+  return std::nullopt;
+}
+
+void drawHatchRateButtons(Image& image, const Image& font,
+                          std::span<const HatchHoverTarget> targets,
+                          std::optional<std::pair<int, int>> hover) {
+  const auto& cells = shell::fontCells();
+  for (const auto& h : targets)
+    for (const int direction : {-1, 1}) {
+      const auto [x, y, bounds] = rateButtonGeometry(h, direction, image.width, image.height);
+      const bool hovered = hover && pointerOverSceneBounds(
+          hover->first, hover->second, bounds[0], bounds[1], bounds[2], bounds[3]);
+      const shell::HudLine line{direction > 0 ? std::string(kRateIncrease) : std::string(kRateDecrease),
+                                x, y, hovered ? kRateHoverRed : kRateOrange};
+      shell::drawHud(image, font, std::span(&line, 1), cells);
+    }
+}
+
 void drawExitHover(Image& image, const Image& font, const PickBox& box, int saveTarget) {
   const auto cells = shell::fontCells();
   // Clone addition. Put the level's save target just above the visible model.
@@ -58,19 +128,24 @@ void drawExitHover(Image& image, const Image& font, const PickBox& box, int save
   shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
 }
 
-void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world, bool armed) {
+void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world,
+                             bool armed, bool portrait) {
   if (!armed && !world.nukeRequested()) return;
   // PROVISIONAL control feedback: gold outline and confirmation/status hint.
   // The large countdown is composed with the level's Let's Go text in main.
-  for (int y = 372; y < std::min(404, image.height); ++y)
-    for (int x = 18; x < std::min(90, image.width); ++x)
-      if (x < 20 || x >= 88 || y < 374 || y >= 402) {
+  const auto [left, top, width, height] = skillPlate(9, portrait);
+  const int right = left + width, bottom = top + height;
+  for (int y = top; y < std::min(bottom, image.height); ++y)
+    for (int x = left; x < std::min(right, image.width); ++x)
+      if (x < left + 2 || x >= right - 2 || y < top + 2 || y >= bottom - 2) {
         const auto p = (std::size_t(y) * image.width + x) * 4;
         image.rgba[p] = 255; image.rgba[p+1] = 220; image.rgba[p+2] = 64;
       }
-  const std::string text = !world.nukeRequested() ? "CLICK AGAIN" : "NUKE";
-  const shell::HudLine line{text, 100, 380, {255,220,64}};
-  shell::drawHud(image, font, std::span(&line, 1), shell::fontCells());
+  const auto& cells = shell::fontCells();
+  const std::string text = world.nukeRequested() ? "NUKE" : (portrait ? "TAP AGAIN" : "CLICK AGAIN");
+  const auto line = portrait ? centredLine(image, cells, text, left, right, bottom, {255,220,64})
+                             : shell::HudLine{text, 100, 380, {255,220,64}};
+  shell::drawHud(image, font, std::span(&line, 1), cells);
 }
 
 shell::HudValues runtimeHudValues(const sim::World& world) {

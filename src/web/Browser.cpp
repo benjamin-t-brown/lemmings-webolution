@@ -4,7 +4,7 @@
 
 namespace webo::web {
 
-// Clone addition. Scale the display with CSS. SDL maps it to the 640x480 backing canvas.
+// Scale the display with CSS. SDL maps it to the backing canvas.
 EM_JS(void, applyCanvasScale, (int scale), {
   const canvas = Module['canvas'];
   if (canvas?.dataset) canvas.dataset.windowScale = scale;
@@ -20,6 +20,20 @@ EM_JS(void, getCanvasFillSize, (int* width, int* height), {
 });
 
 void canvasFillSize(int& width, int& height) { getCanvasFillSize(&width, &height); }
+
+EM_JS(int, portraitLevelMediaMatches, (), {
+  const media = Module['portraitLevelMedia'] ||
+      (Module['portraitLevelMedia'] = window.matchMedia('(orientation: portrait) and (pointer: coarse)'));
+  return media.matches;
+});
+
+bool prefersPortraitLevel() { return portraitLevelMediaMatches() != 0; }
+
+EM_JS(void, applyCanvasPortrait, (int portrait), {
+  Module['canvas'].toggleAttribute('data-portrait-level', !!portrait);
+});
+
+void setCanvasPortrait(bool portrait) { applyCanvasPortrait(portrait); }
 
 EM_ASYNC_JS(void, waitForFrame, (), {
   await new Promise(resolve => requestAnimationFrame(resolve));

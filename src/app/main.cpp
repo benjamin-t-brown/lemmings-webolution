@@ -30,6 +30,7 @@
 #include "app/EntryStartCue.h"
 #include "app/EnglishStrings.h"
 #include "app/LevelStartSequence.h"
+#include "app/LevelLayout.h"
 #include "app/LemmingAnim.h"
 #include "app/LemmingMotion.h"
 #include "app/LevelMenu.h"
@@ -348,6 +349,60 @@ std::optional<std::size_t> hoveredActor(const sim::World& world, const app::Tube
   return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(hit->id));
 }
 #endif
+
+// Touch zoom shows the next action: "+" while zoomed out and "-" while zoomed in.
+constexpr int kTouchZoomBaseY = 444;
+constexpr int kTouchZoomXWord = 640;
+
+std::string_view touchZoomLabel(bool zoomed) { return zoomed ? "-" : "+"; }
+
+shell::MenuParams touchZoomParams(bool zoomed, bool portrait) {
+  if (portrait) return app::portraitButtonParams(app::kPortraitZoom, touchZoomLabel(zoomed));
+  return {.xWord = kTouchZoomXWord, .baseY = kTouchZoomBaseY, .highlight = -1};
+}
+
+bool touchZoomButtonAt(int x, int y, bool zoomed, bool portrait) {
+  if (portrait) return app::kPortraitZoom.contains(x, y);
+  const auto& cells = shell::fontCells();
+  const auto label = touchZoomLabel(zoomed);
+  const auto params = touchZoomParams(zoomed, false);
+  const auto [left, top, right, bottom] = shell::menuPlateBounds(shell::labelLeft(label, cells, params.xWord),
+      params.baseY, shell::textWidth(label, cells), params);
+  return left <= x && x < right && top <= y && y < bottom;
+}
+
+void drawTouchZoomButton(Image& image, const Image& font, bool zoomed, bool portrait) {
+  const std::array labels{std::string(touchZoomLabel(zoomed))};
+  shell::drawMenuRows(image, font, labels, touchZoomParams(zoomed, portrait), shell::fontCells());
+}
+
+app::CameraParams levelDisplayPose(app::CameraParams pose, bool portrait) {
+  if (!portrait) return pose;
+  // Keep the tube large enough to pick actors, with a slightly wider field of
+  // view to compensate for the narrower viewport. The longer view is real scene
+  // geometry, so drawing and picking use the same projection.
+  constexpr double focalScale = 0.88;
+  const double radiansPerAngleUnit = pose.lensPi / pose.angleUnitsPerTurn;
+  const double tangent = std::tan(pose.angleDegrees * radiansPerAngleUnit) /
+      focalScale * app::kPortraitHeight / pose.height;
+  pose.angleDegrees = std::atan(tangent) / radiansPerAngleUnit;
+  pose.cx += (app::kPortraitWidth - pose.width) / 2.0;
+  pose.cy += (app::kPortraitHeight - pose.height) / 2.0 + app::kPortraitHorizonOffset;
+  pose.width = app::kPortraitWidth;
+  pose.height = app::kPortraitHeight;
+  pose.aspect = double(pose.width) / pose.height;
+  return pose;
+}
+
+app::EntryCueFrame levelDisplayCue(app::EntryCueFrame cue, bool portrait) {
+  if (!portrait) return cue;
+  cue.rect[0] = cue.rect[0] * app::kPortraitWidth / app::kGameWidth;
+  cue.rect[2] = cue.rect[2] * app::kPortraitWidth / app::kGameWidth;
+  constexpr int offset = (app::kPortraitHeight - app::kGameHeight) / 2 + app::kPortraitHorizonOffset;
+  cue.rect[1] += offset;
+  cue.rect[3] += offset;
+  return cue;
+}
 
 }  // namespace
 
@@ -1076,35 +1131,48 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   SDL_Renderer* presenter = presentation.renderer();
   // RGBX uploads use the first three bytes of the composed HUD pixels.
   bool uploadRgbx = args.sim && world;
-  const auto makeTexture = [&](Uint32 format) {
-    return SDL_CreateTexture(presenter, format, SDL_TEXTUREACCESS_STREAMING, 640, 480);
+  const auto makeTexture = [&](Uint32 format, int width, int height) {
+    return SDL_CreateTexture(presenter, format, SDL_TEXTUREACCESS_STREAMING, width, height);
   };
-  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> ownedTexture(
-      makeTexture(uploadRgbx ? SDL_PIXELFORMAT_RGBX32 : SDL_PIXELFORMAT_RGB24), SDL_DestroyTexture);
-  if (!ownedTexture && uploadRgbx) {
+  using LevelTexture = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
+  LevelTexture texture(makeTexture(uploadRgbx ? SDL_PIXELFORMAT_RGBX32 : SDL_PIXELFORMAT_RGB24,
+                                   app::kGameWidth, app::kGameHeight), SDL_DestroyTexture);
+  LevelTexture portraitTexture(nullptr, SDL_DestroyTexture);
+  if (!texture && uploadRgbx) {
     uploadRgbx = false;
-    ownedTexture.reset(makeTexture(SDL_PIXELFORMAT_RGB24));
+    texture.reset(makeTexture(SDL_PIXELFORMAT_RGB24, app::kGameWidth, app::kGameHeight));
   }
   std::vector<std::uint8_t> rgbFallback;
-  SDL_Texture* texture = ownedTexture.get();
   if (!texture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); return 1; }
-  if (SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest) != 0) {
+  if (SDL_SetTextureScaleMode(texture.get(), SDL_ScaleModeNearest) != 0) {
     std::fprintf(stderr, "SDL texture scale: %s\n", SDL_GetError()); return 1;
   }
 
-  params.width = 640; params.height = 480; params.aspect = 4.0 / 3.0;
+  bool portrait = false, layoutAwaitingFrame = false;
+  params.width = app::kGameWidth; params.height = app::kGameHeight; params.aspect = 4.0 / 3.0;
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
-                                 static_cast<int>(params.levelEyeHeight));
-  app::Raster windowRaster(640, 480);
+                                  static_cast<int>(params.levelEyeHeight));
+  const auto currentDisplayPose = [&] { return levelDisplayPose(cameraIntro.pose(controls.camera()), portrait); };
+  app::Raster windowRaster(app::kGameWidth, app::kGameHeight);
   bool running = true, leftDown = false, focused = true;
   Uint8 dragButton = 0;
   app::TouchInput touch;
   app::TouchInput menuTouch;
+  app::TouchInput tapTouch;
   bool touchDragging = false;
   std::optional<app::TouchPoint> touchMotion, touchHold;
   std::optional<app::TouchPoint> touchCursor;
   std::optional<std::size_t> touchHatch;
-  std::vector<app::TouchAction> pinchZooms;
+  int touchRateButton = 0; // SDL button held by a touch on a spawner +/- text button
+  std::optional<std::size_t> touchRateHatch;
+  // One-step spawner buttons briefly replace the hover count with the new rate.
+  struct HatchRateNotice {
+    std::size_t hatch = 0;
+    int rate = 0;
+    Uint64 until = 0;
+  };
+  std::optional<HatchRateNotice> hatchRateNotice;
+  constexpr double kHatchRateNoticeSeconds = 1.5;
   // The logical SDL pointer drives hover, clicks and zoom. Camera drag freezes it.
   int pointerX = 320, pointerY = 240;
   const auto scenePointer = [&] {
@@ -1126,7 +1194,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   // assignment. Snapshot the current camera; active one-shots keep their gains.
   const std::function<void()> drainCues = [&] {
     if (cues && world) {
-      const auto camera = app::buildCamera(cameraIntro.pose(controls.camera()));
+      const auto camera = app::buildCamera(currentDisplayPose());
       cues->drain(*world, [&](const std::array<double, 3>& position) {
         return audio::spatialSoundGains(camera, scene->soundWorldPosition(position, terrainHeight));
       });
@@ -1139,7 +1207,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           use == sim::World::GadgetUse::TeleportArrival, static_cast<int>(actor.facing),
           world->levelClockMs()/1000.0);
       if (cues && !sample.empty()) {
-        const auto camera = app::buildCamera(cameraIntro.pose(controls.camera()));
+        const auto camera = app::buildCamera(currentDisplayPose());
         const std::array<double,3> position{double(actor.x), double(terrainHeight-1-actor.y), .75};
         cues->playGadgetSample(sample, audio::spatialSoundGains(camera, scene->soundWorldPosition(position, terrainHeight)));
       }
@@ -1148,17 +1216,36 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   struct HudIcon {
     const char* asset;
     app::SkillIconPlacement placement;
+    int portraitX;
   };
   // The 640x480 HUD quads set up at 0x44CB3E, 0x44CB8D and 0x44CBDC.
   constexpr std::array hudIcons{
-      HudIcon{"TEXTURES\\^OUT.BMP", {557, 15, 0, 0, 26, 32}},
-      HudIcon{"TEXTURES\\^SAVED.BMP", {560, 53, 0, 0, 20, 32}},
-      HudIcon{"TEXTURES\\^TIME.BMP", {579, 395, 0, 0, 26, 32}},
+      HudIcon{"TEXTURES\\^OUT.BMP", {557, 15, 0, 0, 26, 32}, 119},
+      HudIcon{"TEXTURES\\^SAVED.BMP", {560, 53, 0, 0, 20, 32}, 201},
+      HudIcon{"TEXTURES\\^TIME.BMP", {579, 395, 0, 0, 26, 32}, 277},
+  };
+  const auto hudIconPlacement = [&](const HudIcon& icon) {
+    auto placement = icon.placement;
+    if (portrait) {
+      placement.destX = icon.portraitX;
+      placement.destY = 19;
+    }
+    return placement;
+  };
+  const auto levelHudLines = [&](std::span<const shell::GlyphCell> cells) {
+    auto lines = shell::layoutHud(app::runtimeHudValues(*world), {}, cells);
+    if (portrait) {
+      lines[0].x = 150;
+      lines[1].x = 227;
+      lines[2].x = 308;
+      for (auto& line : lines) line.y = 21;
+    }
+    return lines;
   };
   const auto overStatusHud = [&](int x, int y, std::span<const shell::HudLine> lines,
                                  std::span<const shell::GlyphCell> cells) {
     return std::ranges::any_of(hudIcons, [&](const auto& icon) {
-      const auto& rect = icon.placement;
+      const auto rect = hudIconPlacement(icon);
       return app::pointerOverSceneBounds(x, y, rect.destX, rect.destY,
           rect.destX + rect.width, rect.destY + rect.height);
     }) || std::ranges::any_of(lines, [&](const auto& line) {
@@ -1244,9 +1331,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (recorder) recorder->commands(*world, runtimeSim, skillSelection);
   };
   std::optional<Image> finalWindowFrame;
-  auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
+  auto displayedScenePose = currentDisplayPose();
+  auto displayedCamera = app::buildCamera(displayedScenePose);
   auto displayedPickReference = controls.pickReference();
-  auto displayedScenePose = cameraIntro.pose(controls.camera());
   // After a discarded loop frame, a click refreshes invalid scene depth.
   bool windowSceneCurrent = true;
   bool pointerInWindow = true;
@@ -1257,8 +1344,17 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const int previousCursorVisibility = SDL_ShowCursor(SDL_QUERY);
   if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
-  // Only the last presented frame can offer the plate as a touch target.
+  // Only the last presented frame can offer the plates as touch targets.
   bool touchMenuPresented = false;
+  bool touchZoomPresented = false;
+  const auto zoomButtonAt = [&](int x, int y) {
+    return touchZoomButtonAt(x, y, controls.camera().zoomShift != 0, portrait);
+  };
+  const auto portraitControlAt = [&](int x, int y) {
+    return portrait && (app::runtimeSkillPanelIndex(x, y, true) >= 0 ||
+        (touchMenuPresented && app::kPortraitMenu.contains(x, y)) ||
+        (touchZoomPresented && app::kPortraitZoom.contains(x, y)));
+  };
   const auto cancelFastForwardHold = [&] {
     leftDown = false;
     touchHold.reset();
@@ -1266,8 +1362,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   };
   const auto updateFastForwardHold = [&] {
     // Provisional clone input: hold button 0 over plate 8, including dragging onto it.
-    const auto onPlate = [](int x, int y) {
-      return app::runtimeSkillPanelCommand(x, y) == app::RuntimePanelCommand::FastForward;
+    const auto onPlate = [&](int x, int y) {
+      return app::runtimeSkillPanelCommand(x, y, portrait) == app::RuntimePanelCommand::FastForward;
     };
     const bool active = (leftDown && onPlate(pointerX, pointerY)) ||
         (touchHold && onPlate(app::touchPixel(touchHold->x), app::touchPixel(touchHold->y)));
@@ -1301,23 +1397,61 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const auto zoomAtPointer = [&](int x, int y) -> std::optional<app::CameraZoomPose> {
     if (controls.camera().zoomShift != 0 || rendered == 0 ||
         x < 0 || x >= displayedCamera.width || y < 0 || y >= displayedCamera.height ||
-        (runtimePanel && app::runtimeSkillPanelIndex(x, y) >= 0))
+        (runtimePanel && app::runtimeSkillPanelIndex(x, y, portrait) >= 0))
       return std::nullopt;
     ensureDisplayedScene();
     const auto pixel = std::size_t(y) * displayedCamera.width + x;
     const double actorDepth = windowRaster.actorDepth().depthAt(pixel);
     const double depth = std::isfinite(actorDepth) ? actorDepth : windowRaster.depthBuffer()[pixel];
-    return app::cursorZoomPose(displayedCamera, cameraIntro.pose(controls.camera()),
-        x + 0.5, y + 0.5, depth);
+    return app::cursorZoomPose(displayedCamera, currentDisplayPose(), x + 0.5, y + 0.5, depth);
+  };
+  const auto applyTouchZoom = [&](int x, int y) {
+    if (!zoomButtonAt(x, y)) return false;
+    // Zoom around the current targeting cursor, as wheel/keyboard zoom does,
+    // rather than around the button being tapped. A null anchor zooms back out.
+    const auto [cursorX, cursorY] = scenePointer();
+    pending.zoom(zoomAtPointer(cursorX, cursorY));
+    return true;
   };
   std::optional<Uint64> releasePressedAt;
   const auto hatchPressTarget = [&](int x, int y, int button, bool actorCanReceiveSkill)
       -> std::optional<std::size_t> {
-    if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y) >= 0) return std::nullopt;
+    if (!releaseControl || !backdrop || app::runtimeSkillPanelIndex(x, y, portrait) >= 0 ||
+        portraitControlAt(x, y)) return std::nullopt;
     ensureDisplayedScene();
     const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
     const auto hit = app::RuntimeReleaseRateControl::pressTarget(targets, x, y, button, actorCanReceiveSkill);
     return hit ? std::optional{targets[*hit].index} : std::nullopt;
+  };
+  const auto hatchRateTarget = [&](int x, int y) -> std::optional<app::HatchRateButton> {
+    if (!releaseControl || !backdrop || menuOpen() || portraitControlAt(x, y)) return std::nullopt;
+    ensureDisplayedScene();
+    const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
+    return app::hatchRateButtonAt(targets, x, y, displayedCamera.width, displayedCamera.height);
+  };
+  const auto showHatchRateNotice = [&](std::size_t hatch) {
+    if (!world || hatch >= world->setup().entrances.size()) return;
+    hatchRateNotice = HatchRateNotice{hatch, world->setup().entrances[hatch].releaseRate,
+        SDL_GetPerformanceCounter() +
+            static_cast<Uint64>(double(frequency) * kHatchRateNoticeSeconds)};
+  };
+  const auto focusTouchCursorOnHatch = [&](std::size_t hatch) {
+    if (!backdrop) return;
+    ensureDisplayedScene();
+    const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
+    for (const auto& h : targets)
+      if (h.index == hatch) {
+        touchCursor = {(h.left + h.right) / 2.0, (h.top + h.bottom) / 2.0};
+        return;
+      }
+  };
+  const auto applyHatchRateButton = [&](int x, int y) {
+    const auto target = hatchRateTarget(x, y);
+    if (!target) return false;
+    const bool changed = releaseControl->adjust(target->hatch, target->direction, *world);
+    showHatchRateNotice(target->hatch);
+    if (changed) uiClick();
+    return true;
   };
   const auto startReleaseHold = [&](std::optional<std::size_t> hatch, int button) {
     if (!hatch || !releaseControl->press(hatch, button, *world)) return false;
@@ -1325,6 +1459,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     nukeInput.reset();
     uiClick();
     return true;
+  };
+  const auto releaseTouchRateHold = [&] {
+    if (!touchRateButton) return;
+    if (releaseControl) releaseControl->release(touchRateButton);
+    touchRateButton = 0;
+    touchRateHatch.reset();
   };
   const auto tryHatchPress = [&](int x, int y, int button, bool actorCanReceiveSkill) {
     return startReleaseHold(hatchPressTarget(x, y, button, actorCanReceiveSkill), button);
@@ -1344,7 +1484,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   };
   const auto cancelGameplayHolds = [&] {
     nukeInput.reset();
+    releaseTouchRateHold();
     if (releaseControl) releaseControl->reset();
+    hatchRateNotice.reset();
     cancelFastForwardHold();
   };
   const auto cameraDragging = [&] { return dragButton || touchDragging; };
@@ -1378,10 +1520,11 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   const auto resetTouch = [&] {
     touch.reset();
     menuTouch.reset();
+    tapTouch.reset();
     endCameraDrag(true);
     touchMotion.reset();
-    pinchZooms.clear();
     clearTouchHatch();
+    releaseTouchRateHold();
     touchCursor.reset();
     if (touchHold) {
       touchHold.reset();
@@ -1395,6 +1538,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     fixedClock = app::FixedCameraClock{};
     previous = SDL_GetPerformanceCounter();
   };
+  bool menuDismissedThisFrame = false;
   const auto openMenu = [&] {
     if (persistentFrontend &&
         persistentFrontend->openLevelMenu() != shell::Outcome::Handled) return;
@@ -1402,8 +1546,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (!runtimeSim.paused()) runtimeSim.togglePause();
     uiClick(); // Provisional pause feedback.
     resetMenuInput();
+    // The dialog uses landscape coordinates, starting with its first frame.
+    if (portrait) menuDismissedThisFrame = true;
   };
-  bool menuDismissedThisFrame = false;
   const auto activateMenu = [&](app::LevelMenuAction action) {
     switch (action) {
       case app::LevelMenuAction::Resume:
@@ -1428,6 +1573,40 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       case app::LevelMenuAction::None: break;
     }
   };
+#ifdef __EMSCRIPTEN__
+  const bool canShowPortrait = runtimePanel && args.c3WriteMask.empty() && args.c3WriteEvents.empty();
+  bool portraitUnavailable = false;
+  const auto updateLevelLayout = [&] {
+    const bool wanted = canShowPortrait && !menuOpen() && !portraitUnavailable && web::prefersPortraitLevel();
+    if (wanted == portrait) return;
+    const int width = wanted ? app::kPortraitWidth : app::kGameWidth;
+    const int height = wanted ? app::kPortraitHeight : app::kGameHeight;
+    if (wanted && !portraitTexture) {
+      portraitTexture.reset(makeTexture(uploadRgbx ? SDL_PIXELFORMAT_RGBX32 : SDL_PIXELFORMAT_RGB24,
+                                        width, height));
+      if (!portraitTexture || SDL_SetTextureScaleMode(portraitTexture.get(), SDL_ScaleModeNearest) != 0) {
+        std::fprintf(stderr, "SDL portrait texture: %s\n", SDL_GetError());
+        portraitUnavailable = true;
+        return;
+      }
+    }
+    resetMenuInput();
+    portrait = wanted;
+    presentation.setLevelPortrait(portrait);
+    windowRaster = app::Raster(width, height);
+    touch.setViewport(width, height);
+    menuTouch.setViewport(width, height);
+    tapTouch.setViewport(width, height);
+    displayedScenePose = currentDisplayPose();
+    displayedCamera = app::buildCamera(displayedScenePose);
+    windowSceneCurrent = false;
+    layoutAwaitingFrame = true;
+    pointerX = width / 2;
+    pointerY = height / 2;
+    pointerInWindow = !portrait;
+    touchMenuPresented = touchZoomPresented = false;
+  };
+#endif
   app::profile::Run frameProfile;
   const char* profilePath = std::getenv("WEBOLUTION_FRAME_PROFILE");
   SDL_RendererInfo rendererInfo{};
@@ -1451,7 +1630,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         focused = true;
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_LEAVE) {
         pointerInWindow = false;
-        if (releaseControl && !touchHatch) releaseControl->reset();
+        if (releaseControl && !touchHatch && !touchRateButton) releaseControl->reset();
         if (!touchHold) runtimeSim.setFastForward(false);
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_ENTER) {
         pointerInWindow = true;
@@ -1494,6 +1673,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           else if (key == SDL_SCANCODE_UP || key == SDL_SCANCODE_DOWN)
             levelMenu->moveFocus(key == SDL_SCANCODE_UP ? -1 : 1);
         }
+      } else if (portrait && touchMenuPresented && focused && !dragButton &&
+                 event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT &&
+                 app::kPortraitMenu.contains(event.button.x, event.button.y)) {
+        openMenu();
       } else if (runtimeSim.examining() &&
                  (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)) {
         if (fromTouch) {
@@ -1514,43 +1697,52 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           if (focused) beginCameraDrag(SDL_BUTTON_RIGHT);
         }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
-        if (releaseControl) releaseControl->release(event.button.button);
+        if (releaseControl && !(fromTouch && touchRateButton == event.button.button))
+          releaseControl->release(event.button.button);
         if (dragButton == SDL_BUTTON_RIGHT) {
           endCameraDrag();
         } else if (focused) {
           pointerX = event.button.x; pointerY = event.button.y;
         }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
-        if (releaseControl) releaseControl->release(event.button.button);
-        cancelFastForwardHold();
+        if (releaseControl && !(fromTouch && touchRateButton == event.button.button))
+          releaseControl->release(event.button.button);
+        // A second finger can tap a lemming while a touch holds fast-forward.
+        // Clearing the mouse button must not end that independent touch hold.
+        leftDown = false;
+        updateFastForwardHold();
         if (args.sim && world && focused && !dragButton) {
           pointerX = event.button.x; pointerY = event.button.y;
-          nukeInput.release(pointerX, pointerY, event.button.timestamp, *world);
+          nukeInput.release(pointerX, pointerY, event.button.timestamp, *world, portrait);
         } else nukeInput.reset();
       } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
                  event.button.button == SDL_BUTTON_LEFT) {
         // Consume panel clicks before actor picking, including command plates.
         if (focused && !dragButton) {
-          leftDown = true;
           pointerX = event.button.x; pointerY = event.button.y;
-          nukeInput.press(pointerX, pointerY);
+          if (touchZoomPresented && applyTouchZoom(pointerX, pointerY)) return;
+          if (applyHatchRateButton(pointerX, pointerY)) return;
+          leftDown = true;
+          nukeInput.press(pointerX, pointerY, portrait);
           updateFastForwardHold();
-          const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
+          const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY, portrait);
           const auto panelCounts = app::runtimeSkillPanelCounts(*world);
           if ((panelIndex >= 0 && panelIndex < 8 && panelCounts[panelIndex] > 0) ||
               (panelIndex == 9 && world->setup().nukeStock > 0 && !world->nukeRequested()))
             uiClick(); // 0x45AC5C selects stocked skills and Nuke via Changeop.
-          if (!skillSelection.consumePanelClick(pointerX, pointerY,
-                                                panelCounts)) {
+          if (!skillSelection.consumePanelClick(pointerX, pointerY, panelCounts, portrait)) {
             const auto skill = skillSelection.selectedSkill();
             const auto hit = pickActorAt(pointerX, pointerY, skill);
             const bool actorCanReceiveSkill = hit && world->canAssign(*hit, skill);
-            if (!tryHatchPress(pointerX, pointerY, SDL_BUTTON_LEFT, actorCanReceiveSkill))
+            // A second finger must not replace the active touch rate hold.
+            if ((fromTouch && touchRateButton) ||
+                !tryHatchPress(pointerX, pointerY, SDL_BUTTON_LEFT, actorCanReceiveSkill))
               assignActor(hit, skill);
           }
         }
       } else if (event.type == SDL_MOUSEMOTION) {
         if (focused) {
+          if (portrait) pointerInWindow = true;
           if (!touchDragging && !touchMotion && (dragButton || !runtimeSim.examining())) {
             pending.mouse(double(event.motion.xrel) / presentation.scale(),
                           double(event.motion.yrel) / presentation.scale());
@@ -1628,6 +1820,19 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       using Kind = app::TouchActionKind;
       if (action.kind == Kind::None || menuDismissedThisFrame) return;
       if (action.kind == Kind::Tap) {
+        const int x = app::touchPixel(action.point.x), y = app::touchPixel(action.point.y);
+        if (touchZoomPresented && applyTouchZoom(x, y)) {
+          recordCommands();
+          return;
+        }
+        if (applyHatchRateButton(x, y)) {
+          recordCommands();
+          return;
+        }
+        // A tap leaves the targeting cursor at the contact point. A second
+        // finger may assign while a spawner button is held; keep that hold's
+        // hatch anchored for repeat adjustments.
+        if (!touchRateButton) touchCursor = action.point;
         routeEvent(app::touchButton(SDL_MOUSEBUTTONDOWN, action.point, timestamp), true);
         routeEvent(app::touchButton(SDL_MOUSEBUTTONUP, action.point, timestamp), true);
         return;
@@ -1635,43 +1840,82 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       if (menuOpen()) return;
       switch (action.kind) {
         case Kind::Assign:
+          touchCursor = action.point;
           pointerX = app::touchPixel(action.point.x);
           pointerY = app::touchPixel(action.point.y);
           assignActor(downActor, skillSelection.selectedSkill());
           break;
         case Kind::BeginDrag:
-        case Kind::Drag:
-        case Kind::EndDrag:
-          if (action.kind == Kind::BeginDrag) beginCameraDrag(SDL_BUTTON_RIGHT, true);
+          beginCameraDrag(SDL_BUTTON_RIGHT, true);
+          touchCursor.reset();
+          clearTouchHatch();
+          touchMotion.reset();
+          break;
+        case Kind::Drag: {
+          // Touch rotation starts opposite the mouse. The Options setting flips
+          // both together, so On restores the mouse-like direction for touch.
+          const double sign = (persistentFrontend && persistentFrontend->reverseDrag()) ? 1.0 : -1.0;
+          const double sensitivity = portrait ? double(app::kGameWidth) / app::kPortraitWidth : 1.0;
           if (!touchMotion) touchMotion.emplace();
-          touchMotion->x += action.delta.x;
-          touchMotion->y += action.delta.y;
-          if (action.kind == Kind::EndDrag) endCameraDrag(true);
+          touchMotion->x += action.delta.x * sign * sensitivity;
+          touchMotion->y += action.delta.y * sign * sensitivity;
+          break;
+        }
+        case Kind::EndDrag:
+          endCameraDrag(true);
+          touchMotion.reset();
           break;
         case Kind::CancelDrag:
           endCameraDrag(true);
           touchMotion.reset();
           break;
-        case Kind::BeginHold:
-        case Kind::MoveHold:
-          if (action.kind == Kind::BeginHold) nukeInput.reset();
+        case Kind::BeginHold: {
+          nukeInput.reset();
+          const int x = app::touchPixel(action.point.x), y = app::touchPixel(action.point.y);
+          if (const auto rate = hatchRateTarget(x, y)) {
+            const int button = rate->direction > 0 ? SDL_BUTTON_RIGHT : SDL_BUTTON_LEFT;
+            if (startReleaseHold(rate->hatch, button)) {
+              touchRateButton = button;
+              touchRateHatch = rate->hatch;
+              // The repeat logic checks the cursor against the held hatch.
+              focusTouchCursorOnHatch(rate->hatch);
+            }
+            break;
+          }
           touchHold = action.point;
-          pointerX = app::touchPixel(action.point.x);
-          pointerY = app::touchPixel(action.point.y);
+          pointerX = x;
+          pointerY = y;
           updateFastForwardHold();
+          break;
+        }
+        case Kind::MoveHold:
+          if (!touchRateButton) {
+            touchHold = action.point;
+            pointerX = app::touchPixel(action.point.x);
+            pointerY = app::touchPixel(action.point.y);
+            updateFastForwardHold();
+          }
           break;
         case Kind::EndHold:
         case Kind::CancelHold:
-          touchHold.reset();
-          updateFastForwardHold();
+          if (touchRateButton) {
+            if (touchRateHatch) showHatchRateNotice(*touchRateHatch);
+            releaseTouchRateHold();
+          } else {
+            touchHold.reset();
+            updateFastForwardHold();
+          }
           break;
         case Kind::Precision:
           touchCursor = action.point;
           break;
         case Kind::EndPrecision: {
-          touchCursor.reset();
+          // The release contact becomes the resting cursor; the aimed point
+          // still drives assignment so the dragged target stays selected.
+          touchCursor = action.releasePoint;
           const int x = app::touchPixel(action.point.x), y = app::touchPixel(action.point.y);
-          if (!runtimeSim.examining() && app::runtimeSkillPanelIndex(x, y) < 0) {
+          if (!runtimeSim.examining() && app::runtimeSkillPanelIndex(x, y, portrait) < 0 &&
+              !zoomButtonAt(x, y) && !portraitControlAt(x, y) && !hatchRateTarget(x, y)) {
             const auto skill = skillSelection.selectedSkill();
             if (const auto hit = pickActorAt(x, y, skill); hit && world->canAssign(*hit, skill)) {
               nukeInput.reset();
@@ -1699,10 +1943,6 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         case Kind::EndHatchHold:
           clearTouchHatch();
           break;
-        case Kind::ZoomIn:
-        case Kind::ZoomOut:
-          pinchZooms.push_back(action);
-          break;
         default: break;
       }
       recordCommands();
@@ -1713,6 +1953,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     SDL_Event event;
     while (running && SDL_PollEvent(&event)) {
       if (app::isTouchMouseEvent(event)) continue;
+      if (layoutAwaitingFrame && (app::isFingerEvent(event.type) || event.type == SDL_MOUSEMOTION ||
+          event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL))
+        continue;
       displayChanged |= event.type == SDL_WINDOWEVENT &&
                         event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED;
       const auto screen = persistentFrontend ? persistentFrontend->screen() : shell::Screen::Level;
@@ -1724,7 +1967,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         // is in progress. Its motion and lift never enter the scene recognizer.
         if (menuTouch.tracking(id) ||
             (event.type == SDL_FINGERDOWN && touchMenuPresented && !menuOpen() &&
-             levelMenu->touchButtonAt(app::touchPixel(point->x), app::touchPixel(point->y)))) {
+             levelMenu->touchButtonAt(app::touchPixel(point->x), app::touchPixel(point->y), portrait))) {
           if (presentation.feedTouch(menuTouch, event.tfinger, *point).kind ==
               app::TouchActionKind::Tap) {
             openMenu();
@@ -1732,17 +1975,31 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           }
           continue;
         }
-        if (dragButton || leftDown || (releaseControl && releaseControl->holding() && !touchHatch))
-          continue;
         const auto timestamp = event.tfinger.timestamp;
+        // A zoom plate is its own tap target. Another finger may also tap while
+        // a touch or mouse holds fast-forward or a spawner rate button.
+        const bool secondaryTap = tapTouch.tracking(id) ||
+            (event.type == SDL_FINGERDOWN &&
+              ((touchZoomPresented && !menuOpen() &&
+                zoomButtonAt(app::touchPixel(point->x), app::touchPixel(point->y))) ||
+              touchHold.has_value() || touchRateButton != 0 || runtimeSim.fastForward()));
+        if (secondaryTap) {
+          const auto action = presentation.feedTouch(tapTouch, event.tfinger, *point);
+          if (action.kind == app::TouchActionKind::Tap) routeTouch(action, timestamp);
+          continue;
+        }
+        if (dragButton || leftDown ||
+            (releaseControl && releaseControl->holding() && !touchHatch && !touchRateButton))
+          continue;
         routeTouch(touch.advance(timestamp), timestamp);
         using Target = app::TouchTarget;
         auto target = Target::Tap;
         std::optional<std::size_t> downActor;
         if (event.type == SDL_FINGERDOWN && touch.idle() && !menuOpen()) {
           const int x = app::touchPixel(point->x), y = app::touchPixel(point->y);
-          const int plate = runtimePanel ? app::runtimeSkillPanelIndex(x, y) : -1;
-          if (!runtimePanel) target = Target::DragOnly;
+          const int plate = runtimePanel ? app::runtimeSkillPanelIndex(x, y, portrait) : -1;
+          if (hatchRateTarget(x, y)) target = Target::Holdable;
+          else if (!runtimePanel) target = Target::DragOnly;
           else if (plate == 8 && !runtimeSim.examining()) target = Target::Holdable;
           else if (plate < 0) {
             // A scene touch interrupts the Nuke plate's double-tap sequence.
@@ -1757,13 +2014,16 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
               target = Target::Hatch;
             } else {
               const auto cells = shell::fontCells();
-              const auto lines = shell::layoutHud(app::runtimeHudValues(*world), {}, cells);
+              const auto lines = levelHudLines(cells);
               target = hatch || overStatusHud(x, y, lines, cells) ? Target::DragOnly : Target::Scene;
             }
           }
         }
         routeTouch(presentation.feedTouch(touch, event.tfinger, *point, target), timestamp, downActor);
-        if (touch.idle()) clearTouchHatch();
+        if (touch.idle()) {
+          clearTouchHatch();
+          if (touchDragging) endCameraDrag(true);
+        }
       } else {
         if (event.type == SDL_MOUSEBUTTONDOWN) resetTouch();
         presentation.gameCoordinates(event);
@@ -1779,8 +2039,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     if (running) {
       const auto choice = persistentFrontend ? std::optional{persistentFrontend->windowScale()} : std::nullopt;
       presentation.updateWindowScale(choice, displayChanged);
+#ifdef __EMSCRIPTEN__
+      updateLevelLayout();
+#endif
     }
   };
+#ifdef __EMSCRIPTEN__
+  updateLevelLayout();
+#endif
   while (running && (args.frames <= 0 || rendered < args.frames)) {
     menuDismissedThisFrame = false;
 #ifdef __EMSCRIPTEN__
@@ -1803,7 +2069,11 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     input.numpad4 = focused && !menuOpen() && keys[SDL_SCANCODE_KP_4] != 0;
     input.numpad6 = focused && !menuOpen() && keys[SDL_SCANCODE_KP_6] != 0;
     input.leftShift = focused && !menuOpen() && keys[SDL_SCANCODE_LSHIFT] != 0;
+    input.arrowLeft = focused && !menuOpen() && keys[SDL_SCANCODE_LEFT] != 0;
+    input.arrowRight = focused && !menuOpen() && keys[SDL_SCANCODE_RIGHT] != 0;
+    input.reverseDrag = persistentFrontend && persistentFrontend->reverseDrag();
     const Uint64 now = SDL_GetPerformanceCounter();
+    if (hatchRateNotice && now >= hatchRateNotice->until) hatchRateNotice.reset();
     double elapsed = static_cast<double>(now - previous) / static_cast<double>(frequency);
     previous = now;
     if (args.frames > 0) elapsed = app::FixedCameraClock::stepSeconds;
@@ -1812,7 +2082,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     const auto [cursorX, cursorY] = scenePointer();
     if (panelIconAnimation) {
       const int hover = focused && !menuOpen() && !cameraDragging() ?
-          app::runtimeSkillPanelIndex(cursorX, cursorY) : -1;
+          app::runtimeSkillPanelIndex(cursorX, cursorY, portrait) : -1;
       // UI animation uses frame time independently of simulation pause and fast-forward.
       // Provisional policy suspends it while a menu is open or focus is lost.
       panelIconAnimation->advanceIcons(focused && !menuOpen() ? elapsed : 0.0,
@@ -1842,20 +2112,6 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         touchMotion.reset();
       }
       input = pending.consumeInto(input);
-      if (!pinchZooms.empty() && input.uiAllowsCamera) {
-        // Apply the coalesced keyboard/wheel edge first. Each pinch edge then
-        // sees the preceding zoom state, even within a single camera tick.
-        if (input.zoomPressed) {
-          controls.toggleZoom(input.zoomPose);
-          input.zoomPressed = false;
-        }
-        for (const auto& zoom : pinchZooms) {
-          const bool zoomIn = zoom.kind == app::TouchActionKind::ZoomIn;
-          if (zoomIn != (controls.camera().zoomShift != 0))
-            controls.toggleZoom(zoomAtPointer(app::touchPixel(zoom.point.x), app::touchPixel(zoom.point.y)));
-        }
-      }
-      pinchZooms.clear();
       examineDragMotionPending = false;
       controls.update(input, app::FixedCameraClock::stepSeconds);
       updated = true;
@@ -1924,8 +2180,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         backdrop->advanceScenery(elapsed * 1000.0, args.sim && static_cast<bool>(world), runtimeSim.paused());
         if (gravityPresentation) backdrop->animateGravity(*gravityPresentation);
       }
-      params = controls.camera();
-      const auto displayedPose = cameraIntro.pose(params);
+      const auto displayedPose = currentDisplayPose();
       displayedScenePose = displayedPose;
       displayedCamera = app::buildCamera(displayedPose);
       displayedPickReference = controls.pickReference();
@@ -1937,10 +2192,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       std::vector<app::LevelActorView> actors;
       std::vector<app::HatchHoverTarget> hatches;
       bool touchMenuDrawn = false;
+      bool touchZoomDrawn = false;
       // This state-only view is never offered to an ordinary observer. The
       // explicit automation scope opts into inspectLevelFrame() for pixels,
       // hover, visible actor boxes and hatch depth; all other fields are ready.
-      const auto cueFrame = mapPlay && entryCue ? entryCue->frame() : std::nullopt;
+      auto cueFrame = mapPlay && entryCue ? entryCue->frame() : std::nullopt;
+      if (cueFrame) *cueFrame = levelDisplayCue(*cueFrame, portrait);
       std::optional<app::LevelFrameView> pendingView;
       if (args.sim && world && runtimeFont && runtimePanel)
         pendingView.emplace(app::LevelFrameView{rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
@@ -1962,11 +2219,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           auto& view = *pendingView;
           app::profile::Scope profileHud(app::profile::Hud);
           image = toImage(windowRaster.framebuffer());
-          const int panelIndex = app::runtimeSkillPanelIndex(cursorX, cursorY);
-          const bool canHover = focused && !menuOpen() && !cameraDragging() && panelIndex < 0;
+          const int panelIndex = app::runtimeSkillPanelIndex(cursorX, cursorY, portrait);
+          const bool canHover = focused && !menuOpen() && !cameraDragging() && panelIndex < 0 &&
+              !portraitControlAt(cursorX, cursorY);
           const bool cursorInWindow = touchCursor.has_value() || pointerInWindow;
           const auto hudCells = shell::fontCells();
-          const auto hudLines = shell::layoutHud(app::runtimeHudValues(*world), {}, hudCells);
+          const auto hudLines = levelHudLines(hudCells);
           const bool pointerOnHud = !teleportHover.empty() && canHover && cursorInWindow &&
               overStatusHud(cursorX, cursorY, hudLines, hudCells);
           const bool switchHover = canHover && cursorInWindow && backdrop &&
@@ -1981,6 +2239,11 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
               std::vector<app::HatchHoverTarget>{};
           for (auto& h : hatches)
             h.remaining = world->remainingFromEntrance(h.index);
+          if (releaseControl && !menuOpen()) {
+            std::optional<std::pair<int, int>> buttonHover;
+            if (cursorInWindow) buttonHover = {cursorX, cursorY};
+            app::drawHatchRateButtons(image, *runtimeFont, hatches, buttonHover);
+          }
           std::optional<std::size_t> heldHatch;
           if (releaseControl && cursorInWindow && focused && !menuOpen() && !cameraDragging()) {
             heldHatch = touchHatch && touchCursor
@@ -1995,6 +2258,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           // Idle feedback follows left-click precedence. While adjusting a
           // hatch, the cursor and rate follow the held target.
           auto hatchHover = heldHatch;
+          if (!hatchHover && hatchRateNotice)
+            for (std::size_t i = 0; i < hatches.size(); ++i)
+              if (hatches[i].index == hatchRateNotice->hatch) {
+                hatchHover = i;
+                break;
+              }
           if (!hatchHover && releaseControl && canHover && cursorInWindow)
             hatchHover = app::RuntimeReleaseRateControl::pressTarget(
                 hatches, cursorX, cursorY, SDL_BUTTON_LEFT, actorCanReceiveSkill);
@@ -2013,17 +2282,29 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const auto& target = hatches[*hatchHover];
             const auto adjustingRate = heldHatch
                 ? std::optional{world->setup().entrances[target.index].releaseRate} : std::nullopt;
-            app::drawHatchHover(image, *runtimeFont, target, adjustingRate);
+            const auto noticeRate = hatchRateNotice && hatchRateNotice->hatch == target.index
+                ? std::optional{hatchRateNotice->rate} : std::nullopt;
+            app::drawHatchHover(image, *runtimeFont, target, adjustingRate, noticeRate);
           } else if (canHover && cursorInWindow && backdrop && !hover && !switchHover) {
             if (const auto exit = backdrop->exitHoverTarget(displayedCamera, windowRaster, cursorX, cursorY))
               app::drawExitHover(image, *runtimeFont, *exit, world->setup().saveTarget);
           }
           app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
-                                     &*panelIconAnimation);
+                                     &*panelIconAnimation, portrait);
+          if (portrait) {
+            const auto speed = app::skillPlate(8, true), nuke = app::skillPlate(9, true);
+            const std::array<shell::HudLine, 4> commands{{
+                {"Fast Forward", speed.x + 49, speed.y + 5, {255,255,255}, 0.9},
+                {"Hold", speed.x + 50, speed.y + 28, {252,209,141}, 0.62},
+                {"Nuke", nuke.x + 67, nuke.y + 5, {255,255,255}, 0.9},
+                {"Double Tap", nuke.x + 68, nuke.y + 28, {252,209,141}, 0.62},
+            }};
+            shell::drawHud(image, *runtimeFont, commands, hudCells);
+          }
           for (std::size_t i = 0; i < hudIcons.size(); ++i)
-            app::compositeIconRegion(image, runtimeHudIcons[i], hudIcons[i].placement);
+            app::compositeIconRegion(image, runtimeHudIcons[i], hudIconPlacement(hudIcons[i]));
           shell::drawHud(image, *runtimeFont, hudLines, hudCells);
-          app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
+          app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed(), portrait);
           // Draw a countdown over each lemming with a lit fuse.
           if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
                           [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
@@ -2057,7 +2338,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             const int phaseMs = digit * 1000 - remainingMs;
             const int dx = 150 * phaseMs / 1000, dy = 195 * phaseMs / 1000;
             const app::EntryCueFrame countdown{{320 - dx, 240 - dy, 330 + dx, 252 + dy}, true};
-            app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), countdown);
+            app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), levelDisplayCue(countdown, portrait));
           }
           if (menuOpen() && persistentFrontend->screen() == shell::Screen::SoundOptions) {
             persistentFrontend->setWindowScaleMenu(presentation.windowScaleMenu());
@@ -2066,20 +2347,34 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             image = persistentFrontend->image();
           } else if (menuOpen()) {
             levelMenu->draw(image);
-          } else if (levelMenu && presentation.receivedTouch()) {
-            levelMenu->drawTouchButton(image);
-            touchMenuDrawn = true;
+          } else if (portrait || (levelMenu && presentation.receivedTouch())) {
+            if (levelMenu) {
+              levelMenu->drawTouchButton(image, portrait);
+              touchMenuDrawn = true;
+            }
+            drawTouchZoomButton(image, *runtimeFont, controls.camera().zoomShift != 0, portrait);
+            touchZoomDrawn = true;
           }
           const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
-          const auto cursorState = menuOpen() ? persistentFrontend->cursorState() :
+          const auto cursorState = portrait && !cursorInWindow ? app::CursorState::Hidden :
+              menuOpen() ? persistentFrontend->cursorState() :
               app::runtimeCursorState(focused, cameraDragging(), hover.has_value(),
                   runtimeSim.paused(), heldHatch ? -1 : panelIndex, panelAvailability, hatchHover.has_value());
           runtimeCursor->draw(image, cursorState, cursorX, cursorY);
           // READ45E2B5/45E342: cue is below the later cursor and pause caption.
           if (!menuOpen()) {
             if (runtimeSim.examining()) shell::drawExamineCaption(image, *runtimeFont, shell::fontCells());
-            else if (runtimeSim.paused()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
+            else if (runtimeSim.paused()) {
+              shell::CaptionParams caption;
+              if (portrait) {
+                caption.textX = (image.width - shell::textWidth(caption.text, hudCells)) / 2;
+                caption.textY = app::kPortraitZoom.y + 8;
+                caption.rect = {caption.textX - 8, caption.textY,
+                                image.width - caption.textX + 8, caption.textY + 32};
+              }
+              shell::drawCaption(image, *runtimeFont, hudCells, caption);
+            }
           }
           if (levelObserver) {
             const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
@@ -2115,7 +2410,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       const bool skipUnconsumed = app::ScopedFrameConsumption::skipUnconsumed() &&
           (args.frames > 0 || runOptions.frameSeconds > 0) && pendingView &&
           (!backdrop || scenerySpritesReady) && !finalShot &&
-          args.c3WriteMask.empty() && args.c3WriteEvents.empty();
+          !layoutAwaitingFrame && args.c3WriteMask.empty() && args.c3WriteEvents.empty();
       if (!skipUnconsumed) materialize();
       if (levelObserver && pendingView) {
         app::profile::Scope profileObserver(app::profile::Other);
@@ -2136,10 +2431,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           }
         }
         if (finalShot && !finalWindowFrame) finalWindowFrame = toImage(windowRaster.framebuffer());
-        { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * (uploadRgbx ? 4 : 3)); }
-        { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); }
+        auto* output = portrait ? portraitTexture.get() : texture.get();
+        const int pitch = windowRaster.framebuffer().width * (uploadRgbx ? 4 : 3);
+        { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(output, nullptr, pixels, pitch); }
+        { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, output, nullptr, nullptr); }
         { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
+        layoutAwaitingFrame = false;
         touchMenuPresented = touchMenuDrawn;
+        touchZoomPresented = touchZoomDrawn;
         lemmingMotion.frameDrawn();
       }
       ++rendered;
@@ -2153,6 +2452,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   recordCommands();
   SDL_SetRelativeMouseMode(SDL_FALSE);
 #ifdef __EMSCRIPTEN__
+  if (portrait) presentation.setLevelPortrait(false);
   SDL_EventState(SDL_MOUSEWHEEL, SDL_IGNORE);
 #endif
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);

@@ -11,6 +11,7 @@ struct SoundSettings {
   int sfx = 100;
   bool unlockAllLevels = false;  // Clone addition: allow access to every level.
   int windowScale = 0;  // Clone addition: 0 = Auto/Fill, 1..3 = window scale multiplier.
+  bool reverseDrag = false;  // Clone addition: invert drag direction (touch defaults to reversed).
   bool operator==(const SoundSettings&) const = default;
 
   static std::expected<SoundSettings, std::string> load(SaveSink& file);

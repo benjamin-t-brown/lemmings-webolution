@@ -8,6 +8,11 @@ namespace webo::app {
 struct CameraInput {
   bool numpad4 = false;
   bool numpad6 = false;
+  // Clone addition: arrow keys rotate the camera without a drag.
+  bool arrowLeft = false;
+  bool arrowRight = false;
+  // Clone addition: invert drag rotation and tilt (Options setting).
+  bool reverseDrag = false;
   bool leftShift = false;
   bool backspacePressed = false;
   bool zoomPressed = false;

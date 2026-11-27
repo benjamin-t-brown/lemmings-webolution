@@ -1,5 +1,6 @@
 #include "HudText.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 
@@ -34,21 +35,26 @@ std::vector<HudLine> layoutHud(const HudValues& v, const HudParams& p, std::span
 }
 
 HudBox lineBox(const HudLine& line, std::span<const GlyphCell> cells) {
-  return {line.x, line.y, line.x + textWidth(line.text, cells), line.y + kLineHeight};
+  return {line.x, line.y, line.x + static_cast<int>(std::lround(textWidth(line.text, cells) * line.scale)),
+          line.y + static_cast<int>(std::lround(kLineHeight * line.scale))};
 }
 
 void drawHud(webo::Image& target, const webo::Image& sheet, std::span<const HudLine> lines,
              std::span<const GlyphCell> cells) {
   for (const HudLine& line : lines) {
-    int x = line.x;
+    const int height = static_cast<int>(std::lround(kLineHeight * line.scale));
+    int advance = 0, x = line.x;
     for (const char c : line.text) {
       const unsigned idx = (static_cast<unsigned char>(c) - kFirstChar) & 0xff;
       if (idx >= cells.size())
         continue;
       const GlyphCell& g = cells[idx];
-      for (int dy = 0; dy < kLineHeight; ++dy) {
-        for (int dx = 0; dx < g.width; ++dx) {
-          const int sx = g.x + dx, sy = g.y + dy;
+      advance += g.width;
+      const int nextX = line.x + static_cast<int>(std::lround(advance * line.scale));
+      const int width = nextX - x;
+      for (int dy = 0; dy < height; ++dy) {
+        for (int dx = 0; dx < width; ++dx) {
+          const int sx = g.x + dx * g.width / width, sy = g.y + dy * kLineHeight / height;
           if (sx >= sheet.width || sy >= sheet.height)
             continue;
           const int a = sheet.rgba[(static_cast<std::size_t>(sy) * sheet.width + sx) * 4 + 3];
@@ -60,7 +66,7 @@ void drawHud(webo::Image& target, const webo::Image& sheet, std::span<const HudL
             px[k] = static_cast<std::uint8_t>((px[k] * (255 - a) + line.colour[k] * a + 127) / 255);
         }
       }
-      x += g.width;
+      x = nextX;
     }
   }
 }

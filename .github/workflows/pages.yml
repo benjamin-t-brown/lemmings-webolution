@@ -35,6 +35,7 @@ jobs:
           mkdir site
           cp "$output/webolution.html" site/index.html
           cp "$output/webolution.js" "$output/webolution.wasm" "$output/web-game-data.mjs" "$output/isolate.js" "$output/favicon.png" site/
+          cp "$output/basher.gif" "$output/blocker.gif" site/
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site

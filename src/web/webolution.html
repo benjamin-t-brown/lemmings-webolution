@@ -65,9 +65,8 @@
 <main>
   <img id="opening-logo" src="favicon.png" alt="Lemmings Webolution logo">
   <section id="setup" aria-labelledby="setup-title" hidden>
-    <h1 id="setup-title">Set up game data</h1>
-    <p>Use the files from your own copy of the game or from the archive.org item.
-      The files you add are stored only in this browser.</p>
+    <h1 id="setup-title">Game data</h1>
+    <p>Supply game data from your installation or a CD image.</p>
     <fieldset id="setup-options" aria-label="Game data sources">
       <section class="route" id="installed-route">
         <h2>I have the game installed</h2>
@@ -86,14 +85,14 @@
         <button type="button" data-picker="iso-input">Choose CD image</button>
         <input id="iso-input" type="file" accept=".iso" hidden>
       </section>
-      <section class="route">
+      <section class="route" style="text-align: center;">
         <h2>Download from archive.org</h2>
+        <p>You can also download the CD image yourself.</p>
         <div class="actions">
           <button id="download" type="button">Download game data</button>
           <a id="archive-item" href="https://archive.org/details/lemmings-revolution" target="_blank"
-            rel="noopener noreferrer">Open the archive.org item</a>
+            rel="noopener noreferrer">archive.org link</a>
         </div>
-        <p>You can also download the CD image from the item and open it above.</p>
       </section>
     </fieldset>
     <div class="actions" id="transfer" hidden>

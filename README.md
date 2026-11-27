@@ -13,6 +13,7 @@ What's implemented:
   - Resolution scaling
   - Pause to examine
   - Unlock all levels button
+  - Mobile controls /w vertical layout
 
 What's missing:
   - Languages beside English
@@ -24,49 +25,7 @@ What's missing:
 Open the [browser game](https://benjamin-t-brown.github.io/lemmings-webolution/).
 The page may reload once to enable WebAssembly threads.
 
-The project ships no original game data. On the setup screen, choose your
-installation folder, select its `lemmings.box` and `patch.box` files, or open
-a Lemmings Revolution CD image. You can also download the image through the
-setup screen or get it from the [Internet Archive item](https://archive.org/details/lemmings-revolution).
-The browser stores imported data and saved progress on this device.
-
-Select **Start game**, then start a new game and choose an unlocked level.
-Select a skill on the panel or press **1–8**, then click a lemming to assign it.
-Press **Enter** (including keypad Enter) or **Pause/Break** to toggle examine
-pause. While paused, drag with either mouse button, scroll to zoom, and point
-at a switch to see what it controls. **P** or **Esc** resumes play.
-
-### Touch controls
-
-In the browser, holding a touch-first device upright automatically switches
-levels to portrait mode. The job plates move to two rows at the bottom, with
-**Fast Fwd**, **Nuke**, **2 Finger Rotate** and the level stats at the top. Turn the device
-sideways for the original layout. The title screen and in-level menu also support
-portrait mode. The level map uses the wider layout.
-
-- **Tap** a skill plate, then tap a lemming to assign it. Tapping the scene
-  also moves the targeting cursor to that spot. Tapping the **Menu** button at
-  the top opens and pauses the level menu; tap a menu row to choose it.
-- **One-finger drag** on the scene moves the targeting cursor. The cursor sits
-  about one fingertip above your finger so it stays visible; release assigns
-  the selected skill at that aimed position, then the cursor settles at the
-  spot where you lifted your finger.
-- Hold **2 Finger Rotate** with one finger, then drag with another to rotate the
-  camera. You can lift and reposition the dragging finger while keeping the
-  first finger down. You can also plant the first finger on an empty part of the scene.
-  Touch rotation starts in the opposite direction to mouse drag; the
-  **Reverse camera drag** option flips both together.
-- Use the single **+ / −** plate near the bottom of the scene to toggle zoom in and out.
-  It zooms toward the current targeting cursor, and the label shows the next
-  action. Pinch zoom was removed.
-- **Hold** the fast-forward plate to speed up time. A second finger can tap a
-  lemming without stopping fast-forward.
-- Each entrance has **−** and **+** text buttons on either side for release
-  rate changes. Tapping changes one step; holding repeats like holding the
-  mouse button. After a tap, the hatch briefly shows `RATE n`, then returns to
-  the normal remaining count. You can also **hold** the hatch and slide **up**
-  to raise its rate or **down** to lower it.
-- **Double-tap** the Nuke plate to use it.
+The project does not include original game data.
 
 ## Play on Windows or Linux
 

@@ -20,6 +20,18 @@ What's missing:
 
 This project was primarily implemented with ai development tools.
 
+## Screenshots
+
+### Main menu
+
+![Main menu with the Lemmings Revolution logo and game options](docs/screenshots/main-menu.png)
+
+### Gameplay
+
+| Landscape | Portrait with touch controls |
+| --- | --- |
+| ![Lemmings crossing a rotating tower, with the skill panel on the left](docs/screenshots/gameplay-landscape.png) | ![The same level in portrait orientation, with the touch skill panel at the bottom](docs/screenshots/gameplay-portrait.png) |
+
 ## Play in your browser
 
 Open the [browser game](https://benjamin-t-brown.github.io/lemmings-webolution/).
